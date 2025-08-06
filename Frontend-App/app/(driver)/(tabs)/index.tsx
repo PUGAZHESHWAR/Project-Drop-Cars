@@ -96,7 +96,7 @@ export default function DriverDashboard() {
   };
 
   return (
-    <SafeArea style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <LinearGradient
         colors={['#10B981', '#059669']}
         style={styles.header}
@@ -121,7 +121,7 @@ export default function DriverDashboard() {
         </View>
       </LinearGradient>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         {/* Quick Stats */}
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
@@ -315,7 +315,7 @@ export default function DriverDashboard() {
           </View>
         </View>
       </Modal>
-    </SafeArea>
+    </SafeAreaView>
   );
 }
 

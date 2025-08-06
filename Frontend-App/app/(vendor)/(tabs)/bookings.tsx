@@ -79,7 +79,7 @@ export default function BookingsScreen() {
         </View>
       </LinearGradient>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         {vendorBookings.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyText}>No bookings yet</Text>

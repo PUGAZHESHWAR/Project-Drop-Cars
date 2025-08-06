@@ -94,7 +94,7 @@ export default function CreateBooking() {
   };
 
   return (
-    <SafeArea style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <LinearGradient
         colors={['#3B82F6', '#1E40AF']}
         style={styles.header}
@@ -108,7 +108,7 @@ export default function CreateBooking() {
         </View>
       </LinearGradient>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         {/* Customer Details */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Customer Details</Text>
@@ -254,7 +254,7 @@ export default function CreateBooking() {
           </LinearGradient>
         </TouchableOpacity>
       </ScrollView>
-    </SafeArea>
+    </SafeAreaView>
   );
 }
 

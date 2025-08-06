@@ -124,7 +124,7 @@ export default function DriverBookingsScreen() {
         </View>
       </LinearGradient>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         {myBookings.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyText}>No trips yet</Text>

@@ -35,7 +35,7 @@ export default function VendorDashboard() {
     .reduce((sum, b) => sum + b.vendorPricing.commission, 0);
 
   return (
-    <SafeArea style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <LinearGradient
         colors={['#3B82F6', '#1E40AF']}
         style={styles.header}
@@ -54,7 +54,7 @@ export default function VendorDashboard() {
         </View>
       </LinearGradient>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         {/* Quick Stats */}
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
@@ -129,7 +129,7 @@ export default function VendorDashboard() {
           ))}
         </View>
       </ScrollView>
-    </SafeArea>
+    </SafeAreaView>
   );
 }
 

@@ -130,7 +130,7 @@ export default function WalletScreen() {
         </View>
       </LinearGradient>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         {/* Transaction History */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Recent Transactions</Text>
