@@ -44,7 +44,7 @@ export default function VendorDashboard() {
           <TouchableOpacity onPress={openDrawer} style={styles.menuButton}>
             <Menu color="#FFFFFF" size={24} strokeWidth={2} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Vendor Dashboard</Text>
+          <Text style={styles.headerTitle}>MyTrip Dashboard</Text>
           <View style={styles.placeholder} />
         </View>
         

@@ -84,7 +84,7 @@ export default function AuthScreen() {
             >
               <User color={activeTab === 'vendor' ? '#3B82F6' : '#FFFFFF'} size={20} />
               <Text style={[styles.tabText, activeTab === 'vendor' && styles.activeTabText]}>
-                Vendor
+                MyTrip
               </Text>
             </TouchableOpacity>
             
