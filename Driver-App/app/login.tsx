@@ -15,10 +15,30 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Smartphone, Lock, ArrowRight } from 'lucide-react-native';
 import WelcomeScreen from '@/components/WelcomeScreen';
+import axiosInstance from '@/app/api/axiosInstance';
+
+// Helper function to validate Indian mobile numbers
+const validateIndianMobile = (phone: string): boolean => {
+  // Remove +91 prefix if present
+  const cleanPhone = phone.replace(/^\+91/, '');
+  
+  // Check if it's exactly 10 digits and starts with 6, 7, 8, or 9
+  const phoneRegex = /^[6-9]\d{9}$/;
+  return phoneRegex.test(cleanPhone);
+};
+
+// Helper function to format phone number for backend
+const formatPhoneForBackend = (phone: string): string => {
+  if (!phone) return '';
+  // Remove +91 prefix if present and ensure it's properly formatted
+  const cleanPhone = phone.replace(/^\+91/, '');
+  // Add +91 prefix back
+  return `+91${cleanPhone}`;
+};
 
 export default function LoginScreen() {
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [mpin, setMpin] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const router = useRouter();
@@ -26,43 +46,71 @@ export default function LoginScreen() {
   const { colors } = useTheme();
 
   const handleLogin = async () => {
-    if (!phoneNumber || !mpin) {
-      Alert.alert('Error', 'Please enter both phone number and MPIN');
+    if (!phoneNumber || !password) {
+      Alert.alert('Error', 'Please enter both phone number and password');
       return;
     }
 
-    if (phoneNumber.length !== 10) {
-      Alert.alert('Error', 'Please enter a valid 10-digit phone number');
+    // Validate phone number format
+    if (!validateIndianMobile(phoneNumber)) {
+      Alert.alert('Error', 'Please enter a valid mobile number starting with 6, 7, 8, or 9');
       return;
     }
 
     setLoading(true);
 
     try {
-      // Test credentials: 9876543210 / 0000
-      if (phoneNumber === '9876543210' && mpin === '0000') {
-        const dummyUser = {
-          id: '1',
-          name: 'Riaz',
-          mobile: '9876543210',
-          address: 'Chennai, Tamil Nadu',
-          languages: ['Tamil', 'English'],
-          cars: [{
-            id: '1',
-            name: 'Tata Nexon',
-            type: 'SUV',
-            registration: 'TN10BZ1234',
-            isDefault: true
-          }]
-        };
-        
-        await login(dummyUser, 'dummy-jwt-token');
-        setShowWelcome(true);
-      } else {
-        Alert.alert('Error', 'Invalid credentials. Use test credentials: 9876543210 / 0000');
+      // Format phone number for backend (add +91 prefix)
+      const formattedPhone = formatPhoneForBackend(phoneNumber);
+      
+      console.log('🔐 Attempting login with:', {
+        mobile_number: formattedPhone,
+        password: password
+      });
+
+      // Make actual API call to backend
+      const response = await axiosInstance.post('/api/users/vehicleowner/login', {
+        mobile_number: formattedPhone,
+        password: password
+      });
+
+      console.log('✅ Login successful:', response.data);
+
+      // Create user object from response
+      const userData = {
+        id: response.data.user_id || 'temp_id',
+        fullName: response.data.full_name || 'Driver',
+        primaryMobile: phoneNumber,
+        password: password,
+        address: response.data.address || '',
+        aadharNumber: response.data.aadhar_number || '',
+        organizationId: response.data.organization_id || 'org_001',
+        languages: response.data.languages || ['English'],
+        documents: {}
+      };
+
+      // Login with the user data and token
+      await login(userData, response.data.access_token);
+      setShowWelcome(true);
+
+    } catch (error: any) {
+      console.error('❌ Login failed:', error);
+      
+      let errorMessage = 'Login failed. Please try again.';
+      
+      if (error.response?.status === 401) {
+        errorMessage = 'Invalid mobile number or password.';
+      } else if (error.response?.status === 422) {
+        errorMessage = 'Invalid data provided. Please check your input.';
+      } else if (error.response?.status === 500) {
+        errorMessage = 'Server error. Please try again later.';
+      } else if (error.code === 'ECONNABORTED') {
+        errorMessage = 'Request timeout. Please check your connection.';
+      } else if (error.code === 'ERR_NETWORK') {
+        errorMessage = 'Network error. Please check your internet connection.';
       }
-    } catch (error) {
-      Alert.alert('Error', 'Login failed. Please try again.');
+      
+      Alert.alert('Login Error', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -70,7 +118,7 @@ export default function LoginScreen() {
 
   const autoFillTestCredentials = () => {
     setPhoneNumber('9876543210');
-    setMpin('0000');
+    setPassword('secret123');
   };
 
   const handleWelcomeComplete = () => {
@@ -99,26 +147,34 @@ export default function LoginScreen() {
               <Smartphone color="#6B7280" size={20} />
               <TextInput
                 style={styles.input}
-                placeholder="Enter mobile number"
+                placeholder="Enter mobile number (10 digits)"
                 placeholderTextColor="#9CA3AF"
                 value={phoneNumber}
-                onChangeText={setPhoneNumber}
+                onChangeText={(text) => {
+                  // Allow only digits and +91 prefix
+                  const cleanText = text.replace(/[^\d+]/g, '');
+                  if (cleanText.startsWith('+91') || cleanText.length <= 10) {
+                    setPhoneNumber(cleanText);
+                  }
+                }}
                 keyboardType="phone-pad"
-                maxLength={10}
+                maxLength={13}
               />
             </View>
+            <Text style={styles.helperText}>Enter 10-digit mobile number starting with 6, 7, 8, or 9</Text>
+            {phoneNumber && !validateIndianMobile(phoneNumber) && (
+              <Text style={styles.errorText}>Must start with 6, 7, 8, or 9</Text>
+            )}
 
             <View style={styles.inputGroup}>
               <Lock color="#6B7280" size={20} />
               <TextInput
                 style={styles.input}
-                placeholder="Enter 4-digit MPIN"
+                placeholder="Enter password"
                 placeholderTextColor="#9CA3AF"
-                value={mpin}
-                onChangeText={setMpin}
+                value={password}
+                onChangeText={setPassword}
                 secureTextEntry
-                keyboardType="numeric"
-                maxLength={4}
               />
             </View>
 
@@ -256,5 +312,20 @@ const styles = StyleSheet.create({
     color: '#3B82F6',
     fontSize: 14,
     fontFamily: 'Inter-SemiBold',
+  },
+  helperText: {
+    color: '#6B7280',
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+    marginTop: 4,
+    marginLeft: 44,
+    marginBottom: 8
+  },
+  errorText: {
+    color: '#EF4444',
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+    marginTop: 4,
+    marginLeft: 44
   },
 });

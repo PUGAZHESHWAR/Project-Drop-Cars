@@ -8,23 +8,45 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
-import { Car, Plus, ArrowRight, ArrowLeft, X } from 'lucide-react-native';
+import { Car, Plus, ArrowRight, ArrowLeft, X, Upload, CheckCircle, FileText } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { addCarDetails, testCarDetailsDataStructure, CarDetailsData } from '@/services/signupService';
 
-const carTypes = ['Sedan', 'Hatchback', 'SUV', 'Innova', 'Innova Crysta', 'Other'];
+const carTypes = ['SEDAN', 'HATCHBACK', 'SUV', 'INNOVA', 'INNOVA CRYSTA', 'OTHER'];
 
 interface CarDetailsStepProps {
   data: any[];
   onUpdate: (data: any[]) => void;
   onNext: () => void;
   onBack: () => void;
+  vehicleOwnerId?: string;
+  organizationId?: string;
 }
 
-export default function CarDetailsStep({ data, onUpdate, onNext, onBack }: CarDetailsStepProps) {
-  const [cars, setCars] = useState(data.length > 0 ? data : [{ id: '1', name: '', type: '', registration: '', isDefault: true }]);
+export default function CarDetailsStep({ data, onUpdate, onNext, onBack, vehicleOwnerId, organizationId }: CarDetailsStepProps) {
+  const [cars, setCars] = useState(data.length > 0 ? data : [{ 
+    id: '1', 
+    name: '', 
+    type: '', 
+    registration: '', 
+    isDefault: true,
+    rcFrontImg: null,
+    rcBackImg: null,
+    insuranceImg: null,
+    fcImg: null,
+    carImg: null
+  }]);
+  const [loading, setLoading] = useState(false);
 
   const updateCar = (index: number, field: string, value: string) => {
     const updatedCars = [...cars];
     updatedCars[index] = { ...updatedCars[index], [field]: value };
+    setCars(updatedCars);
+  };
+
+  const updateCarImage = (index: number, field: string, imageUri: string) => {
+    const updatedCars = [...cars];
+    updatedCars[index] = { ...updatedCars[index], [field]: imageUri };
     setCars(updatedCars);
   };
 
@@ -34,7 +56,12 @@ export default function CarDetailsStep({ data, onUpdate, onNext, onBack }: CarDe
       name: '',
       type: '',
       registration: '',
-      isDefault: false
+      isDefault: false,
+      rcFrontImg: null,
+      rcBackImg: null,
+      insuranceImg: null,
+      fcImg: null,
+      carImg: null
     };
     setCars([...cars, newCar]);
   };
@@ -48,16 +75,96 @@ export default function CarDetailsStep({ data, onUpdate, onNext, onBack }: CarDe
     setCars(updatedCars);
   };
 
-  const handleNext = () => {
-    const isValid = cars.every(car => car.name && car.type && car.registration);
+  const pickImage = async (index: number, field: string) => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        updateCarImage(index, field, result.assets[0].uri);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to pick image');
+    }
+  };
+
+  const handleNext = async () => {
+    const isValid = cars.every(car => 
+      car.name && 
+      car.type && 
+      car.registration &&
+      car.rcFrontImg &&
+      car.rcBackImg &&
+      car.insuranceImg &&
+      car.fcImg &&
+      car.carImg
+    );
     
     if (!isValid) {
-      Alert.alert('Error', 'Please fill all car details');
+      Alert.alert('Error', 'Please fill all car details and upload all required images');
       return;
     }
 
+    // Test data structure first
+    const firstCar = cars[0];
+    const testData = testCarDetailsDataStructure({
+      car_name: firstCar.name,
+      car_type: firstCar.type,
+      car_number: firstCar.registration,
+      organization_id: organizationId || 'org_123',
+      vehicle_owner_id: vehicleOwnerId || '2819b115-fbcc-42ec-a5b3-81633980d9ce',
+      rc_front_img: firstCar.rcFrontImg,
+      rc_back_img: firstCar.rcBackImg,
+      insurance_img: firstCar.insuranceImg,
+      fc_img: firstCar.fcImg,
+      car_img: firstCar.carImg
+    });
+
+    console.log('🧪 Car details data structure test completed');
+
+    // For now, just update and proceed
+    // In a real app, you might want to call the API here
     onUpdate(cars);
     onNext();
+  };
+
+  const ImageUpload = ({ car, index, field, label, required }: { 
+    car: any; 
+    index: number; 
+    field: string; 
+    label: string; 
+    required: boolean; 
+  }) => {
+    const imageUri = car[field];
+    const isUploaded = !!imageUri;
+    
+    return (
+      <TouchableOpacity
+        style={[styles.imageUploadCard, isUploaded && styles.uploadedImageCard]}
+        onPress={() => pickImage(index, field)}
+      >
+        <View style={styles.imageUploadLeft}>
+          <View style={[styles.imageUploadIcon, isUploaded && styles.uploadedImageIcon]}>
+            {isUploaded ? (
+              <CheckCircle color="#FFFFFF" size={20} />
+            ) : (
+              <FileText color="#6B7280" size={20} />
+            )}
+          </View>
+          <View>
+            <Text style={styles.imageUploadTitle}>{label}</Text>
+            <Text style={styles.imageUploadStatus}>
+              {isUploaded ? 'Uploaded' : required ? 'Required' : 'Optional'}
+            </Text>
+          </View>
+        </View>
+        <Upload color={isUploaded ? "#10B981" : "#6B7280"} size={20} />
+      </TouchableOpacity>
+    );
   };
 
   const CarTypeSelector = ({ selectedType, onSelect }) => (
@@ -85,7 +192,7 @@ export default function CarDetailsStep({ data, onUpdate, onNext, onBack }: CarDe
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Car Details</Text>
-      <Text style={styles.subtitle}>Add your vehicle information</Text>
+      <Text style={styles.subtitle}>Add your vehicle information and upload required documents</Text>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {cars.map((car, index) => (
@@ -106,7 +213,7 @@ export default function CarDetailsStep({ data, onUpdate, onNext, onBack }: CarDe
               <Car color="#6B7280" size={20} />
               <TextInput
                 style={styles.input}
-                placeholder="Car Name (e.g., Tata Nexon)"
+                placeholder="Car Name (e.g., Toyota Camry)"
                 value={car.name}
                 onChangeText={(value) => updateCar(index, 'name', value)}
               />
@@ -122,14 +229,54 @@ export default function CarDetailsStep({ data, onUpdate, onNext, onBack }: CarDe
               <Text style={styles.inputIcon}>REG</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Registration Number"
+                placeholder="Registration Number (e.g., MH-12-AB-1234)"
                 value={car.registration}
                 onChangeText={(value) => updateCar(index, 'registration', value.toUpperCase())}
                 autoCapitalize="characters"
               />
             </View>
 
-            <Text style={styles.photoNote}>Car photo can be uploaded later</Text>
+            <Text style={styles.fieldLabel}>Required Documents</Text>
+            
+            <ImageUpload 
+              car={car} 
+              index={index} 
+              field="rcFrontImg" 
+              label="RC Front Image" 
+              required={true} 
+            />
+            
+            <ImageUpload 
+              car={car} 
+              index={index} 
+              field="rcBackImg" 
+              label="RC Back Image" 
+              required={true} 
+            />
+            
+            <ImageUpload 
+              car={car} 
+              index={index} 
+              field="insuranceImg" 
+              label="Insurance Image" 
+              required={true} 
+            />
+            
+            <ImageUpload 
+              car={car} 
+              index={index} 
+              field="fcImg" 
+              label="FC Image" 
+              required={true} 
+            />
+            
+            <ImageUpload 
+              car={car} 
+              index={index} 
+              field="carImg" 
+              label="Car Image" 
+              required={true} 
+            />
           </View>
         ))}
 
@@ -145,8 +292,14 @@ export default function CarDetailsStep({ data, onUpdate, onNext, onBack }: CarDe
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-          <Text style={styles.nextButtonText}>Next</Text>
+        <TouchableOpacity 
+          style={[styles.nextButton, loading && styles.nextButtonDisabled]} 
+          onPress={handleNext}
+          disabled={loading}
+        >
+          <Text style={styles.nextButtonText}>
+            {loading ? 'Processing...' : 'Next'}
+          </Text>
           <ArrowRight color="#FFFFFF" size={20} />
         </TouchableOpacity>
       </View>
@@ -257,11 +410,53 @@ const styles = StyleSheet.create({
   selectedTypeButtonText: {
     color: '#FFFFFF',
   },
-  photoNote: {
+  imageUploadCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  uploadedImageCard: {
+    borderColor: '#10B981',
+    backgroundColor: '#F0FDF4',
+  },
+  imageUploadLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  imageUploadIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  uploadedImageIcon: {
+    backgroundColor: '#10B981',
+  },
+  imageUploadTitle: {
+    fontSize: 14,
+    fontFamily: 'Inter-SemiBold',
+    color: '#1F2937',
+  },
+  imageUploadStatus: {
     fontSize: 12,
     fontFamily: 'Inter-Regular',
-    color: '#9CA3AF',
-    fontStyle: 'italic',
+    color: '#6B7280',
+    marginTop: 2,
   },
   addCarButton: {
     flexDirection: 'row',
@@ -307,6 +502,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 24,
+  },
+  nextButtonDisabled: {
+    backgroundColor: '#9CA3AF',
   },
   nextButtonText: {
     color: '#FFFFFF',

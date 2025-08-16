@@ -16,7 +16,7 @@ import { Moon, Sun, LogOut, ChevronRight, User, Bell, Shield } from 'lucide-reac
 
 export default function SettingsScreen() {
   const [notifications, setNotifications] = useState(true);
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const { isDarkMode, toggleTheme, colors } = useTheme();
   const router = useRouter();
 

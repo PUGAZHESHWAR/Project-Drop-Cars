@@ -13,8 +13,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { ArrowLeft, User, Phone, Plus, X, Upload, FileText } from 'lucide-react-native';
+import { ArrowLeft, User, Phone, Plus, X, Upload, FileText, Languages } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
+
+const spokenLanguageOptions = [
+  'English', 'Hindi', 'Marathi', 'Gujarati', 'Bengali', 'Tamil', 
+  'Telugu', 'Kannada', 'Malayalam', 'Punjabi', 'Urdu', 'Other'
+];
 
 const dummyDrivers = [
   {
@@ -49,6 +54,7 @@ export default function MyDriversScreen() {
     aadhar: null,
     rcFront: null,
     rcBack: null,
+    spokenLanguages: [] as string[],
   });
 
   const pickDocument = async (documentType) => {
@@ -89,7 +95,7 @@ export default function MyDriversScreen() {
     };
 
     setDrivers([...drivers, driverToAdd]);
-    setNewDriver({ name: '', mobile: '', aadhar: null, rcFront: null, rcBack: null });
+    setNewDriver({ name: '', mobile: '', aadhar: null, rcFront: null, rcBack: null, spokenLanguages: [] });
     setShowAddModal(false);
     Alert.alert('Success', 'Driver added successfully');
   };
@@ -304,6 +310,33 @@ export default function MyDriversScreen() {
       fontSize: 16,
       fontFamily: 'Inter-SemiBold',
     },
+    languageSelector: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      marginTop: 8,
+    },
+    languageButton: {
+      backgroundColor: colors.background,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      marginRight: 8,
+      marginBottom: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    selectedLanguageButton: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    languageButtonText: {
+      fontSize: 12,
+      fontFamily: 'Inter-Medium',
+      color: colors.textSecondary,
+    },
+    selectedLanguageButtonText: {
+      color: '#FFFFFF',
+    },
   });
 
   const DriverCard = ({ driver }) => (
@@ -448,6 +481,36 @@ export default function MyDriversScreen() {
                   maxLength={10}
                   placeholderTextColor={colors.textSecondary}
                 />
+              </View>
+
+              <View style={dynamicStyles.inputGroup}>
+                <Text style={dynamicStyles.inputLabel}>Spoken Languages</Text>
+                <View style={dynamicStyles.languageSelector}>
+                  {spokenLanguageOptions.map((language) => (
+                    <TouchableOpacity
+                      key={language}
+                      style={[
+                        dynamicStyles.languageButton,
+                        newDriver.spokenLanguages.includes(language) && dynamicStyles.selectedLanguageButton
+                      ]}
+                      onPress={() => {
+                        setNewDriver(prev => ({
+                          ...prev,
+                          spokenLanguages: prev.spokenLanguages.includes(language)
+                            ? prev.spokenLanguages.filter(lang => lang !== language)
+                            : [...prev.spokenLanguages, language]
+                        }));
+                      }}
+                    >
+                      <Text style={[
+                        dynamicStyles.languageButtonText,
+                        newDriver.spokenLanguages.includes(language) && dynamicStyles.selectedLanguageButtonText
+                      ]}>
+                        {language}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
 
               <Text style={[dynamicStyles.inputLabel, { marginBottom: 16 }]}>

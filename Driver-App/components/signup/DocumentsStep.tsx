@@ -8,8 +8,9 @@ import {
   ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { ArrowLeft, Upload, CheckCircle, FileText } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
-import { ArrowLeft, Upload, Check, FileText } from 'lucide-react-native';
+import { signupAccount, testSignupDataStructure } from '@/services/signupService';
 import * as ImagePicker from 'expo-image-picker';
 
 interface DocumentsStepProps {
@@ -20,17 +21,12 @@ interface DocumentsStepProps {
 }
 
 const documentTypes = [
-  { key: 'aadharFront', label: 'Aadhar Front', required: true },
-  { key: 'aadharBack', label: 'Aadhar Back', required: true },
-  { key: 'rcFront', label: 'RC Front', required: true },
-  { key: 'rcBack', label: 'RC Back', required: true },
-  { key: 'insurance', label: 'Insurance', required: true },
-  { key: 'fitnessCertificate', label: 'Fitness Certificate', required: true },
-  { key: 'permit', label: 'Permit', required: true },
+  { key: 'aadharFront', label: 'Aadhar Front Image', required: true },
 ];
 
 export default function DocumentsStep({ data, onUpdate, onBack, formData }: DocumentsStepProps) {
   const [documents, setDocuments] = useState(data);
+  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
 
@@ -61,28 +57,93 @@ export default function DocumentsStep({ data, onUpdate, onBack, formData }: Docu
     const missingDocs = requiredDocs.filter(doc => !documents[doc.key]);
 
     if (missingDocs.length > 0) {
-      Alert.alert('Error', 'Please upload all required documents');
+      Alert.alert('Error', 'Please upload Aadhar front image');
       return;
     }
 
-    try {
-      // Create complete user profile
-      const completeUserData = {
-        id: Date.now().toString(),
-        ...formData.personalDetails,
-        cars: formData.carDetails,
-        documents: documents,
-      };
+    // Additional validation for image
+    if (!documents.aadharFront) {
+      Alert.alert('Error', 'Please select an Aadhar front image');
+      return;
+    }
 
-      await login(completeUserData, 'registration-jwt-token');
-      router.replace('/(tabs)');
-      Alert.alert('Success', 'Registration completed successfully!');
-    } catch (error) {
-      Alert.alert('Error', 'Registration failed. Please try again.');
+    // Validate image URI format
+    if (!documents.aadharFront.startsWith('file://')) {
+      Alert.alert('Error', 'Invalid image format. Please select the image again.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      console.log('📤 Starting signup process...');
+      
+      // Test data structure first
+      const testData = testSignupDataStructure(formData.personalDetails, documents);
+      console.log('🧪 Data structure test completed');
+      
+      // Call the signup API
+      const response = await signupAccount(formData.personalDetails, documents);
+      
+      if (response.status === 'success') {
+        // Create user object for local auth
+        const userData = {
+          id: response.user_id,
+          fullName: formData.personalDetails.fullName,
+          primaryMobile: formData.personalDetails.primaryMobile,
+          secondaryMobile: formData.personalDetails.secondaryMobile,
+          paymentMethod: formData.personalDetails.paymentMethod,
+          paymentNumber: formData.personalDetails.paymentNumber,
+          password: formData.personalDetails.password,
+          address: formData.personalDetails.address,
+          aadharNumber: formData.personalDetails.aadharNumber,
+          organizationId: formData.personalDetails.organizationId,
+          languages: formData.personalDetails.languages,
+          documents: documents,
+        };
+
+        // Login with the new user data
+        await login(userData, 'registration-token');
+        
+        // Show success message and redirect to car add page
+        Alert.alert(
+          'Account Created Successfully!',
+          'Welcome to Drop Cars! Now let\'s add your first car.',
+          [
+            {
+              text: 'Continue',
+              onPress: () => router.replace('/add-car')
+            }
+          ]
+        );
+      }
+    } catch (error: any) {
+      console.error('❌ Signup failed:', error);
+      
+      // Provide specific error messages
+      let errorMessage = 'Signup failed. Please try again.';
+      
+      if (error.code === 'ECONNABORTED') {
+        errorMessage = 'Request timeout - server is taking too long to respond. Please try again.';
+      } else if (error.code === 'ERR_NETWORK') {
+        errorMessage = 'Network error - please check your internet connection and try again.';
+      } else if (error.code === 'ENOTFOUND') {
+        errorMessage = 'Server not found - please check if the backend server is running.';
+      } else if (error.response?.status === 400) {
+        errorMessage = `Bad request: ${error.response.data?.message || 'Invalid data provided'}`;
+      } else if (error.response?.status === 500) {
+        errorMessage = 'Server error - please try again later or contact support.';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      Alert.alert('Signup Failed', errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const DocumentUpload = ({ docType }) => {
+  const DocumentUpload = ({ docType }: { docType: { key: string; label: string; required: boolean } }) => {
     const isUploaded = documents[docType.key];
     
     return (
@@ -93,7 +154,7 @@ export default function DocumentsStep({ data, onUpdate, onBack, formData }: Docu
         <View style={styles.documentLeft}>
           <View style={[styles.documentIcon, isUploaded && styles.uploadedIcon]}>
             {isUploaded ? (
-              <Check color="#FFFFFF" size={20} />
+              <CheckCircle color="#FFFFFF" size={20} />
             ) : (
               <FileText color="#6B7280" size={20} />
             )}
@@ -112,8 +173,8 @@ export default function DocumentsStep({ data, onUpdate, onBack, formData }: Docu
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Documents</Text>
-      <Text style={styles.subtitle}>Upload your required documents</Text>
+      <Text style={styles.title}>Document Verification</Text>
+      <Text style={styles.subtitle}>Upload your Aadhar front image for verification</Text>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {documentTypes.map((docType) => (
@@ -127,8 +188,14 @@ export default function DocumentsStep({ data, onUpdate, onBack, formData }: Docu
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-          <Text style={styles.submitButtonText}>Submit</Text>
+        <TouchableOpacity 
+          style={[styles.submitButton, loading && styles.submitButtonDisabled]} 
+          onPress={handleSubmit}
+          disabled={loading}
+        >
+          <Text style={styles.submitButtonText}>
+            {loading ? 'Creating Account...' : 'Create Account'}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -226,6 +293,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 32,
+  },
+  submitButtonDisabled: {
+    backgroundColor: '#9CA3AF',
   },
   submitButtonText: {
     color: '#FFFFFF',
