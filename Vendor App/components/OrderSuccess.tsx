@@ -90,7 +90,8 @@ const OrderSuccess: React.FC<OrderSuccessProps> = ({ visible, onClose, orderData
 
   const getDisplayAmount = () => {
     if (isHourlyRental) {
-      return orderData.estimated_price ? formatAmount(orderData.vendor_amount) : '₹0.00';
+      console.log('Order Data for Hourly Rental:', orderData);
+      return orderData.estimated_price ? formatAmount(orderData.vendor_price) : '₹0.00';
     }
     return hasFareDetails() && orderData.fare.total_amount 
       ? formatAmount(orderData.fare.total_amount)

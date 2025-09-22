@@ -131,7 +131,7 @@ export default function CreateOrderScreen() {
 
     const fetchPackageHours = async () => {
     try {
-      const response = await publicApi.get('/api/orders/rental_hrs_data');; // replace with actual IP if using on device
+      const response = await publicApi.get('/orders/rental_hrs_data');; // replace with actual IP if using on device
       setOptions(response.data);
       console.log('Fetched package hours:', response.data);
     } catch (error) {
@@ -229,16 +229,16 @@ export default function CreateOrderScreen() {
 
   const handleTripTypeChange = (tripType: string) => {
     const newTripType = tripTypes.find(type => type.value === tripType)!;
-    let newLocations = { '0': '' };
-    
+    // let newLocations = { '0': '', '1': '' };
+    let newLocations: { [key: string]: string } = {};
     if (newTripType.value === 'Hourly Rental') {
-      newLocations = { '0': '' };
-    } else if (newTripType.value === 'Round Trip') {
-      newLocations = { '0': '' };
-    } else if (newTripType.value === 'Multy City') {
       newLocations = { '0': ''};
-    } else {
-      newLocations = { '0': ''};
+    }else if (newTripType.value === 'Round Trip') {
+      newLocations = { '0': '', '1': ''};
+    } else if (newTripType.value === 'Multicity') {
+      newLocations = { '0': '', '1': ''};
+    }else{
+      newLocations = { '0': '', '1': ''};
     }
     
     setFormData(prev => ({
