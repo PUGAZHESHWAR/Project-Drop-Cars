@@ -8,64 +8,44 @@ import {
   StatusBar,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useVendorAuth } from '../../hooks/useVendorAuth';
-import {
-  User,
-  Package,
-  DollarSign,
-  TrendingUp,
-  Calendar,
-  Settings,
-  HelpCircle,
-  Info,
-  LogOut,
-  Bell,
-  Shield,
-  Star,
-  MapPin,
-  Phone,
-  Mail,
-  Globe,
-  FileText,
-  CreditCard,
-  Clock,
-  Award,
-  ChevronRight,
-} from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { User, Package, DollarSign, TrendingUp, Calendar, Settings, CircleHelp as HelpCircle, Info, LogOut, Bell, Shield, Star, Phone, Mail, Globe, FileText, CreditCard, Clock, Award, ChevronRight, Wallet } from 'lucide-react-native';
 
 interface VendorData {
   id: string;
   full_name: string;
   primary_number: string;
+  secondary_number: string;
+  gpay_number: string;
+  wallet_balance: number;
+  bank_balance: number;
+  aadhar_number: string;
+  aadhar_front_img: string;
+  address: string;
   account_status: string;
+  created_at: string;
 }
 
 export default function MenuScreen() {
-  const [vendorData, setVendorData] = useState<VendorData | null>(null);
-  const { getStoredVendorData, signOut } = useVendorAuth();
-
-  useEffect(() => {
-    loadVendorData();
-  }, []);
-
-  const loadVendorData = async () => {
-    try {
-      const storedData = await getStoredVendorData();
-      if (storedData) {
-        setVendorData({
-          id: storedData.id,
-          full_name: storedData.full_name,
-          primary_number: storedData.primary_number,
-          account_status: storedData.account_status,
-        });
-      }
-    } catch (error) {
-      console.error('Error loading vendor data:', error);
-    }
-  };
+  const router = useRouter();
+  const [vendorData] = useState<VendorData>({
+    id: "7c7ae8a8-3d57-4feb-9ea1-2b80e91a0e83",
+    full_name: "Pugazheshwar",
+    primary_number: "9600048429",
+    secondary_number: "9585984449",
+    gpay_number: "9600048429",
+    wallet_balance: 2450,
+    bank_balance: 15630,
+    aadhar_number: "123412341234",
+    aadhar_front_img: "https://storage.googleapis.com/drop-cars-files/vendor_details/aadhar/a27638bc-5879-4f8b-8ceb-7b89173333a2.jpg",
+    address: "Bypass Road 2nd street",
+    account_status: "Active",
+    created_at: "2025-09-17T18:43:45.189233Z"
+  });
 
   const handleLogout = () => {
-    signOut();
+    // Implement logout functionality
+    console.log('Logging out...');
   };
 
   const menuItems = [
@@ -75,7 +55,7 @@ export default function MenuScreen() {
       subtitle: 'View and edit your profile',
       icon: User,
       iconColor: '#1E40AF',
-      action: () => console.log('Navigate to Profile'),
+      action: () => router.push('/(menu)/profile'),
     },
     {
       id: 'orders',
@@ -83,7 +63,7 @@ export default function MenuScreen() {
       subtitle: 'Manage your deliveries',
       icon: Package,
       iconColor: '#3B82F6',
-      action: () => console.log('Navigate to Orders'),
+      action: () => router.push('/(menu)/orders'),
     },
     {
       id: 'earnings',
@@ -94,27 +74,11 @@ export default function MenuScreen() {
       action: () => console.log('Navigate to Earnings'),
     },
     {
-      id: 'analytics',
-      title: 'Analytics',
-      subtitle: 'View performance insights',
-      icon: TrendingUp,
-      iconColor: '#1E40AF',
-      action: () => console.log('Navigate to Analytics'),
-    },
-    {
-      id: 'schedule',
-      title: 'Schedule',
-      subtitle: 'Manage your availability',
-      icon: Calendar,
-      iconColor: '#3B82F6',
-      action: () => console.log('Navigate to Schedule'),
-    },
-    {
       id: 'settings',
       title: 'Settings',
       subtitle: 'App preferences',
       icon: Settings,
-      iconColor: '#60A5FA',
+      iconColor: '#6B7280',
       action: () => console.log('Navigate to Settings'),
     },
     {
@@ -122,7 +86,7 @@ export default function MenuScreen() {
       title: 'Support',
       subtitle: 'Get help and contact us',
       icon: HelpCircle,
-      iconColor: '#1E40AF',
+      iconColor: '#F59E0B',
       action: () => console.log('Navigate to Support'),
     },
     {
@@ -130,43 +94,50 @@ export default function MenuScreen() {
       title: 'About',
       subtitle: 'App information',
       icon: Info,
-      iconColor: '#3B82F6',
+      iconColor: '#8B5CF6',
       action: () => console.log('Navigate to About'),
     },
   ];
 
-  if (!vendorData) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text>Loading...</Text>
-      </View>
-    );
-  }
+  const formatJoinedDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-IN', {
+      month: 'long',
+      year: 'numeric'
+    });
+  };
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1E40AF" />
       
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Header Section */}
+        {/* Enhanced Header Section */}
         <LinearGradient
-          colors={['#1E40AF', '#3B82F6', '#60A5FA']}
+          colors={['#057296ff', '#10575eff', '#094157ff']}
           style={styles.headerSection}
         >
           <View style={styles.headerContent}>
             <View style={styles.profileSection}>
-              <View style={styles.profileImage}>
-                <Shield size={40} color="#FFFFFF" />
+              <View style={styles.profileImageContainer}>
+                <View style={styles.profileImage}>
+                  <Text style={styles.profileInitials}>
+                    {vendorData.full_name.split(' ').map(n => n[0]).join('')}
+                  </Text>
+                </View>
+                <View style={[
+                  styles.statusIndicator, 
+                  { backgroundColor: vendorData.account_status === 'Active' ? '#10B981' : '#F59E0B' }
+                ]} />
               </View>
               
               <View style={styles.profileInfo}>
                 <Text style={styles.profileName}>{vendorData.full_name}</Text>
-                <Text style={styles.profilePhone}>{vendorData.primary_number}</Text>
                 <View style={styles.statusContainer}>
-                  <View style={[styles.statusDot, { backgroundColor: vendorData.account_status === 'Active' ? '#10B981' : '#F59E0B' }]} />
-                  <Text style={styles.statusText}>
-                    {vendorData.account_status === 'Active' ? 'Account Active' : 'Pending Verification'}
-                  </Text>
+                  <View style={styles.statusBadge}>
+                    <Shield size={12} color="#FFFFFF" />
+                    <Text style={styles.statusText}>{vendorData.account_status}</Text>
+                  </View>
                 </View>
               </View>
             </View>
@@ -176,94 +147,113 @@ export default function MenuScreen() {
               <View style={styles.notificationBadge} />
             </TouchableOpacity>
           </View>
+
+          {/* Wallet Balance Card */}
+          <View style={styles.walletSection}>
+            <View style={styles.walletCard}>
+              <View style={styles.walletHeader}>
+                <Wallet size={24} color="#FFFFFF" />
+                <Text style={styles.walletLabel}>Wallet Balance</Text>
+              </View>
+              <Text style={styles.walletAmount}>
+                ₹{vendorData.wallet_balance.toLocaleString('en-IN')}
+              </Text>
+            </View>
+          </View>
         </LinearGradient>
 
         {/* Content Section */}
         <View style={styles.contentSection}>
-        {/* Menu Items */}
-        <View style={styles.menuContainer}>
-          <Text style={styles.sectionTitle}>Main Menu</Text>
-          
-          {menuItems.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={styles.menuItem}
-              onPress={item.action}
-            >
-              <View style={styles.menuItemLeft}>
-                <View style={[styles.menuIcon, { backgroundColor: `${item.iconColor}20` }]}>
-                  <item.icon size={24} color={item.iconColor} />
-                </View>
-                <View style={styles.menuText}>
-                  <Text style={styles.menuTitle}>{item.title}</Text>
-                  <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
-                </View>
-              </View>
-              <ChevronRight size={20} color="#9CA3AF" />
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Contact Information */}
-        <View style={styles.contactSection}>
-          <Text style={styles.sectionTitle}>Contact & Support</Text>
-          
-          <View style={styles.contactCard}>
-            <TouchableOpacity style={styles.contactItem}>
-              <View style={styles.contactIcon}>
-                <Phone size={20} color="#1E40AF" />
-              </View>
-              <View style={styles.contactContent}>
-                <Text style={styles.contactLabel}>Call Support</Text>
-                <Text style={styles.contactValue}>+91 98765 43210</Text>
-              </View>
-              <ChevronRight size={16} color="#9CA3AF" />
-            </TouchableOpacity>
+          {/* Menu Items */}
+          <View style={styles.menuContainer}>
+            <Text style={styles.sectionTitle}>Main Menu</Text>
             
-            <TouchableOpacity style={styles.contactItem}>
-              <View style={styles.contactIcon}>
-                <Mail size={20} color="#3B82F6" />
-              </View>
-              <View style={styles.contactContent}>
-                <Text style={styles.contactLabel}>Email Support</Text>
-                <Text style={styles.contactValue}>support@dropcars.com</Text>
-              </View>
-              <ChevronRight size={16} color="#9CA3AF" />
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.contactItem}>
-              <View style={styles.contactIcon}>
-                <Globe size={20} color="#60A5FA" />
-              </View>
-              <View style={styles.contactContent}>
-                <Text style={styles.contactLabel}>Website</Text>
-                <Text style={styles.contactValue}>www.dropcars.com</Text>
-              </View>
-              <ChevronRight size={16} color="#9CA3AF" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* App Information */}
-        <View style={styles.appSection}>
-          <Text style={styles.sectionTitle}>App Information</Text>
-          
-          <View style={styles.appCard}>
-            <View style={styles.appInfo}>
-              <Text style={styles.appName}>Drop Cars Vendor</Text>
-              <Text style={styles.appVersion}>Version 1.0.0</Text>
-              <Text style={styles.appDescription}>
-                Professional delivery management app for vendors
-              </Text>
+            <View style={styles.menuGrid}>
+              {menuItems.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={styles.menuItem}
+                  onPress={item.action}
+                >
+                  <View style={styles.menuItemContent}>
+                    <View style={[styles.menuIcon, { backgroundColor: `${item.iconColor}15` }]}>
+                      <item.icon size={24} color={item.iconColor} />
+                    </View>
+                    <View style={styles.menuTextContainer}>
+                      <Text style={styles.menuTitle}>{item.title}</Text>
+                      <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
+                    </View>
+                  </View>
+                  <ChevronRight size={16} color="#9CA3AF" />
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
-        </View>
 
-        {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <LogOut size={20} color="#EF4444" />
-          <Text style={styles.logoutButtonText}>Logout</Text>
-        </TouchableOpacity>
+          {/* Support Section */}
+          <View style={styles.supportSection}>
+            <Text style={styles.sectionTitle}>Support & Help</Text>
+            
+            <View style={styles.supportCard}>
+              <TouchableOpacity style={styles.supportItem}>
+                <View style={styles.supportIcon}>
+                  <Phone size={20} color="#1E40AF" />
+                </View>
+                <View style={styles.supportContent}>
+                  <Text style={styles.supportLabel}>Call Support</Text>
+                  <Text style={styles.supportValue}>+91 98765 43210</Text>
+                </View>
+                <ChevronRight size={16} color="#9CA3AF" />
+              </TouchableOpacity>
+              
+              <View style={styles.divider} />
+              
+              <TouchableOpacity style={styles.supportItem}>
+                <View style={styles.supportIcon}>
+                  <Mail size={20} color="#3B82F6" />
+                </View>
+                <View style={styles.supportContent}>
+                  <Text style={styles.supportLabel}>Email Support</Text>
+                  <Text style={styles.supportValue}>support@dropcars.com</Text>
+                </View>
+                <ChevronRight size={16} color="#9CA3AF" />
+              </TouchableOpacity>
+              
+              <View style={styles.divider} />
+              
+              <TouchableOpacity style={styles.supportItem}>
+                <View style={styles.supportIcon}>
+                  <Globe size={20} color="#10B981" />
+                </View>
+                <View style={styles.supportContent}>
+                  <Text style={styles.supportLabel}>Website</Text>
+                  <Text style={styles.supportValue}>www.dropcars.com</Text>
+                </View>
+                <ChevronRight size={16} color="#9CA3AF" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* App Information */}
+          <View style={styles.appSection}>
+            <Text style={styles.sectionTitle}>App Information</Text>
+            
+            <View style={styles.appCard}>
+              <View style={styles.appInfo}>
+                <Text style={styles.appName}>Drop Cars Vendor</Text>
+                <Text style={styles.appVersion}>Version 1.0.0</Text>
+                <Text style={styles.appDescription}>
+                  Professional delivery management app for vendors. Manage your bookings, track earnings, and grow your business.
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Logout Button */}
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <LogOut size={20} color="#EF4444" />
+            <Text style={styles.logoutButtonText}>Sign Out</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </View>
@@ -275,17 +265,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8FAFC',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-  },
   scrollView: {
     flex: 1,
   },
   headerSection: {
-    paddingTop: 60,
+    paddingTop: 50,
     paddingHorizontal: 20,
     paddingBottom: 30,
   },
@@ -298,67 +282,110 @@ const styles = StyleSheet.create({
   profileSection: {
     flex: 1,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+  },
+  profileImageContainer: {
+    position: 'relative',
+    marginRight: 16,
   },
   profileImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
     backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  profileInitials: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  statusIndicator: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
   },
   profileInfo: {
     flex: 1,
   },
   profileName: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  profilePhone: {
-    fontSize: 14,
-    color: '#E2E8F0',
     marginBottom: 8,
   },
   statusContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8,
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   statusText: {
     fontSize: 12,
-    color: '#E2E8F0',
+    color: '#FFFFFF',
+    fontWeight: '600',
+    marginLeft: 4,
   },
   notificationButton: {
-    padding: 8,
-    borderRadius: 12,
+    padding: 12,
+    borderRadius: 16,
     backgroundColor: 'rgba(255,255,255,0.2)',
     position: 'relative',
   },
   notificationBadge: {
     position: 'absolute',
-    top: 6,
-    right: 6,
+    top: 8,
+    right: 8,
     width: 8,
     height: 8,
     borderRadius: 4,
     backgroundColor: '#EF4444',
   },
+  walletSection: {
+    marginTop: 20,
+  },
+  walletCard: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 16,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+    alignItems: 'center',
+  },
+  walletHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  walletLabel: {
+    fontSize: 16,
+    color: '#E2E8F0',
+    marginLeft: 8,
+    fontWeight: '500',
+  },
+  walletAmount: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
   contentSection: {
     paddingHorizontal: 20,
     paddingTop: 20,
-  },
-  menuContainer: {
-    marginTop: 24,
-    marginBottom: 32,
   },
   sectionTitle: {
     fontSize: 18,
@@ -366,50 +393,55 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     marginBottom: 16,
   },
+  menuContainer: {
+    marginBottom: 24,
+  },
+  menuGrid: {
+    gap: 12,
+  },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 20,
-    marginBottom: 12,
+    padding: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
   },
-  menuItemLeft: {
+  menuItemContent: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
   menuIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
   },
-  menuText: {
+  menuTextContainer: {
     flex: 1,
   },
   menuTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#1F2937',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   menuSubtitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#6B7280',
   },
-  contactSection: {
+  supportSection: {
     marginBottom: 32,
   },
-  contactCard: {
+  supportCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     overflow: 'hidden',
@@ -419,34 +451,37 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
-  contactItem: {
+  supportItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    padding: 16,
   },
-  contactIcon: {
+  supportIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#F8FAFC',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
   },
-  contactContent: {
+  supportContent: {
     flex: 1,
   },
-  contactLabel: {
+  supportLabel: {
     fontSize: 14,
     color: '#6B7280',
     marginBottom: 2,
   },
-  contactValue: {
+  supportValue: {
     fontSize: 16,
     fontWeight: '600',
     color: '#1F2937',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#F1F5F9',
+    marginLeft: 72,
   },
   appSection: {
     marginBottom: 32,
@@ -454,7 +489,7 @@ const styles = StyleSheet.create({
   appCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 20,
+    padding: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -465,15 +500,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   appName: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#1F2937',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   appVersion: {
     fontSize: 14,
     color: '#6B7280',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   appDescription: {
     fontSize: 14,
@@ -485,17 +520,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#EFF6FF',
+    gap: 10,
+    backgroundColor: '#FEF2F2',
     paddingVertical: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: '#FECACA',
     marginBottom: 40,
   },
   logoutButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1E40AF',
+    color: '#EF4444',
   },
 });

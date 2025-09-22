@@ -28,7 +28,7 @@ interface Order {
   created_at: string;
 }
 
-export default function OrdersScreen() {
+export default function OrdersComponent() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -103,7 +103,7 @@ export default function OrdersScreen() {
         start_date_time: "2025-09-21T07:56:55.171000Z",
         customer_name: "RAVI M",
         customer_number: "9585984449",
-        trip_status: "PENDING",
+        trip_status: "CONFIRMED",
         pick_near_city: "Delhi",
         trip_distance: null,
         trip_time: "8",
@@ -123,7 +123,7 @@ export default function OrdersScreen() {
         start_date_time: "2025-09-20T09:56:33.914000Z",
         customer_name: "PUGAZH ONE WAY",
         customer_number: "9585984449",
-        trip_status: "PENDING",
+        trip_status: "TRIP_COMPLETED",
         pick_near_city: "ALL",
         trip_distance: 88,
         trip_time: "1 hour 57 mins",
@@ -142,7 +142,7 @@ export default function OrdersScreen() {
         start_date_time: "2025-09-18T18:01:44.771000Z",
         customer_name: "PUGAZHESHWAR D",
         customer_number: "9600048429",
-        trip_status: "PENDING",
+        trip_status: "DRIVER_ASSIGNED",
         pick_near_city: "ALL",
         trip_distance: null,
         trip_time: "8",
@@ -151,222 +151,6 @@ export default function OrdersScreen() {
         platform_fees_percent: 10,
         created_at: "2025-09-18T18:02:34.531625Z"
       },
-      {
-        id: 53,
-        trip_type: "Oneway",
-        car_type: "Sedan",
-        pickup_drop_location: {
-          "0": "Tiruvannamalai, Tamil Nadu, India",
-          "1": "Vellore, Tamil Nadu, India"
-        },
-        start_date_time: "2025-09-18T18:00:17.074000Z",
-        customer_name: "PUGAZHESHWAR D",
-        customer_number: "9600048429",
-        trip_status: "PENDING",
-        pick_near_city: "ALL",
-        trip_distance: 88,
-        trip_time: "1 hour 57 mins",
-        estimated_price: 1732,
-        vendor_price: 2108,
-        platform_fees_percent: 10,
-        created_at: "2025-09-18T18:01:35.259842Z"
-      },
-      {
-        id: 52,
-        trip_type: "Hourly Rental",
-        car_type: "Sedan",
-        pickup_drop_location: {
-          "0": "Chennai"
-        },
-        start_date_time: "2025-08-13T12:00:00Z",
-        customer_name: "Arun",
-        customer_number: "9876543210",
-        trip_status: "PENDING",
-        pick_near_city: "TVM",
-        trip_distance: null,
-        trip_time: "8",
-        estimated_price: 300,
-        vendor_price: 400,
-        platform_fees_percent: 10,
-        created_at: "2025-09-18T15:53:08.360109Z"
-      },
-      {
-        id: 51,
-        trip_type: "Hourly Rental",
-        car_type: "Sedan",
-        pickup_drop_location: {
-          "0": "Chennai"
-        },
-        start_date_time: "2025-08-13T12:00:00Z",
-        customer_name: "Arun",
-        customer_number: "9876543210",
-        trip_status: "PENDING",
-        pick_near_city: "TVM",
-        trip_distance: null,
-        trip_time: "8",
-        estimated_price: 300,
-        vendor_price: 400,
-        platform_fees_percent: 10,
-        created_at: "2025-09-18T15:45:19.152095Z"
-      },
-      {
-        id: 50,
-        trip_type: "Hourly Rental",
-        car_type: "Sedan",
-        pickup_drop_location: {
-          "0": "Chennai"
-        },
-        start_date_time: "2025-08-13T12:00:00Z",
-        customer_name: "Arun",
-        customer_number: "9876543210",
-        trip_status: "PENDING",
-        pick_near_city: "TVM",
-        trip_distance: null,
-        trip_time: "8",
-        estimated_price: 300,
-        vendor_price: 400,
-        platform_fees_percent: 10,
-        created_at: "2025-09-18T15:39:27.030097Z"
-      },
-      {
-        id: 49,
-        trip_type: "Hourly Rental",
-        car_type: "Sedan",
-        pickup_drop_location: {
-          "0": "Chennai"
-        },
-        start_date_time: "2025-08-13T12:00:00Z",
-        customer_name: "Arun",
-        customer_number: "9876543210",
-        trip_status: "PENDING",
-        pick_near_city: "TVM",
-        trip_distance: null,
-        trip_time: "8",
-        estimated_price: 300,
-        vendor_price: 400,
-        platform_fees_percent: 10,
-        created_at: "2025-09-18T15:34:50.541228Z"
-      },
-      {
-        id: 48,
-        trip_type: "Hourly Rental",
-        car_type: "Sedan",
-        pickup_drop_location: {
-          "0": "Chennai"
-        },
-        start_date_time: "2025-08-13T12:00:00Z",
-        customer_name: "Arun",
-        customer_number: "9876543210",
-        trip_status: "PENDING",
-        pick_near_city: "TVM",
-        trip_distance: null,
-        trip_time: "8",
-        estimated_price: 300,
-        vendor_price: 100,
-        platform_fees_percent: 10,
-        created_at: "2025-09-18T15:33:14.359917Z"
-      },
-      {
-        id: 47,
-        trip_type: "Hourly Rental",
-        car_type: "Sedan",
-        pickup_drop_location: {
-          "0": "Chennai"
-        },
-        start_date_time: "2025-08-13T12:00:00Z",
-        customer_name: "Arun",
-        customer_number: "9876543210",
-        trip_status: "PENDING",
-        pick_near_city: "TVM",
-        trip_distance: null,
-        trip_time: "8",
-        estimated_price: 300,
-        vendor_price: 50,
-        platform_fees_percent: 10,
-        created_at: "2025-09-18T15:31:47.006009Z"
-      },
-      {
-        id: 44,
-        trip_type: "Multy City",
-        car_type: "Sedan",
-        pickup_drop_location: {
-          "0": "Tiruvannamalai, Tamil Nadu, India",
-          "1": "Vellore, Tamil Nadu, India",
-          "2": "Tiruvannamalai, Tamil Nadu, India"
-        },
-        start_date_time: "2025-09-17T20:57:17.208000Z",
-        customer_name: "PUGAZHESHWAR",
-        customer_number: "9585984449",
-        trip_status: "PENDING",
-        pick_near_city: "ALL",
-        trip_distance: 176,
-        trip_time: "1 hour 57 mins + 1 hour 53 mins",
-        estimated_price: 3064,
-        vendor_price: 3616,
-        platform_fees_percent: 10,
-        created_at: "2025-09-17T21:01:14.986351Z"
-      },
-      {
-        id: 43,
-        trip_type: "Round Trip",
-        car_type: "Sedan",
-        pickup_drop_location: {
-          "0": "Tiruvannamalai, Tamil Nadu, India",
-          "1": "Vellore, Tamil Nadu, India",
-          "2": "Tiruvannamalai, Tamil Nadu, India"
-        },
-        start_date_time: "2025-09-17T20:52:32.379000Z",
-        customer_name: "TEST C",
-        customer_number: "9600048429",
-        trip_status: "PENDING",
-        pick_near_city: "ALL",
-        trip_distance: 176,
-        trip_time: "1 hour 57 mins + 1 hour 53 mins",
-        estimated_price: 3064,
-        vendor_price: 3616,
-        platform_fees_percent: 10,
-        created_at: "2025-09-17T20:55:58.264508Z"
-      },
-      {
-        id: 42,
-        trip_type: "Oneway",
-        car_type: "Sedan",
-        pickup_drop_location: {
-          "0": "Tiruvannamalai, Tamil Nadu, India",
-          "1": "Vellore, Tamil Nadu, India"
-        },
-        start_date_time: "2025-09-17T20:24:27.969000Z",
-        customer_name: "TEST B",
-        customer_number: "9600048426",
-        trip_status: "PENDING",
-        pick_near_city: "ALL",
-        trip_distance: 88,
-        trip_time: "1 hour 57 mins",
-        estimated_price: 1832,
-        vendor_price: 2208,
-        platform_fees_percent: 10,
-        created_at: "2025-09-17T20:25:14.751062Z"
-      },
-      {
-        id: 40,
-        trip_type: "Oneway",
-        car_type: "Sedan",
-        pickup_drop_location: {
-          "0": "Tiruvannamalai, Tamil Nadu, India",
-          "1": "Vellore, Tamil Nadu, India"
-        },
-        start_date_time: "2025-09-17T20:11:29.297000Z",
-        customer_name: "TEST A",
-        customer_number: "9600048429",
-        trip_status: "PENDING",
-        pick_near_city: "ALL",
-        trip_distance: 88,
-        trip_time: "1 hour 57 mins",
-        estimated_price: 1832,
-        vendor_price: 2158,
-        platform_fees_percent: 10,
-        created_at: "2025-09-17T20:12:31.399892Z"
-      }
     ];
     
     // Sort orders by creation date (latest first)
@@ -401,7 +185,7 @@ export default function OrdersScreen() {
       case 'TRIP_STARTED': return <CheckCircle size={16} color="#10B981" />;
       case 'TRIP_COMPLETED': return <CheckCircle size={16} color="#059669" />;
       case 'CANCELLED': return <AlertCircle size={16} color="#DC2626" />;
-      case 'PENDING': return <AlertCircle size={16} color="#6B7280" />;
+      case 'PENDING': return <Clock size={16} color="#6B7280" />;
       default: return <AlertCircle size={16} color="#6B7280" />;
     }
   };
@@ -447,6 +231,7 @@ export default function OrdersScreen() {
           <View style={styles.customerInfo}>
             <User size={16} color="#1E40AF" />
             <Text style={styles.customerName}>{item.customer_name}</Text>
+            <Text style={styles.customerPhone}>• {item.customer_number}</Text>
           </View>
 
           <View style={styles.tripInfo}>
@@ -514,8 +299,14 @@ export default function OrdersScreen() {
           </View>
 
           <View style={styles.profitInfo}>
-            <Text style={styles.profitLabel}>Profit: </Text>
-            <Text style={styles.profitValue}>₹{item.vendor_price - item.estimated_price}</Text>
+            <View style={styles.profitRow}>
+              <Text style={styles.profitLabel}>Your Earning: </Text>
+              <Text style={styles.profitValue}>₹{item.vendor_price - item.estimated_price}</Text>
+            </View>
+            <View style={styles.profitRow}>
+              <Text style={styles.platformFeeLabel}>Platform Fee ({item.platform_fees_percent}%): </Text>
+              <Text style={styles.platformFeeValue}>-₹{Math.round((item.vendor_price * item.platform_fees_percent) / 100)}</Text>
+            </View>
           </View>
         </View>
       </TouchableOpacity>
@@ -525,7 +316,7 @@ export default function OrdersScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#059669', '#10B981', '#34D399']}
+        colors={['#0d5464ff', '#0d5464ff', '#0d5464ff']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.header}
@@ -535,7 +326,7 @@ export default function OrdersScreen() {
             <FileText size={32} color="#FFFFFF" />
           </View>
           <View style={styles.headerTextContainer}>
-            <Text style={styles.headerTitle}>All Orders</Text>
+            <Text style={styles.headerTitle}>My Orders</Text>
             <Text style={styles.headerSubtitle}>{orders.length} total bookings</Text>
           </View>
         </View>
@@ -564,7 +355,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
   },
   header: {
-    paddingTop: 60,
+    paddingTop: 50,
     paddingBottom: 30,
     paddingHorizontal: 24,
     borderBottomLeftRadius: 30,
@@ -660,6 +451,11 @@ const styles = StyleSheet.create({
     color: '#202124',
     marginLeft: 8,
   },
+  customerPhone: {
+    fontSize: 14,
+    color: '#5F6368',
+    marginLeft: 4,
+  },
   tripInfo: {
     gap: 8,
   },
@@ -730,12 +526,15 @@ const styles = StyleSheet.create({
     color: '#059669',
   },
   profitInfo: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
     paddingTop: 8,
     borderTopWidth: 1,
     borderTopColor: '#F1F3F4',
+  },
+  profitRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
   },
   profitLabel: {
     fontSize: 14,
@@ -746,5 +545,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#10B981',
+  },
+  platformFeeLabel: {
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+  platformFeeValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#DC2626',
   },
 });
