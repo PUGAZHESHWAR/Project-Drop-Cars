@@ -62,7 +62,7 @@ export default function OrdersComponent(){
       case 'CONFIRMED': return '#F59E0B';
       case 'DRIVER_ASSIGNED': return '#3B82F6';
       case 'TRIP_STARTED': return '#10B981';
-      case 'TRIP_COMPLETED': return '#059669';
+      case 'COMPLETED': return '#059669';
       case 'CANCELLED': return '#DC2626';
       case 'PENDING': return '#6B7280';
       default: return '#6B7280';
@@ -74,7 +74,7 @@ export default function OrdersComponent(){
       case 'CONFIRMED': return <AlertCircle size={16} color="#F59E0B" />;
       case 'DRIVER_ASSIGNED': return <Car size={16} color="#3B82F6" />;
       case 'TRIP_STARTED': return <CheckCircle size={16} color="#10B981" />;
-      case 'TRIP_COMPLETED': return <CheckCircle size={16} color="#059669" />;
+      case 'COMPLETED': return <CheckCircle size={16} color="#059669" />;
       case 'CANCELLED': return <AlertCircle size={16} color="#DC2626" />;
       case 'PENDING': return <Clock size={16} color="#6B7280" />;
       default: return <AlertCircle size={16} color="#6B7280" />;

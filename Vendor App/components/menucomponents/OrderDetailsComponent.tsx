@@ -7,32 +7,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  Image
+  Image,
+  Linking
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import {
-  ArrowLeft,
-  User,
-  Phone,
-  Calendar,
-  Clock,
-  MapPin,
-  Car,
-  DollarSign,
-  Route,
-  FileText,
-  Settings,
-  Gauge,
-  CheckCircle,
-  AlertCircle,
-  XCircle,
-  Users,
-  CreditCard,
-  Timer,
-  Navigation,
-  Info
-} from 'lucide-react-native';
+import { ArrowLeft, User, Phone, Calendar, Clock, MapPin, Car, DollarSign, Route, FileText, Settings, Gauge, CircleCheck as CheckCircle, CircleAlert as AlertCircle, Circle as XCircle, Users, CreditCard, Timer, Navigation, Info, X } from 'lucide-react-native';
 import api from '../../app/api/api';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 
@@ -102,6 +82,7 @@ export default function OrderDetailsComponent() {
   const [orderDetails, setOrderDetails] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   useEffect(() => {
     if (orderId) {
@@ -121,6 +102,69 @@ export default function OrderDetailsComponent() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const cancelOrder = async () => {
+    if (!orderDetails) return;
+
+    Alert.alert(
+      'Cancel Order',
+      'Are you sure you want to cancel this order?',
+      [
+        {
+          text: 'No',
+          style: 'cancel',
+        },
+        {
+          text: 'Yes',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setCancelLoading(true);
+              const response = await api.patch(`/assignments/vendor/cancel-order/${orderDetails.id}`);
+              
+              if (response.data) {
+                Alert.alert(
+                  'Success',
+                  'Order cancelled successfully!',
+                  [
+                    {
+                      text: 'OK',
+                      onPress: () => {
+                        // Refresh the order details to show updated status
+                        fetchOrderDetails();
+                      }
+                    }
+                  ]
+                );
+              }
+            } catch (err: any) {
+              console.error('Error cancelling order:', err);
+              Alert.alert(
+                'Error',
+                'Failed to cancel order. Please try again.',
+                [{ text: 'OK' }]
+              );
+            } finally {
+              setCancelLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const makePhoneCall = (phoneNumber: string) => {
+    const phoneUrl = `tel:${phoneNumber}`;
+    Linking.canOpenURL(phoneUrl)
+      .then((supported) => {
+        if (supported) {
+          Linking.openURL(phoneUrl);
+        } else {
+          Alert.alert('Error', 'Phone dialer not available');
+        }
+      })
+      .catch((err) => console.error('Error opening phone dialer:', err));
   };
 
   const getStatusColor = (status: string) => {
@@ -215,6 +259,24 @@ export default function OrderDetailsComponent() {
             </Text>
           </View>
         </View>
+
+        {/* Cancel Button - Only show if trip status is PENDING */}
+        {orderDetails.trip_status === 'PENDING' && (
+          <TouchableOpacity 
+            style={[styles.cancelButton, cancelLoading && styles.cancelButtonDisabled]} 
+            onPress={cancelOrder}
+            disabled={cancelLoading}
+          >
+            {cancelLoading ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <>
+                <X size={18} color="#FFFFFF" />
+                <Text style={styles.cancelButtonText}>Cancel Order</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
       </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -227,7 +289,10 @@ export default function OrderDetailsComponent() {
           <View style={styles.customerCard}>
             <View style={styles.customerRow}>
               <Text style={styles.customerName}>{orderDetails.customer_name}</Text>
-              <TouchableOpacity style={styles.phoneButton}>
+              <TouchableOpacity 
+                style={styles.phoneButton}
+                onPress={() => makePhoneCall(orderDetails.customer_number)}
+              >
                 <Phone size={16} color="#FFFFFF" />
                 <Text style={styles.phoneButtonText}>{orderDetails.customer_number}</Text>
               </TouchableOpacity>
@@ -298,19 +363,6 @@ export default function OrderDetailsComponent() {
               </View>
               </>)
             :null}
-
-            {/* <View style={styles.infoRow}>
-              <Timer size={16} color="#6B7280" />
-              <Text style={styles.infoLabel}>Driver Status:</Text>
-              <Text style={[styles.infoValue,{color: orderDetails.assigned_driver_name == null? "red" : "#10B981"}]}>{orderDetails.assigned_driver_name == null?"Not Assigned":"Assigned"}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Timer size={16} color="#6B7280" />
-              <Text style={styles.infoLabel}>Car Status:</Text>
-              <Text style={[styles.infoValue,{color: orderDetails.assigned_car_name == null? "red" : "#10B981"}]}>{orderDetails.assigned_car_name == null?"Not Assigned":"Assigned"}</Text>
-            </View> */}
-
-
           </View>
         </View>
 
@@ -357,7 +409,9 @@ export default function OrderDetailsComponent() {
                     <Text style={styles.assignmentLabel}>Driver</Text>
                     <Text style={styles.assignmentValue}>{orderDetails.assigned_driver_name}</Text>
                     {orderDetails.assigned_driver_phone && (
-                      <Text style={styles.assignmentSubValue}>{orderDetails.assigned_driver_phone}</Text>
+                      <TouchableOpacity onPress={() => makePhoneCall(orderDetails.assigned_driver_phone!)}>
+                        <Text style={[styles.assignmentSubValue, styles.clickablePhone]}>{orderDetails.assigned_driver_phone}</Text>
+                      </TouchableOpacity>
                     )}
                   </View>
                 </View>
@@ -461,24 +515,6 @@ export default function OrderDetailsComponent() {
                   </Text>
                 </View>
               </View>
-              
-              {/* {latestEndRecord.img_url && (
-                <View style={styles.imageSection}>
-                  <Text style={styles.imageLabel}>Speedometer Images</Text>
-                  <View style={styles.imageRow}>
-                    <View style={styles.imageContainer}>
-                      <Image source={{ uri: latestEndRecord.img_url }} style={styles.speedometerImage} />
-                      <Text style={styles.imageCaption}>Start</Text>
-                    </View>
-                    {latestEndRecord.close_speedometer_image && (
-                      <View style={styles.imageContainer}>
-                        <Image source={{ uri: latestEndRecord.close_speedometer_image }} style={styles.speedometerImage} />
-                        <Text style={styles.imageCaption}>End</Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-              )} */}
             </View>
           </View>
         )}
@@ -567,6 +603,25 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     textTransform: 'capitalize',
   },
+  cancelButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#DC2626',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 12,
+    justifyContent: 'center',
+  },
+  cancelButtonDisabled: {
+    opacity: 0.6,
+  },
+  cancelButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
   content: {
     flex: 1,
     paddingHorizontal: 24,
@@ -619,6 +674,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     marginLeft: 6,
+  },
+  clickablePhone: {
+    color: '#10B981',
+    textDecorationLine: 'underline',
   },
   infoCard: {
     backgroundColor: '#FFFFFF',

@@ -6,6 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
+  Linking,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -49,6 +51,27 @@ export default function MenuScreen() {
 
     fetchVendorData();
   }, []);
+
+  const handleCall = () => {
+    const phoneNumber = '+919876543210';
+    Linking.openURL(`tel:${phoneNumber}`).catch(() => {
+      Alert.alert('Error', 'Unable to open dial pad');
+    });
+  };
+
+    const handleEmail = () => {
+    const email = 'dropcars.in@gmail.com';
+    Linking.openURL(`mailto:${email}`).catch(() => {
+      Alert.alert('Error', 'Unable to open the Gmail');
+    });
+  };
+
+      const handleWebSite = () => {
+    const weblink = 'www.arunachalatravels.in/#features';
+    Linking.openURL(`https://${weblink}`).catch(() => {
+      Alert.alert('Error', 'Unable to open the Gmail');
+    });
+  };
 
 const removeAccessToken = async () => {
   try {
@@ -98,14 +121,6 @@ const removeAccessToken = async () => {
       icon: Settings,
       iconColor: '#6B7280',
       action: () => router.push('/(menu)/notification'),
-    },
-    {
-      id: 'support',
-      title: 'Support',
-      subtitle: 'Get help and contact us',
-      icon: HelpCircle,
-      iconColor: '#F59E0B',
-      action: () => router.push('/(menu)/about'),
     },
     {
       id: 'about',
@@ -213,7 +228,7 @@ const removeAccessToken = async () => {
             <Text style={styles.sectionTitle}>Support & Help</Text>
             
             <View style={styles.supportCard}>
-              <TouchableOpacity style={styles.supportItem}>
+              <TouchableOpacity style={styles.supportItem} onPress={handleCall}>
                 <View style={styles.supportIcon}>
                   <Phone size={20} color="#1E40AF" />
                 </View>
@@ -226,26 +241,26 @@ const removeAccessToken = async () => {
               
               <View style={styles.divider} />
               
-              <TouchableOpacity style={styles.supportItem}>
+              <TouchableOpacity style={styles.supportItem} onPress={handleEmail}>
                 <View style={styles.supportIcon}>
                   <Mail size={20} color="#3B82F6" />
                 </View>
                 <View style={styles.supportContent}>
                   <Text style={styles.supportLabel}>Email Support</Text>
-                  <Text style={styles.supportValue}>support@dropcars.com</Text>
+                  <Text style={styles.supportValue}>dropcars.in@gmail.com</Text>
                 </View>
                 <ChevronRight size={16} color="#9CA3AF" />
               </TouchableOpacity>
               
               <View style={styles.divider} />
               
-              <TouchableOpacity style={styles.supportItem}>
+              <TouchableOpacity style={styles.supportItem} onPress={handleWebSite}>
                 <View style={styles.supportIcon}>
                   <Globe size={20} color="#10B981" />
                 </View>
                 <View style={styles.supportContent}>
                   <Text style={styles.supportLabel}>Website</Text>
-                  <Text style={styles.supportValue}>www.dropcars.com</Text>
+                  <Text style={styles.supportValue}>www.arunachalatravels.com</Text>
                 </View>
                 <ChevronRight size={16} color="#9CA3AF" />
               </TouchableOpacity>
