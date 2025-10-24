@@ -8,12 +8,13 @@ import {
   StatusBar,
   Linking,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import api from '../../app/api/api'; // Adjust the path as necessary
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { User, Package, DollarSign, TrendingUp, Calendar,ArrowRight, Settings, CircleHelp as HelpCircle, Info, LogOut, Bell, Shield, Star, Phone, Mail, Globe, FileText, CreditCard, Clock, Award, ChevronRight, Wallet } from 'lucide-react-native';
+import { User, Package, DollarSign, TrendingUp, Calendar,ArrowRight, Settings, CircleHelp as HelpCircle, Info, LogOut, Bell, Shield, Star, Phone, Mail, Globe, FileText, CreditCard, Clock, Award, ChevronRight, Wallet, RefreshCw } from 'lucide-react-native';
 
 interface VendorData {
   id: string;
@@ -33,24 +34,37 @@ interface VendorData {
 export default function MenuScreen() {
   const [vendorData, setVendorData] = useState<VendorData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  useEffect(() => {
-    const fetchVendorData = async () => {
-      try {
-        const response = await api.get('/users/vendor-details/me');
-        // optionally check response.status etc
-        setVendorData(response.data);
-      } catch (err: any) {
-        console.error("Error fetching vendor data:", err);
-        setError('Failed to fetch vendor data.');
-      } finally {
-        setLoading(false);
-      }
-    };
 
+  const fetchVendorData = async () => {
+    try {
+      const response = await api.get('/users/vendor-details/me');
+      setVendorData(response.data);
+      setError(null);
+    } catch (err: any) {
+      console.error("Error fetching vendor data:", err);
+      setError('Failed to fetch vendor data.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
     fetchVendorData();
   }, []);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchVendorData();
+  };
+
+  const handleWalletRefresh = () => {
+    setRefreshing(true);
+    fetchVendorData();
+  };
 
   const handleCall = () => {
     const phoneNumber = '+919876543210';
@@ -59,34 +73,33 @@ export default function MenuScreen() {
     });
   };
 
-    const handleEmail = () => {
+  const handleEmail = () => {
     const email = 'dropcars.in@gmail.com';
     Linking.openURL(`mailto:${email}`).catch(() => {
       Alert.alert('Error', 'Unable to open the Gmail');
     });
   };
 
-      const handleWebSite = () => {
+  const handleWebSite = () => {
     const weblink = 'www.arunachalatravels.in/#features';
     Linking.openURL(`https://${weblink}`).catch(() => {
       Alert.alert('Error', 'Unable to open the Gmail');
     });
   };
 
-const removeAccessToken = async () => {
-  try {
-    await AsyncStorage.removeItem('accessToken');
-    console.log('Access token removed successfully');
-  } catch (error) {
-    console.error('Error removing access token:', error);
-  }
-};
+  const removeAccessToken = async () => {
+    try {
+      await AsyncStorage.removeItem('accessToken');
+      console.log('Access token removed successfully');
+    } catch (error) {
+      console.error('Error removing access token:', error);
+    }
+  };
 
   const handleLogout = () => {
-    // Implement logout functionality
     console.log('Logging out...');
     removeAccessToken();
-    router.replace('/(auth)/sign-in');// Navigate to login screen after logout
+    router.replace('/(auth)/sign-in');
   };
 
   const menuItems = [
@@ -144,7 +157,10 @@ const removeAccessToken = async () => {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1E40AF" />
       
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.scrollView} 
+        showsVerticalScrollIndicator={false}
+      >
         {/* Enhanced Header Section */}
         <LinearGradient
           colors={['#057296ff', '#10575eff', '#094157ff']}
@@ -174,23 +190,34 @@ const removeAccessToken = async () => {
                 </View>
               </View>
             </View>
-            
-            {/* <TouchableOpacity style={styles.notificationButton}>
-              <Bell size={24} color="#FFFFFF" />
-              <View style={styles.notificationBadge} />
-            </TouchableOpacity> */}
           </View>
 
           {/* Wallet Balance Card */}
           <View style={styles.walletSection}>
             <View style={styles.walletCard}>
               <View style={styles.walletHeader}>
-                <Wallet size={24} color="#FFFFFF" />
-                <Text style={styles.walletLabel}>Wallet Balance</Text>
+                <View style={styles.walletTitleContainer}>
+                  <Wallet size={24} color="#FFFFFF" />
+                  <Text style={styles.walletLabel}>Wallet Balance</Text>
+                </View>
+                <TouchableOpacity 
+                  style={styles.refreshButton}
+                  onPress={handleWalletRefresh}
+                  disabled={refreshing}
+                >
+                  <RefreshCw 
+                    size={20} 
+                    color="#FFFFFF" 
+                    style={refreshing ? styles.refreshingIcon : null}
+                  />
+                </TouchableOpacity>
               </View>
               <Text style={styles.walletAmount}>
                 ₹{vendorData?.wallet_balance.toLocaleString('en-IN')}
               </Text>
+              {refreshing && (
+                <Text style={styles.refreshingText}>Updating...</Text>
+              )}
             </View>
           </View>
         </LinearGradient>
@@ -373,21 +400,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 4,
   },
-  notificationButton: {
-    padding: 12,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    position: 'relative',
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#EF4444',
-  },
   walletSection: {
     marginTop: 20,
   },
@@ -397,12 +409,16 @@ const styles = StyleSheet.create({
     padding: 24,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.3)',
-    alignItems: 'center',
   },
   walletHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 12,
+  },
+  walletTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   walletLabel: {
     fontSize: 16,
@@ -415,6 +431,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
     textAlign: 'center',
+  },
+  refreshButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  refreshingIcon: {
+    transform: [{ rotate: '360deg' }],
+  },
+  refreshingText: {
+    fontSize: 12,
+    color: '#E2E8F0',
+    textAlign: 'center',
+    marginTop: 8,
+    fontStyle: 'italic',
   },
   contentSection: {
     paddingHorizontal: 20,

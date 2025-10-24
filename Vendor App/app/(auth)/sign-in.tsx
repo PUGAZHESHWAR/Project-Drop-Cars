@@ -44,7 +44,7 @@ export default function SignIn() {
         console.log('Account Status:', accountStatus);
         if (accountStatus === 'Active') {
           // Account is active, proceed to dashboard
-          router.replace('/(tabs)');
+          router.replace('/(terms)/terms');
         } else if (accountStatus === 'Pending') {
           // Account is inactive, show inactive screen
           console.log('pending account status:');
