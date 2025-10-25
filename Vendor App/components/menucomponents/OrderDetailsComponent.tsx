@@ -8,13 +8,15 @@ import {
   ActivityIndicator,
   Alert,
   Image,
-  Linking
+  Linking,
+  TextInput,
+  Switch
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, User, Phone, Calendar, Clock, MapPin, Car, DollarSign, Route, FileText, Settings, Gauge, CircleCheck as CheckCircle, CircleAlert as AlertCircle, Circle as XCircle, Users, CreditCard, Timer, Navigation, Info, X } from 'lucide-react-native';
+import { ArrowLeft, User, Phone, Calendar, Clock, MapPin, Car, DollarSign, Route, FileText, Settings, Gauge, CircleCheck as CheckCircle, CircleAlert as AlertCircle, Circle as XCircle, Users, CreditCard, Timer, Navigation, Info, X, RefreshCw, Eye, StickyNote, EyeOff } from 'lucide-react-native';
 import api from '../../app/api/api';
-import { Colors } from 'react-native/Libraries/NewAppScreen';
+import OrderSuccess from '../OrderSuccess';
 
 interface OrderDetail {
   id: number;
@@ -38,6 +40,30 @@ interface OrderDetail {
   closed_driver_price: number | null;
   commision_amount: number | null;
   created_at: string;
+  max_time: number | null;
+  cancelled_by: string | null;
+  max_time_to_assign_order: string;
+  toll_charge_update: boolean;
+  data_visibility_vehicle_owner: boolean;
+  
+  // Oneway/Roundtrip specific fields
+  cost_per_km: number | null;
+  extra_cost_per_km: number | null;
+  driver_allowance: number | null;
+  extra_driver_allowance: number | null;
+  permit_charges: number | null;
+  extra_permit_charges: number | null;
+  hill_charges: number | null;
+  toll_charges: number | null;
+  pickup_notes: string | null;
+  
+  // Hourly rental specific fields
+  package_hours: { hours: number; km_range: number } | null;
+  cost_per_hour: number | null;
+  extra_cost_per_hour: number | null;
+  cost_for_addon_km: number | null;
+  extra_cost_for_addon_km: number | null;
+  
   assignments: Assignment[];
   end_records: EndRecord[];
   assigned_driver_name: string | null;
@@ -83,6 +109,10 @@ export default function OrderDetailsComponent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
+  const [recreateLoading, setRecreateLoading] = useState(false);
+  const [showOrderSuccess, setShowOrderSuccess] = useState(false);
+  const [recreatedOrderData, setRecreatedOrderData] = useState<any>(null);
+  const [visibilityLoading, setVisibilityLoading] = useState(false);
 
   useEffect(() => {
     if (orderId) {
@@ -101,6 +131,89 @@ export default function OrderDetailsComponent() {
       setError('Failed to load order details. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // const showMaxTimeInputDialog = () => {
+  //   Alert.prompt(
+  //     'Recreate Order',
+  //     'Enter maximum time to assign order (in minutes):',
+  //     [
+  //       {
+  //         text: 'Cancel',
+  //         style: 'cancel',
+  //       },
+  //       {
+  //         text: 'Create Order',
+  //         onPress: (maxTime) => {
+  //           const timeInMinutes = parseInt(maxTime || '30');
+  //           if (isNaN(timeInMinutes) || timeInMinutes <= 0) {
+  //             Alert.alert('Invalid Input', 'Please enter a valid number of minutes (greater than 0)');
+  //             return;
+  //           }
+  //           performRecreateOrder(timeInMinutes);
+  //         },
+  //       },
+  //     ],
+  //     'plain-text',
+  //     '30' // Default value
+  //   );
+  // };
+    const showMaxTimeInputDialog = () =>{
+      performRecreateOrder(30)
+    }
+
+  const performRecreateOrder = async (maxTimeInMinutes: number) => {
+    if (!orderDetails) return;
+
+    try {
+      setRecreateLoading(true);
+      const response = await api.post('/orders/recreate', {
+        order_id: orderDetails.id,
+        max_time_to_assign_order: maxTimeInMinutes
+      });
+      
+      if (response.data) {
+        setRecreatedOrderData(response.data);
+        setShowOrderSuccess(true);
+      }
+    } catch (err: any) {
+      console.error('Error recreating order:', err);
+      const errorMessage = err.response?.data?.detail || 'Failed to recreate order. Please try again.';
+      Alert.alert('Error', errorMessage, [{ text: 'OK' }]);
+    } finally {
+      setRecreateLoading(false);
+    }
+  };
+
+  const toggleVisibility = async () => {
+    if (!orderDetails) return;
+
+    try {
+      setVisibilityLoading(true);
+      const response = await api.patch(`/orders/${orderDetails.id}/visibility/vehicle-owner/show`, {
+        data_visibility_vehicle_owner: !orderDetails.data_visibility_vehicle_owner
+      });
+      
+      if (response.data) {
+        // Update the local state to reflect the change
+        setOrderDetails(prev => prev ? {
+          ...prev,
+          data_visibility_vehicle_owner: !prev.data_visibility_vehicle_owner
+        } : null);
+        
+        Alert.alert(
+          'Success',
+          `Vehicle owner data visibility ${!orderDetails.data_visibility_vehicle_owner ? 'enabled' : 'disabled'} successfully!`,
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (err: any) {
+      console.error('Error updating visibility:', err);
+      const errorMessage = err.response?.data?.detail || 'Failed to update visibility. Please try again.';
+      Alert.alert('Error', errorMessage, [{ text: 'OK' }]);
+    } finally {
+      setVisibilityLoading(false);
     }
   };
 
@@ -167,6 +280,30 @@ export default function OrderDetailsComponent() {
       .catch((err) => console.error('Error opening phone dialer:', err));
   };
 
+  const viewImage = (imageUrl: string, title: string) => {
+    Alert.alert(
+      title,
+      'Open image in browser?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Open', 
+          onPress: () => {
+            Linking.canOpenURL(imageUrl)
+              .then((supported) => {
+                if (supported) {
+                  Linking.openURL(imageUrl);
+                } else {
+                  Alert.alert('Error', 'Cannot open image URL');
+                }
+              })
+              .catch((err) => console.error('Error opening image:', err));
+          }
+        }
+      ]
+    );
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'CONFIRMED': return '#F59E0B';
@@ -174,6 +311,7 @@ export default function OrderDetailsComponent() {
       case 'TRIP_STARTED': return '#10B981';
       case 'TRIP_COMPLETED': return '#059669';
       case 'CANCELLED': return '#DC2626';
+      case 'AUTO_CANCELLED': return '#DC2626';
       case 'PENDING': return '#6B7280';
       default: return '#6B7280';
     }
@@ -186,6 +324,7 @@ export default function OrderDetailsComponent() {
       case 'TRIP_STARTED': return <CheckCircle size={20} color="#10B981" />;
       case 'TRIP_COMPLETED': return <CheckCircle size={20} color="#059669" />;
       case 'CANCELLED': return <XCircle size={20} color="#DC2626" />;
+      case 'AUTO_CANCELLED': return <XCircle size={20} color="#DC2626" />;
       case 'PENDING': return <Clock size={20} color="#6B7280" />;
       default: return <AlertCircle size={20} color="#6B7280" />;
     }
@@ -214,6 +353,9 @@ export default function OrderDetailsComponent() {
     return Object.entries(locations || {}).sort(([a], [b]) => parseInt(a) - parseInt(b));
   };
 
+  const isHourlyRental = orderDetails?.trip_type === 'Hourly Rental';
+  const canRecreate = orderDetails?.cancelled_by === 'AUTO_CANCELLED';
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -240,7 +382,8 @@ export default function OrderDetailsComponent() {
   const latestEndRecord = orderDetails.end_records[orderDetails.end_records.length - 1];
 
   return (
-    <View style={styles.container}>
+    <>
+      <View style={styles.container}>
       {/* Header */}
       <LinearGradient
         colors={['#0d5464ff', '#0d5464ff', '#0d5464ff']}
@@ -260,23 +403,44 @@ export default function OrderDetailsComponent() {
           </View>
         </View>
 
-        {/* Cancel Button - Only show if trip status is PENDING */}
-        {orderDetails.trip_status === 'PENDING' && (
-          <TouchableOpacity 
-            style={[styles.cancelButton, cancelLoading && styles.cancelButtonDisabled]} 
-            onPress={cancelOrder}
-            disabled={cancelLoading}
-          >
-            {cancelLoading ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <>
-                <X size={18} color="#FFFFFF" />
-                <Text style={styles.cancelButtonText}>Cancel Order</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        )}
+        {/* Action Buttons */}
+        <View style={styles.headerActions}>
+          {/* Cancel Button - Only show if trip status is PENDING */}
+          {orderDetails.trip_status === 'PENDING' && (
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.cancelButton, cancelLoading && styles.actionButtonDisabled]} 
+              onPress={cancelOrder}
+              disabled={cancelLoading}
+            >
+              {cancelLoading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <>
+                  <X size={18} color="#FFFFFF" />
+                  <Text style={styles.actionButtonText}>Cancel</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
+          
+          {/* Recreate Button - Only show if trip status is AUTO_CANCELLED */}
+          {canRecreate && (
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.recreateButton, recreateLoading && styles.actionButtonDisabled]} 
+              onPress={showMaxTimeInputDialog}
+              disabled={recreateLoading}
+            >
+              {recreateLoading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <>
+                  <RefreshCw size={18} color="#FFFFFF" />
+                  <Text style={styles.actionButtonText}>Recreate</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
       </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -342,8 +506,24 @@ export default function OrderDetailsComponent() {
             <View style={styles.infoRow}>
               <Timer size={16} color="#6B7280" />
               <Text style={styles.infoLabel}>Duration:</Text>
-              <Text style={styles.infoValue}>{orderDetails.trip_time}</Text>
+              <Text style={styles.infoValue}>
+                {isHourlyRental ? `${orderDetails.trip_time} hours` : orderDetails.trip_time}
+              </Text>
             </View>
+              <View style={styles.infoRow}>
+              <Timer size={16} color="#6B7280" />
+              <Text style={styles.infoLabel}>Assign Max Time:</Text>
+              <Text style={styles.infoValue}>
+                {isHourlyRental ? `${orderDetails.max_time} min` : orderDetails.trip_time}
+              </Text>
+            </View>
+            {orderDetails.pickup_notes && (
+              <View style={styles.infoRow}>
+                <StickyNote size={16} color="#6B7280" />
+                <Text style={styles.infoLabel}>Pickup Notes:</Text>
+                <Text style={styles.infoValue}>{orderDetails.pickup_notes}</Text>
+              </View>
+            )}
             <View style={styles.infoRow}>
               <Timer size={16} color="#6B7280" />
               <Text style={styles.infoLabel}>Accepted Status:</Text>
@@ -361,8 +541,54 @@ export default function OrderDetailsComponent() {
                 <Text style={styles.infoLabel}>Car Status:</Text>
                 <Text style={[styles.infoValue,{color: orderDetails.assigned_car_name == null? "red" : "#10B981"}]}>{orderDetails.assigned_car_name == null?"Not Assigned":"Assigned"}</Text>
               </View>
+              {
+                orderDetails.cancelled_by && (              
+                <View style={styles.infoRow}>
+                <Timer size={16} color="#6B7280" />
+                <Text style={styles.infoLabel}>Cancelled By:</Text>
+                <Text style={[styles.infoValue,{color: orderDetails.assigned_car_name == "AUTO_CANCELLED"? "red" : "#10B981"}]}>{orderDetails.assigned_car_name == "CANCELLED_BY_VENDOR"?"AUTO_CANCELLED":"VENDOR"}</Text>
+              </View>)
+              }
               </>)
             :null}
+          </View>
+        </View>
+
+        {/* Visibility Toggle */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            {orderDetails.data_visibility_vehicle_owner ? (
+              <Eye size={20} color="#0d5464ff" />
+            ) : (
+              <EyeOff size={20} color="#0d5464ff" />
+            )}
+            <Text style={styles.sectionTitle}>Vehicle Owner Data Visibility</Text>
+          </View>
+          <View style={styles.visibilityCard}>
+            <View style={styles.visibilityRow}>
+              <View style={styles.visibilityInfo}>
+                <Text style={styles.visibilityLabel}>Show data to vehicle owner</Text>
+                <Text style={styles.visibilityDescription}>
+                  {orderDetails.data_visibility_vehicle_owner 
+                    ? 'Vehicle owner can see order details' 
+                    : 'Vehicle owner cannot see order details'
+                  }
+                </Text>
+              </View>
+              <View style={styles.switchContainer}>
+                {visibilityLoading ? (
+                  <ActivityIndicator size="small" color="#0d5464ff" />
+                ) : (
+                  <Switch
+                    value={orderDetails.data_visibility_vehicle_owner}
+                    onValueChange={toggleVisibility}
+                    trackColor={{ false: '#E5E7EB', true: '#0d546480' }}
+                    thumbColor={orderDetails.data_visibility_vehicle_owner ? '#0d5464ff' : '#9CA3AF'}
+                    ios_backgroundColor="#E5E7EB"
+                  />
+                )}
+              </View>
+            </View>
           </View>
         </View>
 
@@ -466,6 +692,87 @@ export default function OrderDetailsComponent() {
               <Text style={[styles.financialValue, styles.vendorPrice]}>₹{orderDetails.vendor_price}</Text>
             </View>
             <View style={styles.divider} />
+            
+            {/* Cost Breakdown for different trip types */}
+            {!isHourlyRental ? (
+              // Oneway/Roundtrip costs
+              <>
+                {orderDetails.cost_per_km && (
+                  <View style={styles.financialRow}>
+                    <Text style={styles.financialLabel}>Cost per KM</Text>
+                    <Text style={styles.financialValue}>₹{orderDetails.cost_per_km}</Text>
+                  </View>
+                )}
+                {orderDetails.extra_cost_per_km && (
+                  <View style={styles.financialRow}>
+                    <Text style={styles.financialLabel}>Extra Cost per KM</Text>
+                    <Text style={styles.financialValue}>₹{orderDetails.extra_cost_per_km}</Text>
+                  </View>
+                )}
+                {orderDetails.driver_allowance && (
+                  <View style={styles.financialRow}>
+                    <Text style={styles.financialLabel}>Driver Allowance</Text>
+                    <Text style={styles.financialValue}>₹{orderDetails.driver_allowance}</Text>
+                  </View>
+                )}
+                {orderDetails.extra_driver_allowance && (
+                  <View style={styles.financialRow}>
+                    <Text style={styles.financialLabel}>Extra Driver Allowance</Text>
+                    <Text style={styles.financialValue}>₹{orderDetails.extra_driver_allowance}</Text>
+                  </View>
+                )}
+                {orderDetails.permit_charges && (
+                  <View style={styles.financialRow}>
+                    <Text style={styles.financialLabel}>Permit Charges</Text>
+                    <Text style={styles.financialValue}>₹{orderDetails.permit_charges}</Text>
+                  </View>
+                )}
+                {orderDetails.extra_permit_charges && (
+                  <View style={styles.financialRow}>
+                    <Text style={styles.financialLabel}>Extra Permit Charges</Text>
+                    <Text style={styles.financialValue}>₹{orderDetails.extra_permit_charges}</Text>
+                  </View>
+                )}
+                {orderDetails.hill_charges && (
+                  <View style={styles.financialRow}>
+                    <Text style={styles.financialLabel}>Hill Charges</Text>
+                    <Text style={styles.financialValue}>₹{orderDetails.hill_charges}</Text>
+                  </View>
+                )}
+                {orderDetails.toll_charges && (
+                  <View style={styles.financialRow}>
+                    <Text style={styles.financialLabel}>Toll Charges</Text>
+                    <Text style={styles.financialValue}>₹{orderDetails.toll_charges}</Text>
+                  </View>
+                )}
+              </>
+            ) : (
+              // Hourly rental costs
+              <>
+                {orderDetails.package_hours && (
+                  <View style={styles.financialRow}>
+                    <Text style={styles.financialLabel}>Package</Text>
+                    <Text style={styles.financialValue}>
+                      {orderDetails.package_hours.hours}hrs / {orderDetails.package_hours.km_range}km
+                    </Text>
+                  </View>
+                )}
+                {orderDetails.cost_per_hour && (
+                  <View style={styles.financialRow}>
+                    <Text style={styles.financialLabel}>Cost per Hour</Text>
+                    <Text style={styles.financialValue}>₹{orderDetails.cost_per_hour}</Text>
+                  </View>
+                )}
+                {orderDetails.cost_for_addon_km && (
+                  <View style={styles.financialRow}>
+                    <Text style={styles.financialLabel}>Cost for Add-on KM</Text>
+                    <Text style={styles.financialValue}>₹{orderDetails.cost_for_addon_km}</Text>
+                  </View>
+                )}
+              </>
+            )}
+            
+            <View style={styles.divider} />
             <View style={styles.financialRow}>
               <Text style={styles.financialLabel}>Your Earning</Text>
               <Text style={[styles.financialValue, styles.profit]}>
@@ -483,7 +790,7 @@ export default function OrderDetailsComponent() {
               <>
                 <View style={styles.divider} />
                 <View style={styles.financialRow}>
-                  <Text style={[styles.financialLabel, styles.finalLabel]}>Final Amount</Text>
+                  <Text style={[styles.financialLabel, styles.finalLabel]}>Customer Amount</Text>
                   <Text style={[styles.financialValue, styles.finalValue]}>₹{orderDetails.closed_vendor_price}</Text>
                 </View>
               </>
@@ -515,13 +822,53 @@ export default function OrderDetailsComponent() {
                   </Text>
                 </View>
               </View>
+              
+              {/* Odometer Images */}
+              {(latestEndRecord.img_url || latestEndRecord.close_speedometer_image) && (
+                <View style={styles.imageSection}>
+                  <Text style={styles.imageLabel}>Odometer Images</Text>
+                  <View style={styles.imageRow}>
+                    {latestEndRecord.img_url && (
+                      <TouchableOpacity 
+                        style={styles.imageButton}
+                        onPress={() => viewImage(latestEndRecord.img_url, 'Start Odometer')}
+                      >
+                        <Eye size={16} color="#0d5464ff" />
+                        <Text style={styles.imageButtonText}>Start Odometer</Text>
+                      </TouchableOpacity>
+                    )}
+                    {latestEndRecord.close_speedometer_image && (
+                      <TouchableOpacity 
+                        style={styles.imageButton}
+                        onPress={() => viewImage(latestEndRecord.close_speedometer_image, 'End Odometer')}
+                      >
+                        <Eye size={16} color="#0d5464ff" />
+                        <Text style={styles.imageButtonText}>End Odometer</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+              )}
             </View>
           </View>
         )}
 
         <View style={styles.bottomSpacing} />
       </ScrollView>
-    </View>
+      </View>
+      
+      {/* Order Success Modal */}
+      <OrderSuccess
+        visible={showOrderSuccess}
+        onClose={() => {
+          setShowOrderSuccess(false);
+          setRecreatedOrderData(null);
+          // Optionally navigate back or refresh
+          router.back();
+        }}
+        orderData={recreatedOrderData}
+      />
+    </>
   );
 }
 
@@ -584,6 +931,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 12,
   },
   headerTitle: {
     fontSize: 24,
@@ -603,20 +951,29 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     textTransform: 'capitalize',
   },
-  cancelButton: {
+  headerActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#DC2626',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
-    marginTop: 12,
     justifyContent: 'center',
+    flex: 1,
   },
-  cancelButtonDisabled: {
+  cancelButton: {
+    backgroundColor: '#DC2626',
+  },
+  recreateButton: {
+    backgroundColor: '#10B981',
+  },
+  actionButtonDisabled: {
     opacity: 0.6,
   },
-  cancelButtonText: {
+  actionButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
@@ -885,24 +1242,65 @@ const styles = StyleSheet.create({
   },
   imageRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    gap: 12,
+  },
+  imageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    flex: 1,
+    justifyContent: 'center',
+  },
+  imageButtonText: {
+    fontSize: 14,
+    color: '#0d5464ff',
+    fontWeight: '600',
+    marginLeft: 8,
   },
   imageContainer: {
     alignItems: 'center',
   },
-  speedometerImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 8,
-    backgroundColor: '#F3F4F6',
-  },
-  imageCaption: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginTop: 8,
-    fontWeight: '600',
-  },
   bottomSpacing: {
     height: 24,
+  },
+  visibilityCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  visibilityRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  visibilityInfo: {
+    flex: 1,
+    marginRight: 16,
+  },
+  visibilityLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#202124',
+    marginBottom: 4,
+  },
+  visibilityDescription: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  switchContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 60,
+    height: 40,
   },
 });

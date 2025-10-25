@@ -8,9 +8,10 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { User, Phone, CreditCard, MapPin, Calendar, Wallet, Building2, Edit, Camera, Shield, Copy, ExternalLink } from 'lucide-react-native';
+import { User, Phone, CreditCard, MapPin, Calendar, Wallet, Building2, Edit, Camera, Shield, Copy, ExternalLink, CheckCircle, XCircle, Clock, LucideIcon } from 'lucide-react-native';
 import api from '../../app/api/api'; // Adjust the path as necessary
 
 interface VendorData {
@@ -23,9 +24,25 @@ interface VendorData {
   bank_balance: number;
   aadhar_number: string;
   aadhar_front_img: string;
+  aadhar_status: 'PENDING' | 'VERIFIED' | 'INVALID';
   address: string;
   account_status: string;
   created_at: string;
+}
+
+// Define interface for profile section items
+interface ProfileSectionItem {
+  label: string;
+  value: string;
+  icon: LucideIcon;
+  action: (() => void) | null | undefined;
+  customStyle?: any;
+  statusColor?: string;
+}
+
+interface ProfileSection {
+  title: string;
+  items: ProfileSectionItem[];
 }
 
 export default function ProfileComponent() {
@@ -37,7 +54,6 @@ export default function ProfileComponent() {
     const fetchVendorData = async () => {
       try {
         const response = await api.get('/users/vendor-details/me');
-        // optionally check response.status etc
         setVendorData(response.data);
       } catch (err: any) {
         console.error("Error fetching vendor data:", err);
@@ -63,6 +79,53 @@ export default function ProfileComponent() {
     Alert.alert('Copied', `${label} copied to clipboard!`);
   };
 
+  const openAadharImage = async () => {
+    if (!vendorData?.aadhar_front_img) {
+      Alert.alert('Error', 'Aadhar image not available');
+      return;
+    }
+
+    try {
+      const supported = await Linking.canOpenURL(vendorData.aadhar_front_img);
+      
+      if (supported) {
+        await Linking.openURL(vendorData.aadhar_front_img);
+      } else {
+        Alert.alert('Error', 'Cannot open the image URL');
+      }
+    } catch (error) {
+      console.error('Error opening URL:', error);
+      Alert.alert('Error', 'Failed to open image');
+    }
+  };
+
+  const getAadharStatusConfig = (status: string) => {
+    switch (status) {
+      case 'VERIFIED':
+        return {
+          color: '#10B981',
+          backgroundColor: '#D1FAE5',
+          text: 'Verified',
+          icon: CheckCircle
+        };
+      case 'INVALID':
+        return {
+          color: '#EF4444',
+          backgroundColor: '#FEE2E2',
+          text: 'Invalid',
+          icon: XCircle
+        };
+      case 'PENDING':
+      default:
+        return {
+          color: '#F59E0B',
+          backgroundColor: '#FEF3C7',
+          text: 'Pending',
+          icon: Clock
+        };
+    }
+  };
+
   // If still loading, show a spinner or loading text
   if (loading) {
     return (
@@ -82,10 +145,10 @@ export default function ProfileComponent() {
   }
 
   // Now vendorData is non-null, so safe to use
-  // Use optional chaining or non-null assertion just to be safe
   const data = vendorData!;
+  const aadharStatusConfig = getAadharStatusConfig(data.aadhar_status);
 
-  const profileSections = [
+  const profileSections: ProfileSection[] = [
     {
       title: 'Personal Information',
       items: [
@@ -170,6 +233,16 @@ export default function ProfileComponent() {
           icon: Shield,
           action: () => copyToClipboard(data.aadhar_number, 'Aadhar Number'),
         },
+        {
+          label: 'Aadhar Status',
+          value: aadharStatusConfig.text,
+          icon: aadharStatusConfig.icon,
+          action: undefined,
+          customStyle: {
+            backgroundColor: aadharStatusConfig.backgroundColor,
+          },
+          statusColor: aadharStatusConfig.color,
+        },
       ],
     },
   ];
@@ -212,6 +285,48 @@ export default function ProfileComponent() {
         {/* Content Section */}
         <View style={styles.contentSection}>
 
+          {/* Aadhar Document Section */}
+          {data.aadhar_front_img && (
+            <View style={styles.documentSection}>
+              <Text style={styles.sectionTitle}>Aadhar Document</Text>
+              <View style={styles.documentCard}>
+                <View style={styles.documentHeader}>
+                  <View style={[styles.statusBadge, { backgroundColor: aadharStatusConfig.backgroundColor }]}>
+                    <aadharStatusConfig.icon size={16} color={aadharStatusConfig.color} />
+                    <Text style={[styles.documentStatus, { color: aadharStatusConfig.color, marginLeft: 4 }]}>
+                      {aadharStatusConfig.text}
+                    </Text>
+                  </View>
+                  <TouchableOpacity 
+                    style={styles.viewButton}
+                    onPress={openAadharImage}
+                  >
+                    <ExternalLink size={16} color="#6B7280" />
+                  </TouchableOpacity>
+                </View>
+                
+                <TouchableOpacity onPress={openAadharImage}>
+                  <Image 
+                    source={{ uri: data.aadhar_front_img }} 
+                    style={styles.documentImage}
+                    resizeMode="cover"
+                  />
+                  <Text style={styles.documentNumber}>
+                    Aadhar: ****-****-{data.aadhar_number.slice(-4)}
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.viewFullButton}
+                  onPress={openAadharImage}
+                >
+                  <Text style={styles.viewFullButtonText}>View Full Document</Text>
+                  <ExternalLink size={16} color="#3B82F6" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
           {/* Profile Sections */}
           {profileSections.map((section, sectionIndex) => (
             <View key={sectionIndex} style={styles.section}>
@@ -222,18 +337,30 @@ export default function ProfileComponent() {
                     key={itemIndex}
                     style={[
                       styles.infoItem,
-                      itemIndex < section.items.length - 1 && styles.infoItemBorder
+                      itemIndex < section.items.length - 1 && styles.infoItemBorder,
+                      item.customStyle
                     ]}
                     onPress={item.action ?? undefined}
                     disabled={!item.action}
                   >
                     <View style={styles.infoLeft}>
-                      <View style={styles.infoIcon}>
-                        <item.icon size={20} color="#6B7280" />
+                      <View style={[
+                        styles.infoIcon,
+                        item.statusColor && { backgroundColor: `${item.statusColor}15` }
+                      ]}>
+                        <item.icon 
+                          size={20} 
+                          color={item.statusColor || '#6B7280'} 
+                        />
                       </View>
                       <View style={styles.infoText}>
                         <Text style={styles.infoLabel}>{item.label}</Text>
-                        <Text style={styles.infoValue}>{item.value}</Text>
+                        <Text style={[
+                          styles.infoValue,
+                          item.statusColor && { color: item.statusColor }
+                        ]}>
+                          {item.value}
+                        </Text>
                       </View>
                     </View>
                     {item.action && (
@@ -261,11 +388,11 @@ export default function ProfileComponent() {
               <View style={styles.balanceBreakdown}>
                 <View style={styles.balanceItem}>
                   <Text style={styles.balanceSmallLabel}>Wallet</Text>
-                  <Text style={styles.balanceSmallValue}>₹{data.wallet_balance}</Text>
+                  <Text style={styles.balanceSmallValue}>₹{data.wallet_balance.toLocaleString('en-IN')}</Text>
                 </View>
                 <View style={styles.balanceItem}>
                   <Text style={styles.balanceSmallLabel}>Bank</Text>
-                  <Text style={styles.balanceSmallValue}>₹{data.bank_balance}</Text>
+                  <Text style={styles.balanceSmallValue}>₹{data.bank_balance.toLocaleString('en-IN')}</Text>
                 </View>
               </View>
             </LinearGradient>
@@ -343,7 +470,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   statusBadge: {
-    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
   },
@@ -394,6 +523,7 @@ const styles = StyleSheet.create({
   documentHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 16,
   },
   documentInfo: {
@@ -407,7 +537,6 @@ const styles = StyleSheet.create({
   },
   documentStatus: {
     fontSize: 12,
-    color: '#10B981',
     fontWeight: '600',
   },
   viewButton: {
@@ -420,11 +549,30 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 12,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   documentNumber: {
     fontSize: 14,
     color: '#6B7280',
     textAlign: 'center',
+    marginBottom: 12,
+  },
+  viewFullButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#DBEAFE',
+  },
+  viewFullButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#3B82F6',
+    marginRight: 8,
   },
   section: {
     marginBottom: 24,

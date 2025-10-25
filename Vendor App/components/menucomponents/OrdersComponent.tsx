@@ -5,7 +5,8 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  ActivityIndicator
+  ActivityIndicator,
+  RefreshControl
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import api from '../../app/api/api'; // Adjust the path as necessary
@@ -37,6 +38,7 @@ export default function OrdersComponent(){
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
     
   useEffect(() => {
     fetchOrders();
@@ -49,12 +51,18 @@ export default function OrdersComponent(){
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
       setOrders(sortedOrders);
-      console.log("Fetched orders:", orders);
+      console.log("Fetched orders:", sortedOrders);
     } catch (err: any) {
       console.error("Error fetching vendor orders:", err);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchOrders();
   };
 
   const getStatusColor = (status: string) => {
@@ -246,6 +254,16 @@ export default function OrdersComponent(){
             keyExtractor={(item) => item.id.toString()}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.ordersList}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={['#0d5464']}
+                tintColor="#0d5464"
+                title="Refreshing orders..."
+                titleColor="#666"
+              />
+            }
           />
         )}
       </View>
