@@ -10,14 +10,24 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import api from '../api/api';
 import * as Notifications from 'expo-notifications';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Shield, FileText } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const API_BASE_URL = 'https://drop-cars-api-1049299844333.asia-south2.run.app/api';
+
+interface NotificationResponse {
+  id: string;
+  title: string;
+  message: string;
+  created_at: string;
+  // Add other notification properties as per your API response
+}
 
 export default function TermsAndConditionsScreen() {
-  const [accepted, setAccepted] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [accepted, setAccepted] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
   const router = useRouter();
 
@@ -25,7 +35,7 @@ export default function TermsAndConditionsScreen() {
     registerForPushNotifications();
   }, []);
 
-  const registerForPushNotifications = async () => {
+  const registerForPushNotifications = async (): Promise<void> => {
     if (Platform.OS === 'web') {
       console.log('Push notifications not supported on web');
       setExpoPushToken('web-demo-token');
@@ -56,7 +66,7 @@ export default function TermsAndConditionsScreen() {
     }
   };
 
-  const checkNotificationStatus = async () => {
+  const checkNotificationStatus = async (): Promise<void> => {
     if (!expoPushToken) {
       Alert.alert('Error', 'Push token not available. Please try again.');
       return;
@@ -64,29 +74,65 @@ export default function TermsAndConditionsScreen() {
 
     setLoading(true);
     try {
-      const response = await api.get('/notifications');
+      const accessToken = await AsyncStorage.getItem('accessToken');
       
-      // If API returns success (notification found), proceed to main app
-      if (response.data) {
-        router.replace('/(tabs)');
+      if (!accessToken) {
+        Alert.alert('Error', 'Authentication token not found. Please sign in again.');
+        router.replace('/sign-in');
+        return;
       }
-    } catch (error: any) {
-      if (error.response?.status === 404) {
+
+      const response = await fetch(`${API_BASE_URL}/notifications/`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log('Notification API Response Status:', response.status);
+
+      if (response.ok) {
+        const data: NotificationResponse[] = await response.json();
+        console.log('Notifications found:', data.length);
+        // If API returns success (notification found), proceed to main app
+        router.replace('/(tabs)');
+      } else if (response.status === 403) {
+        const errorData = await response.json();
+        console.log('403 Forbidden - Error details:', errorData);
+        Alert.alert('Access Denied', 'You do not have permission to access notifications.');
+      } else if (response.status === 404) {
         // Notification not found, proceed to permission screen
+        console.log('No notifications found, redirecting to permissions screen');
         router.replace({
           pathname: '/notification-permissions',
           params: { expoPushToken: expoPushToken }
         });
       } else {
-        Alert.alert('Error', 'Failed to check notification status. Please try again.');
-        console.error('Error checking notification:', error);
+        const errorText = await response.text();
+        console.log('API Error Response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+    } catch (error: any) {
+      console.error('Error checking notification:', error);
+      
+      // Check if it's a network error or server error
+      if (error.message.includes('Network request failed') || error.message.includes('Failed to fetch')) {
+        Alert.alert('Network Error', 'Please check your internet connection and try again.');
+      } else {
+        Alert.alert('Error', 'Failed to check notification status. Please try again.');
+      }
+      
+      // Debug: Log the stored token
+      const storedToken = await AsyncStorage.getItem('accessToken');
+      console.log('Stored access token:', storedToken ? 'Exists' : 'Missing');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleContinue = async () => {
+  const handleContinue = async (): Promise<void> => {
     if (!accepted) {
       Alert.alert('Required', 'Please accept the terms and conditions to continue.');
       return;
@@ -175,7 +221,7 @@ export default function TermsAndConditionsScreen() {
 
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.continueButton, !accepted && styles.continueButtonDisabled]}
+          style={[styles.continueButton, (!accepted || loading) && styles.continueButtonDisabled]}
           onPress={handleContinue}
           disabled={!accepted || loading}
         >

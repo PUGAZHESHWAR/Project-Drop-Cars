@@ -27,6 +27,7 @@ interface Order {
   trip_time: string;
   estimated_price: number;
   vendor_price: number;
+  max_time: number;
   platform_fees_percent: number;
   created_at: string;
   cost_per_km: number;
@@ -151,6 +152,12 @@ export default function OrdersComponent(){
                 {formatDate(item.start_date_time)} at {formatTime(item.start_date_time)}
               </Text>
             </View>
+              <View style={styles.dateTimeContainer}>
+              <Calendar size={16} color="#9c1a2dff" />
+              <Text style={styles.dateTimeText}>
+                {"Assign Max Time : "+item.max_time+" Min"}
+              </Text>
+            </View>
           </View>
 
           <View style={styles.routeInfo}>
@@ -216,7 +223,7 @@ export default function OrdersComponent(){
                     : "Null"}
                 </Text>
               ) : (
-                <Text style={styles.platformFeeValue}>₹{item.estimated_price/10}</Text>
+                <Text style={styles.platformFeeValue}>₹{item.admin_profit?item.admin_profit:Math.round((item.vendor_price - item.estimated_price)*item.platform_fees_percent/100)}</Text>
               )}
             </View>
           </View>

@@ -9,8 +9,16 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import api from '../api/api';
 import { Bell, Shield, MessageCircle, CheckCircle } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const API_BASE_URL = 'https://drop-cars-api-1049299844333.asia-south2.run.app/api';
+
+interface NotificationPermissionRequest {
+  permission1: boolean;
+  permission2: boolean;
+  token: string;
+}
 
 export default function NotificationPermissionsScreen() {
   const [permissions, setPermissions] = useState({
@@ -29,7 +37,7 @@ export default function NotificationPermissionsScreen() {
     }
   }, [expoPushToken]);
 
-  const handleAllowNotifications = async () => {
+  const handleAllowNotifications = async (): Promise<void> => {
     if (!expoPushToken) {
       Alert.alert('Error', 'Push token not available.');
       return;
@@ -37,7 +45,15 @@ export default function NotificationPermissionsScreen() {
 
     setLoading(true);
     try {
-      const requestBody = {
+      const accessToken = await AsyncStorage.getItem('accessToken');
+      
+      if (!accessToken) {
+        Alert.alert('Error', 'Authentication token not found. Please sign in again.');
+        router.replace('/sign-in');
+        return;
+      }
+
+      const requestBody: NotificationPermissionRequest = {
         permission1: permissions.permission1,
         permission2: permissions.permission2,
         token: expoPushToken
@@ -45,29 +61,56 @@ export default function NotificationPermissionsScreen() {
 
       console.log('Sending notification permissions:', requestBody);
 
-      const response = await api.post('/notifications', requestBody);
-      
-      if (response.status === 200 || response.status === 201) {
+      const response = await fetch(`${API_BASE_URL}/notifications/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log('Notification permission API Response Status:', response.status);
+
+      if (response.ok) {
+        const responseData = await response.json();
+        console.log('Notification preferences saved successfully:', responseData);
+        
         Alert.alert('Success', 'Notification preferences saved successfully!', [
           {
             text: 'Continue',
             onPress: () => router.replace('/(tabs)')
           }
         ]);
+      } else if (response.status === 403) {
+        const errorData = await response.json();
+        console.log('403 Forbidden - Error details:', errorData);
+        Alert.alert('Access Denied', 'You do not have permission to save notification preferences.');
+      } else {
+        const errorText = await response.text();
+        console.log('API Error Response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
     } catch (error: any) {
       console.error('Error saving notification permissions:', error);
-      Alert.alert(
-        'Error', 
-        'Failed to save notification preferences. Please try again.',
-        [{ text: 'Try Again' }]
-      );
+      
+      // Check if it's a network error or server error
+      if (error.message.includes('Network request failed') || error.message.includes('Failed to fetch')) {
+        Alert.alert('Network Error', 'Please check your internet connection and try again.');
+      } else {
+        Alert.alert(
+          'Error', 
+          'Failed to save notification preferences. Please try again.',
+          [{ text: 'Try Again' }]
+        );
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSkip = () => {
+  const handleSkip = (): void => {
     Alert.alert(
       'Skip Notifications',
       'You can enable notifications later in settings. Are you sure you want to skip?',

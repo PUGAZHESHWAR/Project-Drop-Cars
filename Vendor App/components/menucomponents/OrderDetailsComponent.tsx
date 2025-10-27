@@ -514,7 +514,7 @@ export default function OrderDetailsComponent() {
               <Timer size={16} color="#6B7280" />
               <Text style={styles.infoLabel}>Assign Max Time:</Text>
               <Text style={styles.infoValue}>
-                {isHourlyRental ? `${orderDetails.max_time} min` : orderDetails.trip_time}
+                {orderDetails.max_time+" Min"}
               </Text>
             </View>
             {orderDetails.pickup_notes && (

@@ -263,9 +263,6 @@ export default function ProfileComponent() {
                     {data.full_name.split(' ').map(n => n[0]).join('')}
                   </Text>
                 </View>
-                <TouchableOpacity style={styles.editImageButton}>
-                  <Camera size={16} color="#FFFFFF" />
-                </TouchableOpacity>
               </View>
 
               <View style={styles.profileInfo}>

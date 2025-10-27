@@ -95,7 +95,7 @@ const OrderSuccess: React.FC<OrderSuccessProps> = ({ visible, onClose, orderData
     }
     return hasFareDetails() && orderData.fare.total_amount 
       ? formatAmount(orderData.fare.total_amount)
-      : '₹0.00';
+      : orderData.vendor_price;
   };
 
   return (

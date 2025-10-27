@@ -92,7 +92,7 @@ export default function SignIn() {
           
           {/* Your existing content */}
           <View style={styles.welcomeContainer}>
-            <Text style={styles.welcomeTitle}>Welcome Back Testing Mode</Text>
+            <Text style={styles.welcomeTitle}>Welcome Back</Text>
             <Text style={styles.welcomeSubtitle}>Sign in to your vendor account to continue</Text>
           </View>
         </View>
@@ -138,11 +138,6 @@ export default function SignIn() {
               </TouchableOpacity>
             </View>
           </View>
-
-          <TouchableOpacity style={styles.forgotPassword}>
-            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-          </TouchableOpacity>
-
           <TouchableOpacity
             style={[styles.signInButton, loading && styles.buttonDisabled]}
             onPress={handleSignIn}

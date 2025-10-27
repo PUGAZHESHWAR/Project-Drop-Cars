@@ -505,7 +505,7 @@ export default function QuoteReview({
                     </View>
                   )}
                   <View style={[styles.priceRow, styles.totalRow]}>
-                    <Text style={styles.totalLabel}>Net Amount</Text>
+                    <Text style={styles.totalLabel}>Driver Net Amount</Text>
                     <Text style={styles.totalValue}>₹{quoteData.fare.base_km_amount+quoteData.fare.driver_allowance+quoteData.fare.permit_charges+quoteData.fare.hill_charges+quoteData.fare.toll_charges-(Math.round((quoteData.fare.base_km_amount)*quoteData.fare.Commission_percent/100))}</Text>
                   </View>
                 </>
