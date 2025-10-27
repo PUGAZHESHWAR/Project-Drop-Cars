@@ -546,7 +546,7 @@ export default function OrderDetailsComponent() {
                 <View style={styles.infoRow}>
                 <Timer size={16} color="#6B7280" />
                 <Text style={styles.infoLabel}>Cancelled By:</Text>
-                <Text style={[styles.infoValue,{color: orderDetails.assigned_car_name == "AUTO_CANCELLED"? "red" : "#10B981"}]}>{orderDetails.assigned_car_name == "CANCELLED_BY_VENDOR"?"AUTO_CANCELLED":"VENDOR"}</Text>
+                <Text style={[styles.infoValue,{color: orderDetails.cancelled_by == "AUTO_CANCELLED"? "red" : "#10B981"}]}>{orderDetails.cancelled_by}</Text>
               </View>)
               }
               </>)
@@ -776,14 +776,22 @@ export default function OrderDetailsComponent() {
             <View style={styles.financialRow}>
               <Text style={styles.financialLabel}>Your Earning</Text>
               <Text style={[styles.financialValue, styles.profit]}>
-                -₹{orderDetails.vendor_profit? orderDetails.vendor_profit : "0"}
+                +₹{orderDetails.vendor_profit? orderDetails.vendor_profit : orderDetails.source == "NEW_ORDERS"?
+                ((orderDetails.vendor_price-orderDetails.estimated_price)+Math.round(((orderDetails.cost_per_km || 0) * (orderDetails.trip_distance || 0))*orderDetails.platform_fees_percent)/100) - Math.round((((orderDetails.vendor_price-orderDetails.estimated_price)+Math.round(((orderDetails.cost_per_km || 0) * (orderDetails.trip_distance || 0))*orderDetails.platform_fees_percent)/100))* orderDetails.platform_fees_percent/100)
+                :
+                (orderDetails.vendor_price-orderDetails.estimated_price) - Math.round((orderDetails.vendor_price-orderDetails.estimated_price)*orderDetails.platform_fees_percent/100)
+                }
                 
               </Text>
             </View>
             <View style={styles.financialRow}>
               <Text style={styles.financialLabel}>Platform Fee ({orderDetails.platform_fees_percent}%)</Text>
               <Text style={[styles.financialValue, styles.fee]}>
-                -₹{orderDetails.admin_profit? orderDetails.admin_profit : "0"}
+                -₹{orderDetails.admin_profit? orderDetails.admin_profit :orderDetails.source == "NEW_ORDERS"?
+                Math.round((((orderDetails.vendor_price-orderDetails.estimated_price)+Math.round(((orderDetails.cost_per_km || 0) * (orderDetails.trip_distance || 0))*orderDetails.platform_fees_percent)/100))* orderDetails.platform_fees_percent/100)
+                :
+                Math.round((orderDetails.vendor_price-orderDetails.estimated_price)*orderDetails.platform_fees_percent/100)
+              }
               </Text>
             </View>
             {orderDetails.closed_vendor_price && (
