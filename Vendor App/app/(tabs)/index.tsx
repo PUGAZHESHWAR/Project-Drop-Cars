@@ -295,7 +295,7 @@ export default function DashboardScreen() {
                 <TrendingUp size={20} color="#F59E0B" />
               </View>
               <Text style={styles.compactStatValue}>₹{stats.totalRevenue.toLocaleString()}</Text>
-              <Text style={styles.compactStatLabel}>Revenue</Text>
+              <Text style={styles.compactStatLabel}>Bookings</Text>
             </View>
           </View>
         </View>
