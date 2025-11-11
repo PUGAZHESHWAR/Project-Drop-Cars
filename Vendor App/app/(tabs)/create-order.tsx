@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,14 +8,10 @@ import {
   ScrollView,
   Alert,
   Modal,
-  Animated,
   Dimensions,
   Platform,
   Switch,
 } from 'react-native';
-import publicApi from '../api/api';
-import DateTimePicker from '@react-native-community/datetimepicker';
-
 import { LinearGradient } from 'expo-linear-gradient';
 import type { ColorValue } from 'react-native';
 import { 
@@ -34,18 +30,14 @@ import {
   Send,
   Route,
   Truck,
-  GripVertical,
   ChevronUp,
   ChevronDown as ChevronDownIcon,
   Timer,
-  ToggleLeft,
-  ToggleRight
 } from 'lucide-react-native';
 import LocationPicker from '../../components/LocationPicker';
 import QuoteReview from '../../components/QuoteReview';
 import OrderSuccess from '../../components/OrderSuccess';
-import { getHourlyQuote, confirmHourlyOrder, getQuote as getQuoteAPI, confirmOrder as confirmOrderAPI, formatOrderData, formatHourlyOrderData } from '../../services/orderService';
-import { Picker } from '@react-native-picker/picker';
+
 const { width } = Dimensions.get('window');
 
 interface FormData {
@@ -77,15 +69,23 @@ interface FormData {
   pickup_notes: string;
   send_to: string;
   near_city: string;
+  night_charges: string;
 }
 
 const carTypes = [
-  'Hatchback',
-  'Sedan', 
-  'New Sedan',
-  'SUV',
-  'Innova',
-  'Innova Crysta'
+    'HATCHBACK',
+    'SEDAN_4_PLUS_1',
+    'NEW_SEDAN_2022_MODEL',
+    'ETIOS_4_PLUS_1',
+    'SUV',
+    'SUV_6_PLUS_1',
+    'SUV_7_PLUS_1',
+    'INNOVA',
+    'INNOVA_6_PLUS_1',
+    'INNOVA_7_PLUS_1',
+    'INNOVA_CRYSTA',
+    'INNOVA_CRYSTA_6_PLUS_1',
+    'INNOVA_CRYSTA_7_PLUS_1'
 ];
 
 const tripTypes = [
@@ -99,7 +99,7 @@ export default function CreateOrderScreen() {
   const [formData, setFormData] = useState<FormData>({
     vendor_id: '83a93a3f-2f6e-4bf6-9f78-1c3f9f42b7b1',
     trip_type: 'Oneway',
-    car_type: 'Sedan',
+    car_type: 'HATCHBACK',
     pickup_drop_location: { '0': '', '1': '' },
     start_date_time: new Date(),
     customer_name: '',
@@ -124,7 +124,8 @@ export default function CreateOrderScreen() {
     extra_cost_for_addon_km: '',
     pickup_notes: '',
     send_to: 'ALL',
-    near_city: ''
+    near_city: '',
+    night_charges:'',
   });
 
   const [showCarTypePicker, setShowCarTypePicker] = useState(false);
@@ -136,26 +137,18 @@ export default function CreateOrderScreen() {
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [showQuoteReview, setShowQuoteReview] = useState(false);
   const [showOrderSuccess, setShowOrderSuccess] = useState(false);
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [packageHoursOptions, setPackageHoursOptions] = useState<Array<{hours: number, km_range: number}>>([]);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  const [dateMode, setDateMode] = useState<'date' | 'time'>('date');
   const [showPackageHoursPicker, setShowPackageHoursPicker] = useState(false);
-  
 
-  const fetchPackageHours = async () => {
-    try {
-      const response = await publicApi.get('/orders/rental_hrs_data');
-      setPackageHoursOptions(response.data);
-      console.log('Fetched package hours:', response.data);
-    } catch (error) {
-      console.error('Failed to fetch package hours:', error);
-    }
-  };
-
+  // Mock data for package hours - replace with actual API call
   useEffect(() => {
-    fetchPackageHours();
+    const mockPackageHours = [
+      { hours: 4, km_range: 40 },
+      { hours: 8, km_range: 80 },
+      { hours: 12, km_range: 120 },
+      { hours: 24, km_range: 240 },
+    ];
+    setPackageHoursOptions(mockPackageHours);
   }, []);
 
   // Auto-populate return location for round trip
@@ -287,9 +280,9 @@ export default function CreateOrderScreen() {
     if (newTripType.value === 'Hourly Rental') {
       newLocations = { '0': ''};
     } else if (newTripType.value === 'Round Trip') {
-      newLocations = { '0': '', '1': ''};
-    } else if (newTripType.value === 'Multicity') {
-      newLocations = { '0': '', '1': ''};
+      newLocations = { '0': '', '1': '', '2': ''};
+    } else if (newTripType.value === 'Multy City') {
+      newLocations = { '0': '', '1': '', '2': ''};
     } else {
       newLocations = { '0': '', '1': ''};
     }
@@ -342,26 +335,6 @@ export default function CreateOrderScreen() {
     setShowLocationPicker(true);
   };
 
-  const handleDateTimeChange = (event: any, selectedDate?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowDatePicker(false);
-      setShowTimePicker(false);
-    }
-    
-    if (selectedDate) {
-      handleInputChange('start_date_time', selectedDate);
-    }
-  };
-
-  const showDateTimePicker = (mode: 'date' | 'time') => {
-    setDateMode(mode);
-    if (mode === 'date') {
-      setShowDatePicker(true);
-    } else {
-      setShowTimePicker(true);
-    }
-  };
-
   const getQuote = async () => {
     // Validation
     if (!formData.customer_name.trim()) {
@@ -401,27 +374,32 @@ export default function CreateOrderScreen() {
     setIsLoading(true);
     
     try {
-      let quoteResponse;
+      // Mock quote response - replace with actual API call
+      const mockQuoteResponse = {
+        echo: {
+          ...formData,
+          max_time_to_assign_order: parseInt(formData.max_time_hours) * 60 + parseInt(formData.max_time_minutes),
+        },
+        fare: {
+          total_km: 150,
+          trip_time: '3 hours',
+          base_km_amount: 2000,
+          driver_allowance: parseInt(formData.driver_allowance) || 0,
+          permit_charges: parseInt(formData.permit_charges) || 0,
+          hill_charges: parseInt(formData.hill_charges) || 0,
+          toll_charges: parseInt(formData.toll_charges) || 0,
+          total_amount: 2500,
+          estimate_price: 1800,
+          vendor_amount: 2200,
+          Commission_percent: 10,
+        }
+      };
       
-      if (formData.trip_type === 'Hourly Rental') {
-        // Use hourly rental API
-        console.log('Fetching hourly rental quote...',formData);
-        const apiData = formatHourlyOrderData(formData);
-        console.log('Formatted Hourly API Data:', apiData);
-        quoteResponse = await getHourlyQuote(apiData);
-      } else {
-        // Use regular trip API
-        const apiData = formatOrderData(formData);
-        console.log('Formatted Regular API Data:', apiData);
-        quoteResponse = await getQuoteAPI(apiData);
-      }
-      
-      setQuoteResponse(quoteResponse);
+      setQuoteResponse(mockQuoteResponse);
       setShowQuoteReview(true);
     } catch (error: any) {
       console.error('Error creating quote:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
-      Alert.alert('Error', `Failed to generate quote: ${errorMessage}`);
+      Alert.alert('Error', 'Failed to generate quote. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -431,26 +409,20 @@ export default function CreateOrderScreen() {
     setIsLoading(true);
     
     try {
-      let orderResponse;
+      // Mock order response - replace with actual API call
+      const mockOrderResponse = {
+        order_id: 'ORD-' + Date.now(),
+        status: 'confirmed',
+        message: 'Order created successfully'
+      };
       
-      if (formData.trip_type === 'Hourly Rental') {
-        // Use hourly rental confirm API
-        const apiData = formatHourlyOrderData(formData, sendTo, nearCity);
-        orderResponse = await confirmHourlyOrder(apiData);
-      } else {
-        // Use regular trip confirm API
-        const apiData = formatOrderData(formData, sendTo, nearCity);
-        orderResponse = await confirmOrderAPI(apiData);
-      }
-      
-      setOrderResponse(orderResponse);
+      setOrderResponse(mockOrderResponse);
       setShowQuoteReview(false);
       setShowOrderSuccess(true);
       
     } catch (error: any) {
       console.error('Error confirming order:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
-      Alert.alert('Error', `Failed to create order: ${errorMessage}`);
+      Alert.alert('Error', 'Failed to create order. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -469,12 +441,6 @@ export default function CreateOrderScreen() {
         hour12: true 
       })
     };
-  };
-
-  const getTripTypeIcon = () => {
-    const tripType = getCurrentTripType();
-    const IconComponent = tripType.icon;
-    return <IconComponent size={32} color="#FFFFFF" />;
   };
 
   const getTripTypeColors = (): [ColorValue, ColorValue, ...ColorValue[]] => {
@@ -622,10 +588,7 @@ export default function CreateOrderScreen() {
           <View style={styles.row}>
             <View style={[styles.inputContainer, styles.halfWidth]}>
               <Calendar size={20} color="#6B7280" style={styles.inputIcon} />
-              <TouchableOpacity
-                style={styles.pickerButton}
-                onPress={() => showDateTimePicker('date')}
-              >
+              <TouchableOpacity style={styles.pickerButton}>
                 <Text style={styles.pickerButtonText}>
                   {formatDateTime(formData.start_date_time).date}
                 </Text>
@@ -634,10 +597,7 @@ export default function CreateOrderScreen() {
 
             <View style={[styles.inputContainer, styles.halfWidth]}>
               <Clock size={20} color="#6B7280" style={styles.inputIcon} />
-              <TouchableOpacity
-                style={styles.pickerButton}
-                onPress={() => showDateTimePicker('time')}
-              >
+              <TouchableOpacity style={styles.pickerButton}>
                 <Text style={styles.pickerButtonText}>
                   {formatDateTime(formData.start_date_time).time}
                 </Text>
@@ -879,6 +839,7 @@ export default function CreateOrderScreen() {
                 />
               </View>
             </View>
+            
 
             <View style={styles.row}>
               <View style={[styles.inputContainer, styles.halfWidth]}>
@@ -891,9 +852,23 @@ export default function CreateOrderScreen() {
                   keyboardType="numeric"
                   placeholderTextColor="#9CA3AF"
                 />
-              </View>
+            </View>
 
-              <View style={[styles.inputContainer, styles.halfWidth]}>
+            <View style={[styles.inputContainer, styles.halfWidth]}>
+                <IndianRupee size={20} color="#6B7280" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Night Charges"
+                  value={formData.night_charges}
+                  onChangeText={(value) => handleInputChange('night_charges', value)}
+                  keyboardType="numeric"
+                  placeholderTextColor="#9CA3AF"
+                />
+            </View>
+          </View>
+
+            {!formData.toll_charge_update && (
+              <View style={[styles.inputContainer, { width: '48%' }]}>
                 <IndianRupee size={20} color="#6B7280" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
@@ -904,8 +879,8 @@ export default function CreateOrderScreen() {
                   placeholderTextColor="#9CA3AF"
                 />
               </View>
+            )}
             </View>
-          </View>
         )}
 
         {/* Additional Notes Section */}
@@ -947,25 +922,47 @@ export default function CreateOrderScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Date Time Pickers */}
-      {showDatePicker && (
-        <DateTimePicker
-          value={formData.start_date_time}
-          mode="date"
-          display="default"
-          onChange={handleDateTimeChange}
-          minimumDate={new Date()}
-        />
-      )}
-
-      {showTimePicker && (
-        <DateTimePicker
-          value={formData.start_date_time}
-          mode="time"
-          display="default"
-          onChange={handleDateTimeChange}
-        />
-      )}
+      {/* Trip Type Picker Modal */}
+      <Modal
+        visible={showTripTypePicker}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Select Trip Type</Text>
+            <TouchableOpacity
+              onPress={() => setShowTripTypePicker(false)}
+              style={styles.closeButton}
+            >
+              <X size={24} color="#5F6368" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.modalContent}>
+            {tripTypes.map((type) => (
+              <TouchableOpacity
+                key={type.value}
+                style={[
+                  styles.modalOption,
+                  formData.trip_type === type.value && styles.modalOptionActive
+                ]}
+                onPress={() => {
+                  handleTripTypeChange(type.value);
+                  setShowTripTypePicker(false);
+                }}
+              >
+                <type.icon size={20} color={formData.trip_type === type.value ? "#1E40AF" : "#6B7280"} />
+                <Text style={[
+                  styles.modalOptionText,
+                  formData.trip_type === type.value && styles.modalOptionTextActive
+                ]}>
+                  {type.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </Modal>
 
       {/* Car Type Picker Modal */}
       <Modal
@@ -984,72 +981,34 @@ export default function CreateOrderScreen() {
             </TouchableOpacity>
           </View>
           <View style={styles.modalContent}>
-            {carTypes.map((type) => (
-              <TouchableOpacity
-                key={type}
-                style={[
-                  styles.modalOption,
-                  formData.car_type === type && styles.modalOptionActive
-                ]}
-                onPress={() => {
-                  handleInputChange('car_type', type);
-                  setShowCarTypePicker(false);
-                }}
-              >
-                <Car size={20} color={formData.car_type === type ? "#1E40AF" : "#6B7280"} />
-                <Text style={[
-                  styles.modalOptionText,
-                  formData.car_type === type && styles.modalOptionTextActive
-                ]}>
-                  {type}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-      </Modal>
-
-      {/* Trip Type Picker Modal */}
-      <Modal
-        visible={showTripTypePicker}
-        animationType="slide"
-        presentationStyle="pageSheet"
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Select Trip Type</Text>
-            <TouchableOpacity
-              onPress={() => setShowTripTypePicker(false)}
-              style={styles.closeButton}
-            >
-              <X size={24} color="#5F6368" />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.modalContent}>
-            {tripTypes.map((type) => {
-              const IconComponent = type.icon;
-              return (
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {carTypes.map((type) => (
                 <TouchableOpacity
-                  key={type.value}
+                  key={type}
                   style={[
                     styles.modalOption,
-                    formData.trip_type === type.value && styles.modalOptionActive
+                    formData.car_type === type && styles.modalOptionActive
                   ]}
                   onPress={() => {
-                    handleTripTypeChange(type.value);
-                    setShowTripTypePicker(false);
+                    handleInputChange("car_type", type);
+                    setShowCarTypePicker(false);
                   }}
                 >
-                  <IconComponent size={20} color={formData.trip_type === type.value ? "#1E40AF" : "#6B7280"} />
-                  <Text style={[
-                    styles.modalOptionText,
-                    formData.trip_type === type.value && styles.modalOptionTextActive
-                  ]}>
-                    {type.label}
+                  <Car
+                    size={20}
+                    color={formData.car_type === type ? "#1E40AF" : "#6B7280"}
+                  />
+                  <Text
+                    style={[
+                      styles.modalOptionText,
+                      formData.car_type === type && styles.modalOptionTextActive
+                    ]}
+                  >
+                    {type}
                   </Text>
                 </TouchableOpacity>
-              );
-            })}
+              ))}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -1104,11 +1063,9 @@ export default function CreateOrderScreen() {
           if (activeLocationField) {
             handleLocationChange(activeLocationField, location);
           }
-          setShowLocationPicker(false);
         }}
         title={activeLocationField ? `Select ${getLocationLabel(activeLocationField)}` : 'Select Location'}
         placeholder="Search for a location..."
-        initialValue={activeLocationField ? formData.pickup_drop_location[activeLocationField] : ''}
       />
 
       {/* Quote Review */}
@@ -1129,7 +1086,7 @@ export default function CreateOrderScreen() {
           setFormData({
             vendor_id: '83a93a3f-2f6e-4bf6-9f78-1c3f9f42b7b1',
             trip_type: 'Oneway',
-            car_type: 'Sedan',
+            car_type: 'HATCHBACK',
             pickup_drop_location: { '0': '', '1': '' },
             start_date_time: new Date(),
             customer_name: '',
@@ -1152,7 +1109,8 @@ export default function CreateOrderScreen() {
             extra_cost_for_addon_km: '',
             pickup_notes: '',
             send_to: 'ALL',
-            near_city: ''
+            near_city: '',
+            night_charges:'',
           });
           setQuoteResponse(null);
           setOrderResponse(null);
@@ -1224,10 +1182,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  dragHandle: {
-    padding: 8,
-    marginLeft: 8,
-  },
   reorderControls: {
     flexDirection: 'column',
     marginLeft: 8,
@@ -1298,7 +1252,7 @@ const styles = StyleSheet.create({
   textArea: {
     height: 100,
     textAlignVertical: 'top',
-    paddingTop: 35,
+    paddingTop: 15,
   },
   row: {
     flexDirection: 'row',
