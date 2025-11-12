@@ -76,7 +76,7 @@ interface FormData {
   extra_cost_for_addon_km: string;
   pickup_notes: string;
   send_to: string;
-  near_city: string;
+  near_city: string[];
   night_charges: string
 }
 
@@ -108,7 +108,7 @@ export default function CreateOrderScreen() {
   const [formData, setFormData] = useState<FormData>({
     vendor_id: '83a93a3f-2f6e-4bf6-9f78-1c3f9f42b7b1',
     trip_type: 'Oneway',
-    car_type: 'Sedan',
+    car_type: 'SEDAN_4_PLUS_1',
     pickup_drop_location: { '0': '', '1': '' },
     start_date_time: new Date(),
     customer_name: '',
@@ -124,7 +124,7 @@ export default function CreateOrderScreen() {
     permit_charges: '',
     extra_permit_charges: '',
     hill_charges: '',
-    toll_charges: '',
+    toll_charges: '0',
     // Hourly rental fields
     package_hours: null,
     cost_per_hour: '',
@@ -133,7 +133,7 @@ export default function CreateOrderScreen() {
     extra_cost_for_addon_km: '',
     pickup_notes: '',
     send_to: 'ALL',
-    near_city: '',
+    near_city: ['ALL'],
     night_charges: ''
   });
 
@@ -1200,7 +1200,7 @@ export default function CreateOrderScreen() {
           setFormData({
             vendor_id: '83a93a3f-2f6e-4bf6-9f78-1c3f9f42b7b1',
             trip_type: 'Oneway',
-            car_type: 'Sedan',
+            car_type: 'SEDAN_4_PLUS_1',
             pickup_drop_location: { '0': '', '1': '' },
             start_date_time: new Date(),
             customer_name: '',
@@ -1215,7 +1215,7 @@ export default function CreateOrderScreen() {
             permit_charges: '',
             extra_permit_charges: '',
             hill_charges: '',
-            toll_charges: '',
+            toll_charges: '0',
             package_hours: null,
             cost_per_hour: '',
             extra_cost_per_hour: '',
@@ -1223,7 +1223,7 @@ export default function CreateOrderScreen() {
             extra_cost_for_addon_km: '',
             pickup_notes: '',
             send_to: 'ALL',
-            near_city: '',
+            near_city: ['ALL'],
             night_charges:''
           });
           setQuoteResponse(null);

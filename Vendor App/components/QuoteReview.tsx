@@ -312,6 +312,14 @@ export default function QuoteReview({
                     <Text style={styles.summaryLabel}>Driver(Update Toll)</Text>
                     <Text style={styles.summaryValue}>{quoteData.echo.toll_charge_update ? "YES" : "NO"}</Text>
                   </View>
+
+                {quoteData.fare.remark_trip_min_km > 0 && (
+                    <View style={styles.warningMessage}>
+                      <Text style={styles.warningText}>
+                        Minimum KM for this trip is 130 (Current: {quoteData.fare.remark_trip_min_km} Changed to {quoteData.fare.total_km} KM)
+                      </Text>
+                    </View>
+                  )}
                 </>
               )}
             </View>
@@ -321,14 +329,14 @@ export default function QuoteReview({
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <IndianRupee size={24} color={tripType === 'Hourly Rental' ? "#8B5A3C" : "#1E40AF"} />
-              <Text style={styles.sectionTitle}>Customer Pricing</Text>
+              <Text style={styles.sectionTitle}>Vendor Pricing</Text>
             </View>
             
             <View style={styles.priceCard}>
               {isHourlyRental ? (
                 <>
                   <View style={styles.priceRow}>
-                    <Text style={styles.priceLabel}>Customer Amount (₹{(quoteData.echo.cost_per_hour + quoteData.echo.extra_cost_per_hour)} X {quoteData.echo.package_hours.hours})</Text>
+                    <Text style={styles.priceLabel}>Vendor Amount (₹{(quoteData.echo.cost_per_hour + quoteData.echo.extra_cost_per_hour)} X {quoteData.echo.package_hours.hours})</Text>
                     <Text style={styles.priceValue}>₹{quoteData.fare.vendor_amount}</Text>
                   </View>
 
@@ -354,7 +362,7 @@ export default function QuoteReview({
               ) : (
                 <>
                   <View style={styles.priceRow}>
-                    <Text style={styles.priceLabel}>Customer Amount ({quoteData.fare.total_km} km × ₹{quoteData.echo.cost_per_km + quoteData.echo.extra_cost_per_km})</Text>
+                    <Text style={styles.priceLabel}>Vendor Amount ({quoteData.fare.total_km} km × ₹{quoteData.echo.cost_per_km + quoteData.echo.extra_cost_per_km})</Text>
                     <Text style={styles.priceValue}>₹{quoteData.fare.base_km_amount + Math.round(quoteData.fare.total_km * quoteData.echo.extra_cost_per_km)}</Text>
                   </View>
                 
@@ -386,9 +394,15 @@ export default function QuoteReview({
                     </View>
                   )}
                   
+                  {quoteData.echo.night_charges > 0 && (
+                    <View style={styles.priceRow}>
+                      <Text style={styles.priceLabel}>Night Charges</Text>
+                      <Text style={styles.priceValue}>₹{quoteData.echo.night_charges}</Text>
+                    </View>
+                  )}
                   <View style={[styles.priceRow, styles.totalRow]}>
                     <Text style={styles.totalLabel}>Total Amount</Text>
-                    <Text style={styles.totalValue}>₹{quoteData.fare.total_amount}</Text>
+                    <Text style={styles.totalValue}>₹{quoteData.fare.customer_amount}</Text>
                   </View>
                 </>
               )}
@@ -464,16 +478,23 @@ export default function QuoteReview({
                     </View>
                   )}
                   
-                  <View style={styles.priceRow}>
+                  {quoteData.echo.night_charges > 0 && (
+                    <View style={styles.priceRow}>
+                      <Text style={styles.priceLabel}>Night Charges</Text>
+                      <Text style={styles.priceValue}>₹{quoteData.echo.night_charges}</Text>
+                    </View>
+                  )}
+
+                  {/* <View style={styles.priceRow}>
                     <Text style={styles.priceLabel}>Vendor Basic Commission</Text>
                     <Text style={[styles.priceValue, { color: 'red' }]}>
                       ₹{Math.round((quoteData.fare.base_km_amount) * quoteData.fare.Commission_percent / 100)}
                     </Text>
-                  </View>
+                  </View> */}
                   
                   <View style={[styles.priceRow, styles.totalRow]}>
                     <Text style={styles.totalLabel}>Driver Net Amount</Text>
-                    <Text style={styles.totalValue}>₹{quoteData.fare.base_km_amount + quoteData.fare.driver_allowance + quoteData.fare.permit_charges + quoteData.fare.hill_charges + quoteData.fare.toll_charges - (Math.round((quoteData.fare.base_km_amount) * quoteData.fare.Commission_percent / 100))}</Text>
+                    <Text style={styles.totalValue}>₹ {quoteData.fare.driver_amount}</Text>
                   </View>
                 </>
               )}
@@ -646,16 +667,15 @@ export default function QuoteReview({
     </Modal>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
   },
   header: {
-    paddingTop: 50,
-    paddingBottom: 30,
-    paddingHorizontal: 24,
+    paddingTop: 45,
+    paddingBottom: 20,
+    paddingHorizontal: 16,
   },
   headerContent: {
     flexDirection: 'row',
@@ -667,107 +687,107 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#e9eeffff',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   headerSubtitle: {
-    fontSize: 16,
+    fontSize: 13,
     color: '#e9eeffff',
   },
   closeButton: {
-    padding: 8,
+    padding: 6,
     backgroundColor: '#e9eeffff',
-    borderRadius: 20,
+    borderRadius: 16,
   },
   placeholder: {
-    width: 40,
+    width: 32,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
   },
   section: {
-    marginTop: 24,
+    marginTop: 16,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '600',
     color: '#202124',
-    marginLeft: 12,
+    marginLeft: 8,
     flex: 1,
   },
   routeBadge: {
     backgroundColor: '#E8F4FD',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   routeBadgeText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '600',
     color: '#1E40AF',
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 12,
+    padding: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 3,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 16,
-    paddingBottom: 16,
+    marginBottom: 12,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F3F4',
   },
   detailIcon: {
-    marginRight: 16,
-    marginTop: 2,
+    marginRight: 12,
+    marginTop: 1,
   },
   detailContent: {
     flex: 1,
   },
   detailLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#5F6368',
-    marginBottom: 4,
+    marginBottom: 2,
     fontWeight: '500',
   },
   detailValue: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#202124',
     fontWeight: '600',
   },
   routeItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   lastRouteItem: {
     marginBottom: 0,
   },
   routeIndicator: {
     alignItems: 'center',
-    marginRight: 16,
-    width: 24,
+    marginRight: 12,
+    width: 20,
   },
   routeDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginBottom: 8,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginBottom: 6,
   },
   routeDotStart: {
     backgroundColor: '#10B981',
@@ -779,67 +799,81 @@ const styles = StyleSheet.create({
     backgroundColor: '#DC2626',
   },
   routeLine: {
-    width: 2,
-    height: 32,
+    width: 1.5,
+    height: 24,
     backgroundColor: '#D1D5DB',
     position: 'absolute',
-    top: 12,
+    top: 10,
   },
   routeContent: {
     flex: 1,
-    paddingTop: -4,
+    paddingTop: -2,
   },
   routeLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#5F6368',
     fontWeight: '500',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   routeLocation: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#202124',
     fontWeight: '600',
-    lineHeight: 22,
+    lineHeight: 18,
   },
   summaryCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 12,
+    padding: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 2,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1.5,
     borderColor: '#E8F4FD',
   },
+  warningMessage: {
+  backgroundColor: '#FEF2F2',
+  borderWidth: 1,
+  borderColor: '#FECACA',
+  borderRadius: 8,
+  padding: 12,
+  marginTop: 8,
+},
+warningText: {
+  fontSize: 12,
+  color: '#DC2626',
+  fontWeight: '600',
+  textAlign: 'center',
+},
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F3F4',
   },
   summaryLabel: {
-    fontSize: 16,
+    fontSize: 13,
     color: '#5F6368',
     fontWeight: '500',
   },
   summaryValue: {
-    fontSize: 16,
+    fontSize: 13,
     color: '#1E40AF',
     fontWeight: '600',
   },
   priceCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 12,
+    padding: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 4,
     borderWidth: 1,
     borderColor: '#E8EAED',
   },
@@ -847,38 +881,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F3F4',
   },
   totalRow: {
     borderBottomWidth: 0,
-    paddingTop: 16,
-    borderTopWidth: 2,
+    paddingTop: 12,
+    borderTopWidth: 1.5,
     borderTopColor: '#E8EAED',
     backgroundColor: '#F8FDF9',
-    marginHorizontal: -20,
-    paddingHorizontal: 20,
-    borderRadius: 12,
+    marginHorizontal: -16,
+    paddingHorizontal: 16,
+    borderRadius: 8,
   },
   priceLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#5F6368',
     fontWeight: '500',
     flex: 1,
+    paddingRight: 8,
   },
   priceValue: {
-    fontSize: 16,
+    fontSize: 13,
     color: '#202124',
     fontWeight: '600',
   },
   totalLabel: {
-    fontSize: 18,
+    fontSize: 14,
     color: '#202124',
     fontWeight: '600',
   },
   totalValue: {
-    fontSize: 22,
+    fontSize: 16,
     color: '#059669',
     fontWeight: 'bold',
   },
@@ -886,22 +921,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 10,
+    padding: 14,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
     elevation: 2,
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
   pickerIcon: {
-    marginRight: 12,
+    marginRight: 10,
   },
   pickerText: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 14,
     color: '#202124',
     fontWeight: '500',
   },
@@ -909,27 +944,27 @@ const styles = StyleSheet.create({
     color: '#9AA0A6',
   },
   notesText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#202124',
-    lineHeight: 24,
+    lineHeight: 20,
   },
   confirmButton: {
-    marginVertical: 32,
-    borderRadius: 16,
+    marginVertical: 24,
+    borderRadius: 12,
     overflow: 'hidden',
   },
   disabledButton: {
     opacity: 0.6,
   },
   gradientButton: {
-    paddingVertical: 18,
+    paddingVertical: 16,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
   },
   modalContainer: {
@@ -940,33 +975,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 20,
+    paddingHorizontal: 20,
+    paddingTop: 50,
+    paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E8EAED',
     backgroundColor: '#FFFFFF',
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#202124',
   },
   modalCloseButton: {
-    padding: 8,
+    padding: 6,
   },
   modalContent: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingHorizontal: 20,
+    paddingTop: 16,
   },
   modalOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    marginBottom: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    marginBottom: 6,
     backgroundColor: '#F8F9FA',
     borderWidth: 1,
     borderColor: '#E5E7EB',
@@ -977,20 +1012,20 @@ const styles = StyleSheet.create({
   },
   modalOptionContent: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: 10,
   },
   modalOptionText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#6B7280',
     fontWeight: '500',
-    marginBottom: 2,
+    marginBottom: 1,
   },
   modalOptionTextActive: {
     color: '#1E40AF',
     fontWeight: '600',
   },
   modalOptionSubtext: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#9CA3AF',
   },
 });
