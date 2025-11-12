@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,10 +8,14 @@ import {
   ScrollView,
   Alert,
   Modal,
+  Animated,
+  Dimensions,
   Platform,
   Switch,
 } from 'react-native';
+import publicApi from '../api/api';
 import DateTimePicker from '@react-native-community/datetimepicker';
+
 import { LinearGradient } from 'expo-linear-gradient';
 import type { ColorValue } from 'react-native';
 import { 
@@ -27,13 +31,22 @@ import {
   X,
   ChevronDown,
   Calculator,
+  Send,
   Route,
   Truck,
+  GripVertical,
   ChevronUp,
   ChevronDown as ChevronDownIcon,
   Timer,
+  ToggleLeft,
+  ToggleRight
 } from 'lucide-react-native';
-import { publicApi } from '../api/api';
+import LocationPicker from '../../components/LocationPicker';
+import QuoteReview from '../../components/QuoteReview';
+import OrderSuccess from '../../components/OrderSuccess';
+import { getHourlyQuote, confirmHourlyOrder, getQuote as getQuoteAPI, confirmOrder as confirmOrderAPI, formatOrderData, formatHourlyOrderData } from '../../services/orderService';
+import { Picker } from '@react-native-picker/picker';
+const { width } = Dimensions.get('window');
 
 interface FormData {
   vendor_id: string;
@@ -46,6 +59,7 @@ interface FormData {
   max_time_hours: string;
   max_time_minutes: string;
   toll_charge_update: boolean;
+  // Regular trip fields
   cost_per_km: string;
   extra_cost_per_km: string;
   driver_allowance: string;
@@ -54,6 +68,7 @@ interface FormData {
   extra_permit_charges: string;
   hill_charges: string;
   toll_charges: string;
+  // Hourly rental fields
   package_hours: { hours: number; km_range: number } | null;
   cost_per_hour: string;
   extra_cost_per_hour: string;
@@ -62,24 +77,25 @@ interface FormData {
   pickup_notes: string;
   send_to: string;
   near_city: string;
-  night_charges: string;
+  night_charges: string
 }
 
 const carTypes = [
-  'HATCHBACK',
-  'SEDAN_4_PLUS_1',
-  'NEW_SEDAN_2022_MODEL',
-  'ETIOS_4_PLUS_1',
-  'SUV',
-  'SUV_6_PLUS_1',
-  'SUV_7_PLUS_1',
-  'INNOVA',
-  'INNOVA_6_PLUS_1',
-  'INNOVA_7_PLUS_1',
-  'INNOVA_CRYSTA',
-  'INNOVA_CRYSTA_6_PLUS_1',
-  'INNOVA_CRYSTA_7_PLUS_1'
+  "HATCHBACK",
+  "SEDAN_4_PLUS_1",
+  "NEW_SEDAN_2022_MODEL",
+  "ETIOS_4_PLUS_1",
+  "SUV",
+  "SUV_6_PLUS_1",
+  "SUV_7_PLUS_1",
+  "INNOVA",
+  "INNOVA_6_PLUS_1",
+  "INNOVA_7_PLUS_1",
+  "INNOVA_CRYSTA",
+  "INNOVA_CRYSTA_6_PLUS_1",
+  "INNOVA_CRYSTA_7_PLUS_1"
 ];
+
 
 const tripTypes = [
   { value: 'Oneway', label: 'One Way', minLocations: 2, maxLocations: 2, icon: Car },
@@ -88,30 +104,11 @@ const tripTypes = [
   { value: 'Hourly Rental', label: 'Hourly Rental', minLocations: 1, maxLocations: 1, icon: Timer },
 ];
 
-// const packageHoursOptions = [
-//   { hours: 4, km_range: 40 },
-//   { hours: 8, km_range: 80 },
-//   { hours: 12, km_range: 120 },
-//   { hours: 24, km_range: 240 },
-// ];
-
-
-const mockLocations = [
-  'Mumbai Airport',
-  'Delhi Railway Station',
-  'Bangalore IT Park',
-  'Chennai Marina Beach',
-  'Hyderabad Hi-Tech City',
-  'Pune Station',
-  'Kolkata Airport',
-  'Goa Beach Resort',
-];
-
 export default function CreateOrderScreen() {
   const [formData, setFormData] = useState<FormData>({
     vendor_id: '83a93a3f-2f6e-4bf6-9f78-1c3f9f42b7b1',
     trip_type: 'Oneway',
-    car_type: 'HATCHBACK',
+    car_type: 'Sedan',
     pickup_drop_location: { '0': '', '1': '' },
     start_date_time: new Date(),
     customer_name: '',
@@ -119,6 +116,7 @@ export default function CreateOrderScreen() {
     max_time_hours: '0',
     max_time_minutes: '10',
     toll_charge_update: true,
+    // Regular trip fields
     cost_per_km: '',
     extra_cost_per_km: '',
     driver_allowance: '',
@@ -127,6 +125,7 @@ export default function CreateOrderScreen() {
     extra_permit_charges: '',
     hill_charges: '',
     toll_charges: '',
+    // Hourly rental fields
     package_hours: null,
     cost_per_hour: '',
     extra_cost_per_hour: '',
@@ -135,18 +134,58 @@ export default function CreateOrderScreen() {
     pickup_notes: '',
     send_to: 'ALL',
     near_city: '',
-    night_charges: '',
+    night_charges: ''
   });
 
   const [showCarTypePicker, setShowCarTypePicker] = useState(false);
   const [showTripTypePicker, setShowTripTypePicker] = useState(false);
+  const [activeLocationField, setActiveLocationField] = useState<string | null>(null);
+  const [quoteResponse, setQuoteResponse] = useState<any | null>(null);
+  const [orderResponse, setOrderResponse] = useState<any | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
-  const [showPackageHoursPicker, setShowPackageHoursPicker] = useState(false);
+  const [showQuoteReview, setShowQuoteReview] = useState(false);
+  const [showOrderSuccess, setShowOrderSuccess] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [packageHoursOptions, setPackageHoursOptions] = useState<Array<{hours: number, km_range: number}>>([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [activeLocationField, setActiveLocationField] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [packageHoursOptions,setPackageHoursOptions] = useState([{hours: 12, km_range: 120 }])
+  const [dateMode, setDateMode] = useState<'date' | 'time'>('date');
+  const [showPackageHoursPicker, setShowPackageHoursPicker] = useState(false);
+  
+
+  const fetchPackageHours = async () => {
+    try {
+      const response = await publicApi.get('/orders/rental_hrs_data');
+      setPackageHoursOptions(response.data);
+      console.log('Fetched package hours:', response.data);
+    } catch (error) {
+      console.error('Failed to fetch package hours:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchPackageHours();
+  }, []);
+
+  // Auto-populate return location for round trip
+  useEffect(() => {
+    if (formData.trip_type === 'Round Trip') {
+      const locations = getLocationKeys();
+      const lastLocationIndex = (locations.length - 1).toString();
+      const firstLocation = formData.pickup_drop_location['0'];
+      
+      if (firstLocation && locations.length > 1) {
+        setFormData(prev => ({
+          ...prev,
+          pickup_drop_location: {
+            ...prev.pickup_drop_location,
+            [lastLocationIndex]: firstLocation
+          }
+        }));
+      }
+    }
+  }, [formData.trip_type, formData.pickup_drop_location['0']]);
 
   const getCurrentTripType = () => {
     return tripTypes.find(type => type.value === formData.trip_type) || tripTypes[0];
@@ -168,85 +207,55 @@ export default function CreateOrderScreen() {
     return `Stop ${position}`;
   };
 
-  const fetchPackageHours = async () => {
-    try {
-      const response = await publicApi.get('/orders/rental_hrs_data');
-      setPackageHoursOptions(response.data);
-      console.log('Fetched package hours:', response.data);
-    } catch (error) {
-      console.error('Failed to fetch package hours:', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchPackageHours();
-  }, []);
-
-  const handleTripTypeChange = (tripType: string) => {
-    const newTripType = tripTypes.find(type => type.value === tripType)!;
-    let newLocations: { [key: string]: string } = {};
-    
-    if (newTripType.value === 'Hourly Rental') {
-      newLocations = { '0': '' };
-    } else if (newTripType.value === 'Round Trip') {
-      newLocations = { '0': '', '1': '', '2': '' };
-    } else if (newTripType.value === 'Multy City') {
-      newLocations = { '0': '', '1': '', '2': '' };
-    } else {
-      newLocations = { '0': '', '1': '' };
-    }
-    
-    setFormData(prev => ({
-      ...prev,
-      trip_type: tripType,
-      pickup_drop_location: newLocations
-    }));
-  };
-
-  const handleInputChange = (field: keyof FormData, value: string | Date | boolean | { hours: number; km_range: number } | null) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleLocationChange = (index: string, value: string) => {
-    const newLocations = { ...formData.pickup_drop_location, [index]: value };
-    
-    if (formData.trip_type === 'Round Trip' && index === '0') {
-      const keys = getLocationKeys();
-      const lastIndex = (keys.length - 1).toString();
-      if (keys.length > 1) {
-        newLocations[lastIndex] = value;
-      }
-    }
-    
-    setFormData(prev => ({ ...prev, pickup_drop_location: newLocations }));
-  };
-
-  const openLocationPicker = (index: string) => {
-    const keys = getLocationKeys();
-    const position = keys.indexOf(index);
-    if (formData.trip_type === 'Round Trip' && position === keys.length - 1) {
-      Alert.alert('Info', 'Return location is automatically set to pickup location for round trip');
-      return;
-    }
-    
-    setActiveLocationField(index);
-    setShowLocationPicker(true);
-  };
-
   const addLocation = () => {
     const keys = getLocationKeys();
     const nextIndex = keys.length.toString();
     const maxLocations = getCurrentTripType().maxLocations;
     
     if (keys.length < maxLocations) {
-      const newLocations = { ...formData.pickup_drop_location, [nextIndex]: '' };
+      const newLocations = {
+        ...formData.pickup_drop_location,
+        [nextIndex]: ''
+      };
       
+      // For round trip, auto-populate the last location with pickup location
       if (formData.trip_type === 'Round Trip' && formData.pickup_drop_location['0']) {
-        const lastIndex = keys.length.toString();
+        const lastIndex = (keys.length).toString();
         newLocations[lastIndex] = formData.pickup_drop_location['0'];
       }
       
-      setFormData(prev => ({ ...prev, pickup_drop_location: newLocations }));
+      setFormData(prev => ({
+        ...prev,
+        pickup_drop_location: newLocations
+      }));
+    }
+  };
+
+  const removeLocation = (index: string) => {
+    const keys = getLocationKeys();
+    if (keys.length > getCurrentTripType().minLocations) {
+      const newLocations = { ...formData.pickup_drop_location };
+      delete newLocations[index];
+      
+      // Reindex remaining locations
+      const remaining = Object.entries(newLocations)
+        .sort(([a], [b]) => parseInt(a) - parseInt(b));
+      
+      const reindexed: { [key: string]: string } = {};
+      remaining.forEach(([, value], i) => {
+        reindexed[i.toString()] = value;
+      });
+
+      // For round trip, auto-populate the last location with pickup location
+      if (formData.trip_type === 'Round Trip' && reindexed['0'] && Object.keys(reindexed).length > 1) {
+        const lastIndex = (Object.keys(reindexed).length - 1).toString();
+        reindexed[lastIndex] = reindexed['0'];
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        pickup_drop_location: reindexed
+      }));
     }
   };
 
@@ -265,12 +274,16 @@ export default function CreateOrderScreen() {
       reindexed[i.toString()] = formData.pickup_drop_location[key];
     });
 
+    // For round trip, auto-populate the last location with pickup location
     if (formData.trip_type === 'Round Trip' && reindexed['0']) {
       const lastIndex = (Object.keys(reindexed).length - 1).toString();
       reindexed[lastIndex] = reindexed['0'];
     }
 
-    setFormData(prev => ({ ...prev, pickup_drop_location: reindexed }));
+    setFormData(prev => ({
+      ...prev,
+      pickup_drop_location: reindexed
+    }));
   };
 
   const canReorderLocations = () => {
@@ -278,24 +291,178 @@ export default function CreateOrderScreen() {
     return tripType.value === 'Round Trip' || tripType.value === 'Multy City';
   };
 
-  const onDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(false);
+  const handleTripTypeChange = (tripType: string) => {
+    const newTripType = tripTypes.find(type => type.value === tripType)!;
+    let newLocations: { [key: string]: string } = {};
+    if (newTripType.value === 'Hourly Rental') {
+      newLocations = { '0': ''};
+    } else if (newTripType.value === 'Round Trip') {
+      newLocations = { '0': '', '1': ''};
+    } else if (newTripType.value === 'Multicity') {
+      newLocations = { '0': '', '1': ''};
+    } else {
+      newLocations = { '0': '', '1': ''};
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      trip_type: tripType,
+      pickup_drop_location: newLocations
+    }));
+  };
+
+  const handleInputChange = (field: keyof FormData, value: string | Date | boolean | { hours: number; km_range: number } | null) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleLocationChange = (index: string, value: string) => {
+    const newLocations = {
+      ...formData.pickup_drop_location,
+      [index]: value
+    };
+    
+    // For round trip, auto-populate the last location with pickup location
+    if (formData.trip_type === 'Round Trip' && index === '0') {
+      const keys = getLocationKeys();
+      const lastIndex = (keys.length - 1).toString();
+      if (keys.length > 1) {
+        newLocations[lastIndex] = value;
+      }
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      pickup_drop_location: newLocations
+    }));
+  };
+
+  const openLocationPicker = (index: string) => {
+    // For round trip return location, don't allow editing
+    const keys = getLocationKeys();
+    const position = keys.indexOf(index);
+    if (formData.trip_type === 'Round Trip' && position === keys.length - 1) {
+      Alert.alert('Info', 'Return location is automatically set to pickup location for round trip');
+      return;
+    }
+    
+    setActiveLocationField(index);
+    setShowLocationPicker(true);
+  };
+
+  const handleDateTimeChange = (event: any, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+      setShowTimePicker(false);
+    }
+    
     if (selectedDate) {
-      const newDateTime = new Date(formData.start_date_time);
-      newDateTime.setFullYear(selectedDate.getFullYear());
-      newDateTime.setMonth(selectedDate.getMonth());
-      newDateTime.setDate(selectedDate.getDate());
-      handleInputChange('start_date_time', newDateTime);
+      handleInputChange('start_date_time', selectedDate);
     }
   };
 
-  const onTimeChange = (event: any, selectedTime?: Date) => {
-    setShowTimePicker(false);
-    if (selectedTime) {
-      const newDateTime = new Date(formData.start_date_time);
-      newDateTime.setHours(selectedTime.getHours());
-      newDateTime.setMinutes(selectedTime.getMinutes());
-      handleInputChange('start_date_time', newDateTime);
+  const showDateTimePicker = (mode: 'date' | 'time') => {
+    setDateMode(mode);
+    if (mode === 'date') {
+      setShowDatePicker(true);
+    } else {
+      setShowTimePicker(true);
+    }
+  };
+
+  const getQuote = async () => {
+    // Validation
+    if (!formData.customer_name.trim()) {
+      Alert.alert('Error', 'Please enter customer name');
+      return;
+    }
+    if (!formData.customer_number.trim()) {
+      Alert.alert('Error', 'Please enter customer number');
+      return;
+    }
+    
+    const locationKeys = getLocationKeys();
+    for (const key of locationKeys) {
+      if (!formData.pickup_drop_location[key]) {
+        Alert.alert('Error', `Please enter ${getLocationLabel(key).toLowerCase()}`);
+        return;
+      }
+    }
+    
+    // Different validation for hourly rental vs regular trips
+    if (formData.trip_type === 'Hourly Rental') {
+      if (!formData.package_hours) {
+        Alert.alert('Error', 'Please select package hours');
+        return;
+      }
+      if (!formData.cost_per_hour) {
+        Alert.alert('Error', 'Please enter cost per hour');
+        return;
+      }
+    } else {
+      if (!formData.cost_per_km) {
+        Alert.alert('Error', 'Please enter cost per km');
+        return;
+      }
+    }
+
+    setIsLoading(true);
+    
+    try {
+      let quoteResponse;
+      
+      if (formData.trip_type === 'Hourly Rental') {
+        // Use hourly rental API
+        console.log('Fetching hourly rental quote...',formData);
+        const apiData = formatHourlyOrderData(formData);
+        console.log('Formatted Hourly API Data:', apiData);
+        quoteResponse = await getHourlyQuote(apiData);
+      } else {
+        // Use regular trip API
+        const apiData = formatOrderData(formData);
+        console.log('Formatted Regular API Data:', apiData);
+        quoteResponse = await getQuoteAPI(apiData);
+      }
+      
+      setQuoteResponse(quoteResponse);
+      setShowQuoteReview(true);
+    } catch (error: any) {
+      console.error('Error creating quote:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
+      Alert.alert('Error', `Failed to generate quote: ${errorMessage}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const confirmOrder = async (sendTo: string, nearCity?: string) => {
+    setIsLoading(true);
+    
+    try {
+      let orderResponse;
+      
+      if (formData.trip_type === 'Hourly Rental') {
+        // Use hourly rental confirm API
+        const apiData = formatHourlyOrderData(formData, sendTo, nearCity);
+        orderResponse = await confirmHourlyOrder(apiData);
+      } else {
+        // Use regular trip confirm API
+        const apiData = formatOrderData(formData, sendTo, nearCity);
+        orderResponse = await confirmOrderAPI(apiData);
+      }
+      
+      setOrderResponse(orderResponse);
+      setShowQuoteReview(false);
+      setShowOrderSuccess(true);
+      
+    } catch (error: any) {
+      console.error('Error confirming order:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
+      Alert.alert('Error', `Failed to create order: ${errorMessage}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -314,35 +481,18 @@ export default function CreateOrderScreen() {
     };
   };
 
+  const getTripTypeIcon = () => {
+    const tripType = getCurrentTripType();
+    const IconComponent = tripType.icon;
+    return <IconComponent size={32} color="#FFFFFF" />;
+  };
+
   const getTripTypeColors = (): [ColorValue, ColorValue, ...ColorValue[]] => {
     if (formData.trip_type === 'Hourly Rental') {
       return ['#8B5A3C', '#A0522D', '#CD853F'];
     }
+    // All other trip types use the same blue color scheme
     return ['#1E40AF', '#3B82F6', '#60A5FA'];
-  };
-
-  const getQuote = async () => {
-    if (!formData.customer_name.trim()) {
-      Alert.alert('Error', 'Please enter customer name');
-      return;
-    }
-    if (!formData.customer_number.trim()) {
-      Alert.alert('Error', 'Please enter customer number');
-      return;
-    }
-
-    setIsLoading(true);
-    
-    try {
-      setTimeout(() => {
-        setIsLoading(false);
-        Alert.alert('Success', 'Quote generated successfully!');
-      }, 2000);
-    } catch (error: any) {
-      console.error('Error creating quote:', error);
-      Alert.alert('Error', 'Failed to generate quote. Please try again.');
-      setIsLoading(false);
-    }
   };
 
   return (
@@ -614,7 +764,7 @@ export default function CreateOrderScreen() {
                   <IndianRupee size={18} color="#6B7280" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter cost per hour"
+                    placeholder="Cost/hour"
                     value={formData.cost_per_hour}
                     onChangeText={(value) => handleInputChange('cost_per_hour', value)}
                     keyboardType="numeric"
@@ -629,7 +779,7 @@ export default function CreateOrderScreen() {
                   <IndianRupee size={18} color="#6B7280" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter extra cost"
+                    placeholder="Extra/hour"
                     value={formData.extra_cost_per_hour}
                     onChangeText={(value) => handleInputChange('extra_cost_per_hour', value)}
                     keyboardType="numeric"
@@ -646,7 +796,7 @@ export default function CreateOrderScreen() {
                   <IndianRupee size={18} color="#6B7280" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter addon km cost"
+                    placeholder="Cost/KM"
                     value={formData.cost_for_addon_km}
                     onChangeText={(value) => handleInputChange('cost_for_addon_km', value)}
                     keyboardType="numeric"
@@ -661,7 +811,7 @@ export default function CreateOrderScreen() {
                   <IndianRupee size={18} color="#6B7280" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter extra addon cost"
+                    placeholder="Extra/KM"
                     value={formData.extra_cost_for_addon_km}
                     onChangeText={(value) => handleInputChange('extra_cost_for_addon_km', value)}
                     keyboardType="numeric"
@@ -685,7 +835,7 @@ export default function CreateOrderScreen() {
                   <IndianRupee size={18} color="#6B7280" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter cost per km"
+                    placeholder="Cost/KM"
                     value={formData.cost_per_km}
                     onChangeText={(value) => handleInputChange('cost_per_km', value)}
                     keyboardType="numeric"
@@ -700,7 +850,7 @@ export default function CreateOrderScreen() {
                   <IndianRupee size={18} color="#6B7280" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter extra cost"
+                    placeholder="Extra/KM"
                     value={formData.extra_cost_per_km}
                     onChangeText={(value) => handleInputChange('extra_cost_per_km', value)}
                     keyboardType="numeric"
@@ -717,7 +867,7 @@ export default function CreateOrderScreen() {
                   <Car size={18} color="#6B7280" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter driver allowance"
+                    placeholder="DA"
                     value={formData.driver_allowance}
                     onChangeText={(value) => handleInputChange('driver_allowance', value)}
                     keyboardType="numeric"
@@ -732,7 +882,7 @@ export default function CreateOrderScreen() {
                   <Car size={18} color="#6B7280" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter extra allowance"
+                    placeholder="Extra DA"
                     value={formData.extra_driver_allowance}
                     onChangeText={(value) => handleInputChange('extra_driver_allowance', value)}
                     keyboardType="numeric"
@@ -749,7 +899,7 @@ export default function CreateOrderScreen() {
                   <FileText size={18} color="#6B7280" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter permit charges"
+                    placeholder="Permit"
                     value={formData.permit_charges}
                     onChangeText={(value) => handleInputChange('permit_charges', value)}
                     keyboardType="numeric"
@@ -764,7 +914,7 @@ export default function CreateOrderScreen() {
                   <FileText size={18} color="#6B7280" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter extra charges"
+                    placeholder="Ext Permit"
                     value={formData.extra_permit_charges}
                     onChangeText={(value) => handleInputChange('extra_permit_charges', value)}
                     keyboardType="numeric"
@@ -781,7 +931,7 @@ export default function CreateOrderScreen() {
                   <Mountain size={18} color="#6B7280" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter hill charges"
+                    placeholder="Hill charges"
                     value={formData.hill_charges}
                     onChangeText={(value) => handleInputChange('hill_charges', value)}
                     keyboardType="numeric"
@@ -796,7 +946,7 @@ export default function CreateOrderScreen() {
                   <IndianRupee size={18} color="#6B7280" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter night charges"
+                    placeholder="Ngt charges"
                     value={formData.night_charges}
                     onChangeText={(value) => handleInputChange('night_charges', value)}
                     keyboardType="numeric"
@@ -813,7 +963,7 @@ export default function CreateOrderScreen() {
                   <IndianRupee size={18} color="#6B7280" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter toll charges"
+                    placeholder="Toll charges"
                     value={formData.toll_charges}
                     onChangeText={(value) => handleInputChange('toll_charges', value)}
                     keyboardType="numeric"
@@ -871,7 +1021,7 @@ export default function CreateOrderScreen() {
           value={formData.start_date_time}
           mode="date"
           display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={onDateChange}
+          // onChange={onDateChange}
           minimumDate={new Date()}
         />
       )}
@@ -882,7 +1032,7 @@ export default function CreateOrderScreen() {
           value={formData.start_date_time}
           mode="time"
           display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={onTimeChange}
+          // onChange={onTimeChange}
         />
       )}
 
@@ -1019,45 +1169,69 @@ export default function CreateOrderScreen() {
         </View>
       </Modal>
 
-      {/* Location Picker Modal */}
-      <Modal
+      {/* Location Picker */}
+      <LocationPicker
         visible={showLocationPicker}
-        animationType="slide"
-        presentationStyle="pageSheet"
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>
-              {activeLocationField ? `Select ${getLocationLabel(activeLocationField)}` : 'Select Location'}
-            </Text>
-            <TouchableOpacity
-              onPress={() => setShowLocationPicker(false)}
-              style={styles.closeButton}
-            >
-              <X size={22} color="#5F6368" />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.modalContent}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {mockLocations.map((location, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.modalOption}
-                  onPress={() => {
-                    if (activeLocationField) {
-                      handleLocationChange(activeLocationField, location);
-                    }
-                    setShowLocationPicker(false);
-                  }}
-                >
-                  <MapPin size={18} color="#6B7280" />
-                  <Text style={styles.modalOptionText}>{location}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setShowLocationPicker(false)}
+        onLocationSelect={(location) => {
+          if (activeLocationField) {
+            handleLocationChange(activeLocationField, location);
+          }
+        }}
+        title={activeLocationField ? `Select ${getLocationLabel(activeLocationField)}` : 'Select Location'}
+        placeholder="Search for a location..."
+      />
+
+         {/* Quote Review */}
+      <QuoteReview
+        visible={showQuoteReview}
+        onClose={() => setShowQuoteReview(false)}
+        quoteData={quoteResponse}
+        onConfirmOrder={confirmOrder}
+        isLoading={isLoading}
+      />
+
+      {/* Order Success */}
+      <OrderSuccess
+        visible={showOrderSuccess}
+        onClose={() => {
+          setShowOrderSuccess(false);
+          // Reset form
+          setFormData({
+            vendor_id: '83a93a3f-2f6e-4bf6-9f78-1c3f9f42b7b1',
+            trip_type: 'Oneway',
+            car_type: 'Sedan',
+            pickup_drop_location: { '0': '', '1': '' },
+            start_date_time: new Date(),
+            customer_name: '',
+            customer_number: '',
+            max_time_hours: '0',
+            max_time_minutes: '10',
+            toll_charge_update: true,
+            cost_per_km: '',
+            extra_cost_per_km: '',
+            driver_allowance: '',
+            extra_driver_allowance: '',
+            permit_charges: '',
+            extra_permit_charges: '',
+            hill_charges: '',
+            toll_charges: '',
+            package_hours: null,
+            cost_per_hour: '',
+            extra_cost_per_hour: '',
+            cost_for_addon_km: '',
+            extra_cost_for_addon_km: '',
+            pickup_notes: '',
+            send_to: 'ALL',
+            near_city: '',
+            night_charges:''
+          });
+          setQuoteResponse(null);
+          setOrderResponse(null);
+        }}
+        orderData={orderResponse}
+      />
+
     </View>
   );
 }

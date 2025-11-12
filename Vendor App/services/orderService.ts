@@ -60,6 +60,7 @@ interface FormData {
   extra_cost_per_hour?: string;
   cost_for_addon_km?: string;
   extra_cost_for_addon_km?: string;
+  night_charges? : string
 }
 
 // ----------------------
@@ -175,6 +176,7 @@ export const formatOrderData = (
     ...(formData.extra_permit_charges && { extra_permit_charges: parseFloat(formData.extra_permit_charges) }),
     ...(formData.hill_charges && { hill_charges: parseFloat(formData.hill_charges) }),
     ...(formData.toll_charges && { toll_charges: parseFloat(formData.toll_charges) }),
+    ...(formData.night_charges && { night_charges: parseFloat(formData.night_charges) }),
     ...(sendTo && { send_to: sendTo }),
     ...(sendTo === 'NEAR_CITY' && nearCity && { near_city: nearCity }),
   };
