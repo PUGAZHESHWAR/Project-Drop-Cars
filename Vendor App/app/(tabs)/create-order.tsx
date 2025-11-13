@@ -437,34 +437,63 @@ export default function CreateOrderScreen() {
     }
   };
 
-  const confirmOrder = async (sendTo: string, nearCity?: string) => {
-    setIsLoading(true);
+  // const confirmOrder = async (sendTo: string, nearCity?: string) => {
+  //   setIsLoading(true);
     
-    try {
-      let orderResponse;
+  //   try {
+  //     let orderResponse;
       
-      if (formData.trip_type === 'Hourly Rental') {
-        // Use hourly rental confirm API
-        const apiData = formatHourlyOrderData(formData, sendTo, nearCity);
-        orderResponse = await confirmHourlyOrder(apiData);
-      } else {
-        // Use regular trip confirm API
-        const apiData = formatOrderData(formData, sendTo, nearCity);
-        orderResponse = await confirmOrderAPI(apiData);
-      }
+  //     if (formData.trip_type === 'Hourly Rental') {
+  //       // Use hourly rental confirm API
+  //       const apiData = formatHourlyOrderData(formData, sendTo, nearCity);
+  //       orderResponse = await confirmHourlyOrder(apiData);
+  //     } else {
+  //       // Use regular trip confirm API
+  //       const apiData = formatOrderData(formData, sendTo, nearCity);
+  //       orderResponse = await confirmOrderAPI(apiData);
+  //     }
       
-      setOrderResponse(orderResponse);
-      setShowQuoteReview(false);
-      setShowOrderSuccess(true);
+  //     setOrderResponse(orderResponse);
+  //     setShowQuoteReview(false);
+  //     setShowOrderSuccess(true);
       
-    } catch (error: any) {
-      console.error('Error confirming order:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
-      Alert.alert('Error', `Failed to create order: ${errorMessage}`);
-    } finally {
-      setIsLoading(false);
+  //   } catch (error: any) {
+  //     console.error('Error confirming order:', error);
+  //     const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
+  //     Alert.alert('Error', `Failed to create order: ${errorMessage}`);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  const confirmOrder = async (sendTo: string, nearCity?: string[]) => { // Change to string[]
+  setIsLoading(true);
+  
+  try {
+    let orderResponse;
+    
+    if (formData.trip_type === 'Hourly Rental') {
+      // Use hourly rental confirm API
+      const apiData = formatHourlyOrderData(formData, sendTo, nearCity); // Pass array
+      orderResponse = await confirmHourlyOrder(apiData);
+    } else {
+      // Use regular trip confirm API
+      const apiData = formatOrderData(formData, sendTo, nearCity); // Pass array
+      orderResponse = await confirmOrderAPI(apiData);
     }
-  };
+    
+    setOrderResponse(orderResponse);
+    setShowQuoteReview(false);
+    setShowOrderSuccess(true);
+    
+  } catch (error: any) {
+    console.error('Error confirming order:', error);
+    const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
+    Alert.alert('Error', `Failed to create order: ${errorMessage}`);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const formatDateTime = (date: Date) => {
     return {

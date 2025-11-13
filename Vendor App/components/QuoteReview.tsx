@@ -52,7 +52,7 @@ interface QuoteReviewProps {
   visible: boolean;
   onClose: () => void;
   quoteData: any;
-  onConfirmOrder: (sendTo: string, nearCity?: string) => Promise<void>;
+  onConfirmOrder: (sendTo: string, nearCity?: string[]) => Promise<void>; // Change to string[]
   isLoading: boolean;
 }
 
@@ -66,18 +66,19 @@ export default function QuoteReview({
   const [showSendToPicker, setShowSendToPicker] = useState(false);
   const [showNearCityPicker, setShowNearCityPicker] = useState(false);
   const [sendTo, setSendTo] = useState<'ALL' | 'NEAR_CITY'>('ALL');
+  const [selectedCities, setSelectedCities] = useState<string[]>([]); 
   const [nearCity, setNearCity] = useState('');
   
   console.log('Quote Data:', quoteData);
   
   const handleConfirmOrder = async () => {
-    if (sendTo === 'NEAR_CITY' && !nearCity) {
-      Alert.alert('Error', 'Please select a near city when sending to NEAR_CITY');
+    if (sendTo === 'NEAR_CITY' && selectedCities.length === 0) {
+      Alert.alert('Error', 'Please select at least one city when sending to NEAR_CITY');
       return;
     }
 
     try {
-      await onConfirmOrder(sendTo, nearCity);
+      await onConfirmOrder(sendTo, selectedCities); // Pass array instead of string
     } catch (error) {
       Alert.alert('Error', 'Failed to create order. Please try again.');
     }
@@ -519,18 +520,29 @@ export default function QuoteReview({
               <ChevronDown size={20} color={tripType === 'Hourly Rental' ? "#8B5A3C" : "#1E40AF"} />
             </TouchableOpacity>
 
-            {sendTo === 'NEAR_CITY' && (
-              <TouchableOpacity
-                style={[styles.pickerButton, { marginTop: 12 }]}
-                onPress={() => setShowNearCityPicker(true)}
-              >
-                <MapPin size={20} color={tripType === 'Hourly Rental' ? "#8B5A3C" : "#1E40AF"} style={styles.pickerIcon} />
-                <Text style={[styles.pickerText, !nearCity && styles.pickerPlaceholder]}>
-                  {nearCity || 'Select Near City'}
-                </Text>
-                <ChevronDown size={20} color={tripType === 'Hourly Rental' ? "#8B5A3C" : "#1E40AF"} />
-              </TouchableOpacity>
+      {sendTo === 'NEAR_CITY' && (
+        <TouchableOpacity
+          style={[styles.pickerButton, { marginTop: 12 }]}
+          onPress={() => setShowNearCityPicker(true)}
+        >
+          <MapPin size={20} color={tripType === 'Hourly Rental' ? "#8B5A3C" : "#1E40AF"} style={styles.pickerIcon} />
+          <View style={styles.selectedCitiesContainer}>
+            <Text style={[styles.pickerText, selectedCities.length === 0 && styles.pickerPlaceholder]}>
+              {selectedCities.length === 0 
+                ? 'Select Cities' 
+                : `${selectedCities.length} city${selectedCities.length > 1 ? 's' : ''} selected`
+              }
+            </Text>
+            {selectedCities.length > 0 && (
+              <Text style={styles.selectedCitiesText}>
+                {selectedCities.slice(0, 2).join(', ')}
+                {selectedCities.length > 2 && ` +${selectedCities.length - 2} more`}
+              </Text>
             )}
+          </View>
+          <ChevronDown size={20} color={tripType === 'Hourly Rental' ? "#8B5A3C" : "#1E40AF"} />
+        </TouchableOpacity>
+      )}
           </View>
 
           {quoteData.echo.pickup_notes && (
@@ -629,40 +641,103 @@ export default function QuoteReview({
         </Modal>
 
         {/* Near City Picker Modal */}
-        <Modal
-          visible={showNearCityPicker}
-          animationType="slide"
-          presentationStyle="pageSheet"
+{/* Multi-Select Near City Picker Modal */}
+<Modal
+  visible={showNearCityPicker}
+  animationType="slide"
+  presentationStyle="pageSheet"
+>
+  <View style={styles.modalContainer}>
+    <View style={styles.modalHeader}>
+      <Text style={styles.modalTitle}>Select Cities ({selectedCities.length} selected)</Text>
+      <View style={styles.modalHeaderActions}>
+        <TouchableOpacity
+          onPress={() => {
+            setSelectedCities([]);
+          }}
+          style={styles.clearButton}
         >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Near City</Text>
-              <TouchableOpacity
-                onPress={() => setShowNearCityPicker(false)}
-                style={styles.modalCloseButton}
-              >
-                <X size={24} color="#5F6368" />
-              </TouchableOpacity>
-            </View>
-            <ScrollView style={styles.modalContent}>
-              {cities.map((city) => (
-                <TouchableOpacity
-                  key={city}
-                  style={[styles.modalOption, nearCity === city && styles.modalOptionActive]}
-                  onPress={() => {
-                    setNearCity(city);
-                    setShowNearCityPicker(false);
-                  }}
-                >
-                  <MapPin size={20} color={nearCity === city ? "#1E40AF" : "#6B7280"} />
-                  <Text style={[styles.modalOptionText, nearCity === city && styles.modalOptionTextActive]}>
-                    {city}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+          <Text style={styles.clearButtonText}>Clear All</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => setShowNearCityPicker(false)}
+          style={styles.modalCloseButton}
+        >
+          <X size={24} color="#5F6368" />
+        </TouchableOpacity>
+      </View>
+    </View>
+    
+    <View style={styles.selectedCitiesPreview}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        {selectedCities.map((city) => (
+          <View key={city} style={styles.selectedCityChip}>
+            <Text style={styles.selectedCityChipText}>{city}</Text>
+            <TouchableOpacity
+              onPress={() => {
+                setSelectedCities(prev => prev.filter(c => c !== city));
+              }}
+              style={styles.removeCityButton}
+            >
+              <X size={14} color="#1E40AF" />
+            </TouchableOpacity>
           </View>
-        </Modal>
+        ))}
+      </ScrollView>
+    </View>
+
+    <ScrollView style={styles.modalContent}>
+      {cities.map((city) => {
+        const isSelected = selectedCities.includes(city);
+        return (
+          <TouchableOpacity
+            key={city}
+            style={[
+              styles.modalOption,
+              isSelected && styles.modalOptionActive
+            ]}
+            onPress={() => {
+              if (isSelected) {
+                setSelectedCities(prev => prev.filter(c => c !== city));
+              } else {
+                setSelectedCities(prev => [...prev, city]);
+              }
+            }}
+          >
+            <View style={[
+              styles.checkbox,
+              isSelected && styles.checkboxSelected
+            ]}>
+              {isSelected && <Text style={styles.checkmark}>✓</Text>}
+            </View>
+            <MapPin size={20} color={isSelected ? "#1E40AF" : "#6B7280"} />
+            <Text style={[
+              styles.modalOptionText,
+              isSelected && styles.modalOptionTextActive
+            ]}>
+              {city}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </ScrollView>
+    
+    <View style={styles.modalFooter}>
+      <TouchableOpacity
+        style={[
+          styles.doneButton,
+          selectedCities.length === 0 && styles.doneButtonDisabled
+        ]}
+        onPress={() => setShowNearCityPicker(false)}
+        disabled={selectedCities.length === 0}
+      >
+        <Text style={styles.doneButtonText}>
+          Done ({selectedCities.length} selected)
+        </Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
       </View>
     </Modal>
   );
@@ -814,6 +889,94 @@ const styles = StyleSheet.create({
     color: '#5F6368',
     fontWeight: '500',
     marginBottom: 2,
+  },
+   selectedCitiesContainer: {
+    flex: 1,
+  },
+  selectedCitiesText: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  modalHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  clearButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 12,
+  },
+  clearButtonText: {
+    color: '#EF4444',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  selectedCitiesPreview: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: '#F8FAFC',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  selectedCityChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#3B82F6',
+  },
+  selectedCityChipText: {
+    fontSize: 12,
+    color: '#1E40AF',
+    fontWeight: '500',
+    marginRight: 4,
+  },
+  removeCityButton: {
+    padding: 2,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
+    marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxSelected: {
+    backgroundColor: '#1E40AF',
+    borderColor: '#1E40AF',
+  },
+  checkmark: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  modalFooter: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
+  },
+  doneButton: {
+    backgroundColor: '#1E40AF',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  doneButtonDisabled: {
+    backgroundColor: '#9CA3AF',
+  },
+  doneButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   routeLocation: {
     fontSize: 14,
