@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   acceptanceContainer: {
-    marginBottom: 24,
+    marginBottom: 44,
   },
   checkboxContainer: {
     flexDirection: 'row',

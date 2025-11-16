@@ -31,21 +31,33 @@ import {
 const { width } = Dimensions.get('window');
 
 const cities = [
-  'Chennai',
-  'Bangalore',
-  'Mumbai',
-  'Delhi',
-  'Hyderabad',
-  'Pune',
-  'Kolkata',
-  'Ahmedabad',
-  'Vellore',
-  'Salem',
-  'Coimbatore',
-  'Madurai',
-  'Trichy',
-  'Polur',
-  'Tiruvannamalai'
+  "Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem", "Tirunelveli", "Tiruppur", 
+  "Vellore", "Erode", "Thoothukudi", "Dindigul", "Thanjavur", "Hosur", "Nagercoil", "Avadi", 
+  "Kancheepuram", "Kumbakonam", "Cuddalore", "Karaikudi", "Sivakasi", "Ariyalur", "Jayankondam", 
+  "Varadarajanpettai", "Udayarpalayam", "Chengalpattu", "Madurantakam", "Mamallapuram", 
+  "Tirukalukundram", "Acharapakkam", "Mettupalayam", "Pollachi", "Valparai", "Annur", "Karamadai", 
+  "Sulur", "Kinathukadavu", "Chidambaram", "Virudhachalam", "Panruti", "Nellikuppam", 
+  "Parangipettai", "Bhuvanagiri", "Dharmapuri", "Harur", "Palacode", "Pennagaram", "Karimangalam", 
+  "Palani", "Kodaikanal", "Oddanchatram", "Nilakottai", "Vedasandur", "Batlagundu", 
+  "Gobichettipalayam", "Sathyamangalam", "Bhavani", "Perundurai", "Anthiyur", "Kallakurichi", 
+  "Sankarapuram", "Chinnasalem", "Thiagadurgam", "Sriperumbudur", "Uthiramerur", "Walajabad", 
+  "Colachel", "Kuzhithurai", "Padmanabhapuram", "Anjugramam", "Tiruvannamalai", 
+  "Tiruvannamalai District", "Katpadi", "Jolarpettai", "Nagapattinam", "Kanchipuram", 
+  "Rameswaram", "Villupuram", "Gingee", "Ooty", "Udhagamandalam", "Yercaud", "Kanyakumari", 
+  "Rajapalayam", "Sivaganga", "Pudukkottai", "Ambur", "Ranipet", "Vaniyambadi", "Tiruchengode", 
+  "Namakkal", "Paramakudi", "Ramanathapuram", "Tenkasi", "Sankarankovil", "Kovilpatti", "Mettur", 
+  "Mylapore", "Tambaram", "Ambattur", "Pallavaram", "Poonamallee", "Tiruvallur", "Pattukkottai", 
+  "Arcot", "Krishnagiri", "Udumalaipettai", "Dharapuram", "Pernampattu", "Tindivanam", 
+  "Vikravandi", "Ulundurpettai", "Arakkonam", "Sholingur", "Tirupattur", "Vedaranyam", 
+  "Manamadurai", "Devakottai", "Sirkazhi", "Mayiladuthurai", "Thuraiyur", "Manapparai", 
+  "Puliyankudi", "Sengottai", "Vadipatti", "Usilampatti", "Nilakkottai", "Rasipuram", 
+  "Sendamangalam", "Kumarapalayam", "Mohanur", "Kattumannarkoil", "Vadalur", "Neyveli", 
+  "Kurinjipadi", "Veppur", "Kunnam", "Lalgudi", "Manachanallur", "Thuvakudi", "Thiruthuraipoondi", 
+  "Mannargudi", "Needamangalam", "Kottur", "Tiruvadanai", "Mudukulathur", "Kamuthi", 
+  "Mallankinaru", "Kariapatti", "Natham", "Melur", "Tirumangalam", "Kallupatti", "Thirumangalam", 
+  "Sedapatti", "Chellampatti", "Kallikudi", "Nagalapuram", "Papanasam", "Thiruvidaimarudur", 
+  "Swamimalai", "Thiruppanandal", "Thiruvaiyaru", "Orathanadu", "Peravurani", "Gandarvakkottai", 
+  "Arantangi", "Avudayarkoil", "Vallam"
 ];
 
 interface QuoteReviewProps {
@@ -69,7 +81,7 @@ export default function QuoteReview({
   const [selectedCities, setSelectedCities] = useState<string[]>([]); 
   const [nearCity, setNearCity] = useState('');
   
-  console.log('Quote Data:', quoteData);
+  // console.log('Quote Data:', quoteData);
   
   const handleConfirmOrder = async () => {
     if (sendTo === 'NEAR_CITY' && selectedCities.length === 0) {
