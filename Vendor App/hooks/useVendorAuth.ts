@@ -10,6 +10,8 @@ export interface VendorSignUpData {
   secondary_number?: string;
   password: string;
   address: string;
+  pincode: string; // Changed back to string
+  city: string;
   aadhar_number: string;
   gpay_number: string;
   organization_id?: string;
@@ -32,6 +34,8 @@ export interface Vendor {
   aadhar_number: string;
   aadhar_front_img?: string;
   address: string;
+  pincode: string; // Changed back to string
+  city: string;
   account_status: string;
   created_at: string;
 }
@@ -62,6 +66,8 @@ export const useVendorAuth = () => {
       }
       formData.append('password', data.password);
       formData.append('address', data.address);
+      formData.append('pincode', data.pincode); // No conversion needed since it's string
+      formData.append('city', data.city);
       formData.append('aadhar_number', data.aadhar_number);
       formData.append('gpay_number', data.gpay_number);
       if (data.organization_id) {
@@ -87,7 +93,7 @@ export const useVendorAuth = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        Alert.alert('Sign up Failed',errorData.detail || 'Please check your details and try again.');
+        Alert.alert('Sign up Failed', errorData.detail || 'Please check your details and try again.');
         throw new Error(errorData.detail || 'Signup failed');
       }
 

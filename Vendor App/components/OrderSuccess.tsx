@@ -95,7 +95,7 @@ const OrderSuccess: React.FC<OrderSuccessProps> = ({ visible, onClose, orderData
     }
     return hasFareDetails() && orderData.fare.total_amount 
       ? formatAmount(orderData.fare.total_amount)
-      : '₹0.00';
+      : orderData.vendor_price;
   };
 
   return (
@@ -197,12 +197,12 @@ const OrderSuccess: React.FC<OrderSuccessProps> = ({ visible, onClose, orderData
                 </Text>
               </View>
 
-              <View style={styles.detailRow}>
+              {/* <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>SEND TO</Text>
                 <Text style={styles.detailValue}>
                   {getPickupCity() !== 'N/A' ? getPickupCity() : 'ALL DRIVERS'}
                 </Text>
-              </View>
+              </View> */}
 
               {/* Trip Details based on type */}
               {isHourlyRental ? (
@@ -263,9 +263,9 @@ const OrderSuccess: React.FC<OrderSuccessProps> = ({ visible, onClose, orderData
 
             {/* Action Buttons */}
             <View style={styles.actionContainer}>
-              <TouchableOpacity style={styles.shareButton}>
+              {/* <TouchableOpacity style={styles.shareButton}>
                 <Text style={styles.shareButtonText}>Share Receipt</Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
               
               <TouchableOpacity style={styles.doneButton} onPress={onClose}>
                 <Text style={styles.doneButtonText}>Done</Text>

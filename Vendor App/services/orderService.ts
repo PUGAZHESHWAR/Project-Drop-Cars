@@ -22,14 +22,14 @@ interface QuoteData {
   toll_charges?: number;
   pickup_notes: string;
   send_to?: string;
-  near_city?: string;
+  near_city?: string[]; // Change to string array
   // Hourly rental fields
   package_hours?: { hours: number; km_range: number };
   cost_per_hour?: number;
   extra_cost_per_hour?: number;
   cost_for_addon_km?: number;
   extra_cost_for_addon_km?: number;
-  pick_near_city?: string;
+  pick_near_city?: string[];
 }
 
 interface FormData {
@@ -60,6 +60,7 @@ interface FormData {
   extra_cost_per_hour?: string;
   cost_for_addon_km?: string;
   extra_cost_for_addon_km?: string;
+  night_charges? : string
 }
 
 // ----------------------
@@ -149,14 +150,14 @@ export const confirmOrder = async (orderData: QuoteData) => {
 export const formatOrderData = (
   formData: FormData,
   sendTo: string = 'ALL',
-  nearCity: string = ''
+  nearCity?: string[] // Change to string array
 ): QuoteData => {
   // Convert hours and minutes to total minutes
   const hours = parseInt(formData.max_time_hours || '0');
   const minutes = parseInt(formData.max_time_minutes || '0');
   const totalMinutes = (hours * 60) + minutes;
 
-  return {
+  const orderData: QuoteData = {
     vendor_id: formData.vendor_id,
     trip_type: formData.trip_type,
     car_type: formData.car_type,
@@ -167,6 +168,9 @@ export const formatOrderData = (
     max_time_to_assign_order: totalMinutes,
     toll_charge_update: formData.toll_charge_update,
     pickup_notes: formData.pickup_notes,
+    send_to: sendTo,
+    // Handle near_city as array
+    near_city: sendTo === 'NEAR_CITY' && nearCity && nearCity.length > 0 ? nearCity : ['ALL'],
     ...(formData.cost_per_km && { cost_per_km: parseFloat(formData.cost_per_km) }),
     ...(formData.extra_cost_per_km && { extra_cost_per_km: parseFloat(formData.extra_cost_per_km) }),
     ...(formData.driver_allowance && { driver_allowance: parseFloat(formData.driver_allowance) }),
@@ -175,22 +179,23 @@ export const formatOrderData = (
     ...(formData.extra_permit_charges && { extra_permit_charges: parseFloat(formData.extra_permit_charges) }),
     ...(formData.hill_charges && { hill_charges: parseFloat(formData.hill_charges) }),
     ...(formData.toll_charges && { toll_charges: parseFloat(formData.toll_charges) }),
-    ...(sendTo && { send_to: sendTo }),
-    ...(sendTo === 'NEAR_CITY' && nearCity && { near_city: nearCity }),
+    ...(formData.night_charges && { night_charges: parseFloat(formData.night_charges) }),
   };
+
+  return orderData;
 };
 
 export const formatHourlyOrderData = (
   formData: FormData,
   sendTo: string = 'ALL',
-  nearCity: string = ''
+  nearCity?: string[]
 ): QuoteData => {
   // Convert hours and minutes to total minutes
   const hours = parseInt(formData.max_time_hours || '0');
   const minutes = parseInt(formData.max_time_minutes || '0');
   const totalMinutes = (hours * 60) + minutes;
 
-  return {
+  const orderData: QuoteData = {
     vendor_id: formData.vendor_id,
     trip_type: "Hourly Rental",
     car_type: formData.car_type,
@@ -201,12 +206,16 @@ export const formatHourlyOrderData = (
     max_time_to_assign_order: totalMinutes,
     toll_charge_update: formData.toll_charge_update,
     pickup_notes: formData.pickup_notes,
+    send_to: sendTo,
+    // For hourly rental, both near_city and pick_near_city should be arrays
+    near_city: sendTo === 'NEAR_CITY' && nearCity && nearCity.length > 0 ? nearCity : ['ALL'],
+    pick_near_city: sendTo === 'NEAR_CITY' && nearCity && nearCity.length > 0 ? nearCity : ['ALL'],
     ...(formData.package_hours && { package_hours: formData.package_hours }),
     ...(formData.cost_per_hour && { cost_per_hour: parseFloat(formData.cost_per_hour) }),
     ...(formData.extra_cost_per_hour && { extra_cost_per_hour: parseFloat(formData.extra_cost_per_hour) }),
     ...(formData.cost_for_addon_km && { cost_for_addon_km: parseFloat(formData.cost_for_addon_km) }),
     ...(formData.extra_cost_for_addon_km && { extra_cost_for_addon_km: parseFloat(formData.extra_cost_for_addon_km) }),
-    pick_near_city: sendTo === 'NEAR_CITY' ? nearCity : 'ALL',
-    send_to: sendTo,
   };
+
+  return orderData;
 };

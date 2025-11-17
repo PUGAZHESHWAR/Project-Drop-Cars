@@ -290,13 +290,13 @@ export default function DashboardScreen() {
               <Text style={styles.compactStatLabel}>Accepted</Text>
             </View>
             
-            <View style={styles.compactStatCard}>
+            {/* <View style={styles.compactStatCard}>
               <View style={[styles.statIconContainer, { backgroundColor: '#FEF3C7' }]}>
                 <TrendingUp size={20} color="#F59E0B" />
               </View>
               <Text style={styles.compactStatValue}>₹{stats.totalRevenue.toLocaleString()}</Text>
-              <Text style={styles.compactStatLabel}>Revenue</Text>
-            </View>
+              <Text style={styles.compactStatLabel}>Bookings</Text>
+            </View> */}
           </View>
         </View>
 

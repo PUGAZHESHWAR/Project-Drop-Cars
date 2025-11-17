@@ -31,28 +31,40 @@ import {
 const { width } = Dimensions.get('window');
 
 const cities = [
-  'Chennai',
-  'Bangalore',
-  'Mumbai',
-  'Delhi',
-  'Hyderabad',
-  'Pune',
-  'Kolkata',
-  'Ahmedabad',
-  'Vellore',
-  'Salem',
-  'Coimbatore',
-  'Madurai',
-  'Trichy',
-  'Polur',
-  'Tiruvannamalai'
+  "Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem", "Tirunelveli", "Tiruppur", 
+  "Vellore", "Erode", "Thoothukudi", "Dindigul", "Thanjavur", "Hosur", "Nagercoil", "Avadi", 
+  "Kancheepuram", "Kumbakonam", "Cuddalore", "Karaikudi", "Sivakasi", "Ariyalur", "Jayankondam", 
+  "Varadarajanpettai", "Udayarpalayam", "Chengalpattu", "Madurantakam", "Mamallapuram", 
+  "Tirukalukundram", "Acharapakkam", "Mettupalayam", "Pollachi", "Valparai", "Annur", "Karamadai", 
+  "Sulur", "Kinathukadavu", "Chidambaram", "Virudhachalam", "Panruti", "Nellikuppam", 
+  "Parangipettai", "Bhuvanagiri", "Dharmapuri", "Harur", "Palacode", "Pennagaram", "Karimangalam", 
+  "Palani", "Kodaikanal", "Oddanchatram", "Nilakottai", "Vedasandur", "Batlagundu", 
+  "Gobichettipalayam", "Sathyamangalam", "Bhavani", "Perundurai", "Anthiyur", "Kallakurichi", 
+  "Sankarapuram", "Chinnasalem", "Thiagadurgam", "Sriperumbudur", "Uthiramerur", "Walajabad", 
+  "Colachel", "Kuzhithurai", "Padmanabhapuram", "Anjugramam", "Tiruvannamalai", 
+  "Tiruvannamalai District", "Katpadi", "Jolarpettai", "Nagapattinam", "Kanchipuram", 
+  "Rameswaram", "Villupuram", "Gingee", "Ooty", "Udhagamandalam", "Yercaud", "Kanyakumari", 
+  "Rajapalayam", "Sivaganga", "Pudukkottai", "Ambur", "Ranipet", "Vaniyambadi", "Tiruchengode", 
+  "Namakkal", "Paramakudi", "Ramanathapuram", "Tenkasi", "Sankarankovil", "Kovilpatti", "Mettur", 
+  "Mylapore", "Tambaram", "Ambattur", "Pallavaram", "Poonamallee", "Tiruvallur", "Pattukkottai", 
+  "Arcot", "Krishnagiri", "Udumalaipettai", "Dharapuram", "Pernampattu", "Tindivanam", 
+  "Vikravandi", "Ulundurpettai", "Arakkonam", "Sholingur", "Tirupattur", "Vedaranyam", 
+  "Manamadurai", "Devakottai", "Sirkazhi", "Mayiladuthurai", "Thuraiyur", "Manapparai", 
+  "Puliyankudi", "Sengottai", "Vadipatti", "Usilampatti", "Nilakkottai", "Rasipuram", 
+  "Sendamangalam", "Kumarapalayam", "Mohanur", "Kattumannarkoil", "Vadalur", "Neyveli", 
+  "Kurinjipadi", "Veppur", "Kunnam", "Lalgudi", "Manachanallur", "Thuvakudi", "Thiruthuraipoondi", 
+  "Mannargudi", "Needamangalam", "Kottur", "Tiruvadanai", "Mudukulathur", "Kamuthi", 
+  "Mallankinaru", "Kariapatti", "Natham", "Melur", "Tirumangalam", "Kallupatti", "Thirumangalam", 
+  "Sedapatti", "Chellampatti", "Kallikudi", "Nagalapuram", "Papanasam", "Thiruvidaimarudur", 
+  "Swamimalai", "Thiruppanandal", "Thiruvaiyaru", "Orathanadu", "Peravurani", "Gandarvakkottai", 
+  "Arantangi", "Avudayarkoil", "Vallam"
 ];
 
 interface QuoteReviewProps {
   visible: boolean;
   onClose: () => void;
   quoteData: any;
-  onConfirmOrder: (sendTo: string, nearCity?: string) => Promise<void>;
+  onConfirmOrder: (sendTo: string, nearCity?: string[]) => Promise<void>; // Change to string[]
   isLoading: boolean;
 }
 
@@ -66,16 +78,19 @@ export default function QuoteReview({
   const [showSendToPicker, setShowSendToPicker] = useState(false);
   const [showNearCityPicker, setShowNearCityPicker] = useState(false);
   const [sendTo, setSendTo] = useState<'ALL' | 'NEAR_CITY'>('ALL');
+  const [selectedCities, setSelectedCities] = useState<string[]>([]); 
   const [nearCity, setNearCity] = useState('');
-  console.log('Quote Data:', quoteData);
+  
+  // console.log('Quote Data:', quoteData);
+  
   const handleConfirmOrder = async () => {
-    if (sendTo === 'NEAR_CITY' && !nearCity) {
-      Alert.alert('Error', 'Please select a near city when sending to NEAR_CITY');
+    if (sendTo === 'NEAR_CITY' && selectedCities.length === 0) {
+      Alert.alert('Error', 'Please select at least one city when sending to NEAR_CITY');
       return;
     }
 
     try {
-      await onConfirmOrder(sendTo, nearCity);
+      await onConfirmOrder(sendTo, selectedCities); // Pass array instead of string
     } catch (error) {
       Alert.alert('Error', 'Failed to create order. Please try again.');
     }
@@ -105,8 +120,10 @@ export default function QuoteReview({
     return Object.entries(quoteData.echo.pickup_drop_location)
       .sort(([a], [b]) => parseInt(a) - parseInt(b));
   };
-  console.log('Data For Houry Rental :',quoteData);
-  console.log('Trip Type :',isHourlyRental);
+  
+  console.log('Data For Hourly Rental:', quoteData);
+  console.log('Trip Type:', isHourlyRental);
+  
   const getLocationLabel = (index: string, isLast: boolean, tripType: string) => {
     const position = parseInt(index);
     if (tripType === 'Hourly Rental') return 'Pickup Location';
@@ -272,16 +289,10 @@ export default function QuoteReview({
             <View style={styles.summaryCard}>
               {isHourlyRental ? (
                 <>
-                  
                   <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>Package Hours</Text>
                     <Text style={styles.summaryValue}>{quoteData.echo.package_hours?.hours || 0} hours ({quoteData.echo.package_hours?.km_range || 0} km)</Text>
                   </View>
-{/*                   
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Cost per Hour</Text>
-                    <Text style={styles.summaryValue}>₹{quoteData.echo.cost_per_hour}</Text>
-                  </View> */}
 
                   <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>Max Time(Report Details)</Text>
@@ -314,23 +325,31 @@ export default function QuoteReview({
                     <Text style={styles.summaryLabel}>Driver(Update Toll)</Text>
                     <Text style={styles.summaryValue}>{quoteData.echo.toll_charge_update ? "YES" : "NO"}</Text>
                   </View>
+
+                {quoteData.fare.remark_trip_min_km > 0 && (
+                    <View style={styles.warningMessage}>
+                      <Text style={styles.warningText}>
+                        Minimum KM for this trip is 130 (Current: {quoteData.fare.remark_trip_min_km} Changed to {quoteData.fare.total_km} KM)
+                      </Text>
+                    </View>
+                  )}
                 </>
               )}
             </View>
           </View>
 
-          {/* Pricing Breakdown Section Vendor */}
+          {/* Pricing Breakdown Section Customer */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <IndianRupee size={24} color={tripType === 'Hourly Rental' ? "#8B5A3C" : "#1E40AF"} />
-              <Text style={styles.sectionTitle}>Customer Pricing</Text>
+              <Text style={styles.sectionTitle}>Vendor Pricing</Text>
             </View>
             
             <View style={styles.priceCard}>
               {isHourlyRental ? (
                 <>
                   <View style={styles.priceRow}>
-                    <Text style={styles.priceLabel}>Customer Amount (₹{(quoteData.echo.cost_per_hour+ quoteData.echo.extra_cost_per_hour)} X {quoteData.echo.package_hours.hours} )</Text>
+                    <Text style={styles.priceLabel}>Vendor Amount (₹{(quoteData.echo.cost_per_hour + quoteData.echo.extra_cost_per_hour)} X {quoteData.echo.package_hours.hours})</Text>
                     <Text style={styles.priceValue}>₹{quoteData.fare.vendor_amount}</Text>
                   </View>
 
@@ -344,16 +363,9 @@ export default function QuoteReview({
                   {quoteData.echo.extra_cost_per_hour > 0 && (
                     <View style={styles.priceRow}>
                       <Text style={styles.priceLabel}>Extra Price (Addon KM)</Text>
-                      <Text style={styles.priceValue}>₹{(quoteData.echo.cost_for_addon_km+quoteData.echo.extra_cost_for_addon_km)}</Text>
+                      <Text style={styles.priceValue}>₹{(quoteData.echo.cost_for_addon_km + quoteData.echo.extra_cost_for_addon_km)}</Text>
                     </View>
                   )}
-
-                  {/* {quoteData.echo.extra_additional_cost_per_hour > 0 && (
-                    <View style={styles.priceRow}>
-                      <Text style={styles.priceLabel}>Extra Additional Cost per Hour</Text>
-                      <Text style={styles.priceValue}>₹{quoteData.echo.extra_additional_cost_per_hour}</Text>
-                    </View>
-                  )} */}
 
                   <View style={[styles.priceRow, styles.totalRow]}>
                     <Text style={styles.totalLabel}>Estimate Price</Text>
@@ -363,22 +375,21 @@ export default function QuoteReview({
               ) : (
                 <>
                   <View style={styles.priceRow}>
-                    <Text style={styles.priceLabel}>Customer Amount ({quoteData.fare.total_km} km × ₹{quoteData.echo.cost_per_km+quoteData.echo.extra_cost_per_km})</Text>
-                    <Text style={styles.priceValue}>₹{quoteData.fare.base_km_amount+Math.round(quoteData.fare.total_km * quoteData.echo.extra_cost_per_km)}</Text>
+                    <Text style={styles.priceLabel}>Vendor Amount ({quoteData.fare.total_km} km × ₹{quoteData.echo.cost_per_km + quoteData.echo.extra_cost_per_km})</Text>
+                    <Text style={styles.priceValue}>₹{quoteData.fare.base_km_amount + Math.round(quoteData.fare.total_km * quoteData.echo.extra_cost_per_km)}</Text>
                   </View>
                 
                   {quoteData.echo.driver_allowance > 0 && (
                     <View style={styles.priceRow}>
                       <Text style={styles.priceLabel}>Driver Allowance</Text>
-                      <Text style={styles.priceValue}>₹{quoteData.echo.driver_allowance+quoteData.echo.extra_driver_allowance}</Text>
+                      <Text style={styles.priceValue}>₹{quoteData.echo.driver_allowance + quoteData.echo.extra_driver_allowance}</Text>
                     </View>
                   )}
 
-                  
                   {quoteData.echo.permit_charges > 0 && (
                     <View style={styles.priceRow}>
                       <Text style={styles.priceLabel}>Permit Charges</Text>
-                      <Text style={styles.priceValue}>₹{quoteData.echo.permit_charges+quoteData.echo.extra_permit_charges}</Text>
+                      <Text style={styles.priceValue}>₹{quoteData.echo.permit_charges + quoteData.echo.extra_permit_charges}</Text>
                     </View>
                   )}
                   
@@ -396,16 +407,20 @@ export default function QuoteReview({
                     </View>
                   )}
                   
+                  {quoteData.echo.night_charges > 0 && (
+                    <View style={styles.priceRow}>
+                      <Text style={styles.priceLabel}>Night Charges</Text>
+                      <Text style={styles.priceValue}>₹{quoteData.echo.night_charges}</Text>
+                    </View>
+                  )}
                   <View style={[styles.priceRow, styles.totalRow]}>
                     <Text style={styles.totalLabel}>Total Amount</Text>
-                    <Text style={styles.totalValue}>₹{quoteData.fare.total_amount}</Text>
+                    <Text style={styles.totalValue}>₹{quoteData.fare.customer_amount}</Text>
                   </View>
-                  
                 </>
               )}
             </View>
           </View>
-
 
           {/* Pricing Breakdown Section Driver */}
           <View style={styles.section}>
@@ -418,7 +433,7 @@ export default function QuoteReview({
               {isHourlyRental ? (
                 <>
                   <View style={styles.priceRow}>
-                    <Text style={styles.priceLabel}>Driver Amount (₹{(quoteData.echo.cost_per_hour)} X {quoteData.echo.package_hours.hours} )</Text>
+                    <Text style={styles.priceLabel}>Driver Amount (₹{quoteData.echo.cost_per_hour} X {quoteData.echo.package_hours.hours})</Text>
                     <Text style={styles.priceValue}>₹{quoteData.fare.estimate_price}</Text>
                   </View>
 
@@ -435,20 +450,6 @@ export default function QuoteReview({
                       <Text style={styles.priceValue}>₹{quoteData.echo.cost_for_addon_km}</Text>
                     </View>
                   )}
-
-                  {/* {quoteData.echo.extra_cost_for_addon_km > 0 && (
-                    <View style={styles.priceRow}>
-                      <Text style={styles.priceLabel}>Extra Cost for Addon KM</Text>
-                      <Text style={styles.priceValue}>₹{quoteData.echo.extra_cost_for_addon_km}</Text>
-                    </View>
-                  )} */}
-
-                  {/* {quoteData.echo.extra_additional_cost_per_hour > 0 && (
-                    <View style={styles.priceRow}>
-                      <Text style={styles.priceLabel}>Extra Additional Cost per Hour</Text>
-                      <Text style={styles.priceValue}>₹{quoteData.echo.extra_additional_cost_per_hour}</Text>
-                    </View>
-                  )} */}
 
                   <View style={[styles.priceRow, styles.totalRow]}>
                     <Text style={styles.totalLabel}>Estimate Price</Text>
@@ -490,23 +491,23 @@ export default function QuoteReview({
                     </View>
                   )}
                   
-                  <View style={[styles.priceRow, styles.totalRow]}>
-                    <Text style={styles.totalLabel}>Total Amount</Text>
-                    <Text style={styles.totalValue}>₹{quoteData.fare.base_km_amount+quoteData.fare.driver_allowance+quoteData.fare.permit_charges+quoteData.fare.hill_charges+quoteData.fare.toll_charges}</Text>
-                  </View>
-                  {quoteData.echo.toll_charges > 0 && (
+                  {quoteData.echo.night_charges > 0 && (
                     <View style={styles.priceRow}>
-                      <Text style={styles.priceLabel}>Vendor Basic Commessions</Text>
-                      {/* <Text style={styles.priceValue}>₹{Math.round((quoteData.fare.base_km_amount)*quoteData.fare.Commission_percent/100)}</Text> */}
-                      <Text style={[styles.priceValue, { color: 'red' }]}>
-                        ₹{Math.round((quoteData.fare.base_km_amount) * quoteData.fare.Commission_percent / 100)}
-                      </Text>
-                      {/* <Text style={styles.priceValue}>₹{100}</Text> */}
+                      <Text style={styles.priceLabel}>Night Charges</Text>
+                      <Text style={styles.priceValue}>₹{quoteData.echo.night_charges}</Text>
                     </View>
                   )}
+
+                  {/* <View style={styles.priceRow}>
+                    <Text style={styles.priceLabel}>Vendor Basic Commission</Text>
+                    <Text style={[styles.priceValue, { color: 'red' }]}>
+                      ₹{Math.round((quoteData.fare.base_km_amount) * quoteData.fare.Commission_percent / 100)}
+                    </Text>
+                  </View> */}
+                  
                   <View style={[styles.priceRow, styles.totalRow]}>
-                    <Text style={styles.totalLabel}>Net Amount</Text>
-                    <Text style={styles.totalValue}>₹{quoteData.fare.base_km_amount+quoteData.fare.driver_allowance+quoteData.fare.permit_charges+quoteData.fare.hill_charges+quoteData.fare.toll_charges-(Math.round((quoteData.fare.base_km_amount)*quoteData.fare.Commission_percent/100))}</Text>
+                    <Text style={styles.totalLabel}>Driver Net Amount</Text>
+                    <Text style={styles.totalValue}>₹ {quoteData.fare.driver_amount}</Text>
                   </View>
                 </>
               )}
@@ -531,18 +532,29 @@ export default function QuoteReview({
               <ChevronDown size={20} color={tripType === 'Hourly Rental' ? "#8B5A3C" : "#1E40AF"} />
             </TouchableOpacity>
 
-            {sendTo === 'NEAR_CITY' && (
-              <TouchableOpacity
-                style={[styles.pickerButton, { marginTop: 12 }]}
-                onPress={() => setShowNearCityPicker(true)}
-              >
-                <MapPin size={20} color={tripType === 'Hourly Rental' ? "#8B5A3C" : "#1E40AF"} style={styles.pickerIcon} />
-                <Text style={[styles.pickerText, !nearCity && styles.pickerPlaceholder]}>
-                  {nearCity || 'Select Near City'}
-                </Text>
-                <ChevronDown size={20} color={tripType === 'Hourly Rental' ? "#8B5A3C" : "#1E40AF"} />
-              </TouchableOpacity>
+      {sendTo === 'NEAR_CITY' && (
+        <TouchableOpacity
+          style={[styles.pickerButton, { marginTop: 12 }]}
+          onPress={() => setShowNearCityPicker(true)}
+        >
+          <MapPin size={20} color={tripType === 'Hourly Rental' ? "#8B5A3C" : "#1E40AF"} style={styles.pickerIcon} />
+          <View style={styles.selectedCitiesContainer}>
+            <Text style={[styles.pickerText, selectedCities.length === 0 && styles.pickerPlaceholder]}>
+              {selectedCities.length === 0 
+                ? 'Select Cities' 
+                : `${selectedCities.length} city${selectedCities.length > 1 ? 's' : ''} selected`
+              }
+            </Text>
+            {selectedCities.length > 0 && (
+              <Text style={styles.selectedCitiesText}>
+                {selectedCities.slice(0, 2).join(', ')}
+                {selectedCities.length > 2 && ` +${selectedCities.length - 2} more`}
+              </Text>
             )}
+          </View>
+          <ChevronDown size={20} color={tripType === 'Hourly Rental' ? "#8B5A3C" : "#1E40AF"} />
+        </TouchableOpacity>
+      )}
           </View>
 
           {quoteData.echo.pickup_notes && (
@@ -641,54 +653,116 @@ export default function QuoteReview({
         </Modal>
 
         {/* Near City Picker Modal */}
-        <Modal
-          visible={showNearCityPicker}
-          animationType="slide"
-          presentationStyle="pageSheet"
+{/* Multi-Select Near City Picker Modal */}
+<Modal
+  visible={showNearCityPicker}
+  animationType="slide"
+  presentationStyle="pageSheet"
+>
+  <View style={styles.modalContainer}>
+    <View style={styles.modalHeader}>
+      <Text style={styles.modalTitle}>Select Cities ({selectedCities.length} selected)</Text>
+      <View style={styles.modalHeaderActions}>
+        <TouchableOpacity
+          onPress={() => {
+            setSelectedCities([]);
+          }}
+          style={styles.clearButton}
         >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Near City</Text>
-              <TouchableOpacity
-                onPress={() => setShowNearCityPicker(false)}
-                style={styles.modalCloseButton}
-              >
-                <X size={24} color="#5F6368" />
-              </TouchableOpacity>
-            </View>
-            <ScrollView style={styles.modalContent}>
-              {cities.map((city) => (
-                <TouchableOpacity
-                  key={city}
-                  style={[styles.modalOption, nearCity === city && styles.modalOptionActive]}
-                  onPress={() => {
-                    setNearCity(city);
-                    setShowNearCityPicker(false);
-                  }}
-                >
-                  <MapPin size={20} color={nearCity === city ? "#1E40AF" : "#6B7280"} />
-                  <Text style={[styles.modalOptionText, nearCity === city && styles.modalOptionTextActive]}>
-                    {city}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+          <Text style={styles.clearButtonText}>Clear All</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => setShowNearCityPicker(false)}
+          style={styles.modalCloseButton}
+        >
+          <X size={24} color="#5F6368" />
+        </TouchableOpacity>
+      </View>
+    </View>
+    
+    <View style={styles.selectedCitiesPreview}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        {selectedCities.map((city) => (
+          <View key={city} style={styles.selectedCityChip}>
+            <Text style={styles.selectedCityChipText}>{city}</Text>
+            <TouchableOpacity
+              onPress={() => {
+                setSelectedCities(prev => prev.filter(c => c !== city));
+              }}
+              style={styles.removeCityButton}
+            >
+              <X size={14} color="#1E40AF" />
+            </TouchableOpacity>
           </View>
-        </Modal>
+        ))}
+      </ScrollView>
+    </View>
+
+    <ScrollView style={styles.modalContent}>
+      {cities.map((city) => {
+        const isSelected = selectedCities.includes(city);
+        return (
+          <TouchableOpacity
+            key={city}
+            style={[
+              styles.modalOption,
+              isSelected && styles.modalOptionActive
+            ]}
+            onPress={() => {
+              if (isSelected) {
+                setSelectedCities(prev => prev.filter(c => c !== city));
+              } else {
+                setSelectedCities(prev => [...prev, city]);
+              }
+            }}
+          >
+            <View style={[
+              styles.checkbox,
+              isSelected && styles.checkboxSelected
+            ]}>
+              {isSelected && <Text style={styles.checkmark}>✓</Text>}
+            </View>
+            <MapPin size={20} color={isSelected ? "#1E40AF" : "#6B7280"} />
+            <Text style={[
+              styles.modalOptionText,
+              isSelected && styles.modalOptionTextActive
+            ]}>
+              {city}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </ScrollView>
+    
+    <View style={styles.modalFooter}>
+      <TouchableOpacity
+        style={[
+          styles.doneButton,
+          selectedCities.length === 0 && styles.doneButtonDisabled
+        ]}
+        onPress={() => setShowNearCityPicker(false)}
+        disabled={selectedCities.length === 0}
+      >
+        <Text style={styles.doneButtonText}>
+          Done ({selectedCities.length} selected)
+        </Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
       </View>
     </Modal>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
   },
   header: {
-    paddingTop: 20,
-    paddingBottom: 30,
-    paddingHorizontal: 24,
+    paddingTop: 45,
+    paddingBottom: 20,
+    paddingHorizontal: 16,
   },
   headerContent: {
     flexDirection: 'row',
@@ -700,107 +774,107 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#e9eeffff',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   headerSubtitle: {
-    fontSize: 16,
+    fontSize: 13,
     color: '#e9eeffff',
   },
   closeButton: {
-    padding: 8,
+    padding: 6,
     backgroundColor: '#e9eeffff',
-    borderRadius: 20,
+    borderRadius: 16,
   },
   placeholder: {
-    width: 40,
+    width: 32,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
   },
   section: {
-    marginTop: 24,
+    marginTop: 16,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '600',
     color: '#202124',
-    marginLeft: 12,
+    marginLeft: 8,
     flex: 1,
   },
   routeBadge: {
     backgroundColor: '#E8F4FD',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   routeBadgeText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '600',
     color: '#1E40AF',
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 12,
+    padding: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 3,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 16,
-    paddingBottom: 16,
+    marginBottom: 12,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F3F4',
   },
   detailIcon: {
-    marginRight: 16,
-    marginTop: 2,
+    marginRight: 12,
+    marginTop: 1,
   },
   detailContent: {
     flex: 1,
   },
   detailLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#5F6368',
-    marginBottom: 4,
+    marginBottom: 2,
     fontWeight: '500',
   },
   detailValue: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#202124',
     fontWeight: '600',
   },
   routeItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   lastRouteItem: {
     marginBottom: 0,
   },
   routeIndicator: {
     alignItems: 'center',
-    marginRight: 16,
-    width: 24,
+    marginRight: 12,
+    width: 20,
   },
   routeDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginBottom: 8,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginBottom: 6,
   },
   routeDotStart: {
     backgroundColor: '#10B981',
@@ -812,67 +886,169 @@ const styles = StyleSheet.create({
     backgroundColor: '#DC2626',
   },
   routeLine: {
-    width: 2,
-    height: 32,
+    width: 1.5,
+    height: 24,
     backgroundColor: '#D1D5DB',
     position: 'absolute',
-    top: 12,
+    top: 10,
   },
   routeContent: {
     flex: 1,
-    paddingTop: -4,
+    paddingTop: -2,
   },
   routeLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#5F6368',
     fontWeight: '500',
-    marginBottom: 4,
+    marginBottom: 2,
+  },
+   selectedCitiesContainer: {
+    flex: 1,
+  },
+  selectedCitiesText: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  modalHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  clearButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 12,
+  },
+  clearButtonText: {
+    color: '#EF4444',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  selectedCitiesPreview: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: '#F8FAFC',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  selectedCityChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#3B82F6',
+  },
+  selectedCityChipText: {
+    fontSize: 12,
+    color: '#1E40AF',
+    fontWeight: '500',
+    marginRight: 4,
+  },
+  removeCityButton: {
+    padding: 2,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
+    marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxSelected: {
+    backgroundColor: '#1E40AF',
+    borderColor: '#1E40AF',
+  },
+  checkmark: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  modalFooter: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
+  },
+  doneButton: {
+    backgroundColor: '#1E40AF',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  doneButtonDisabled: {
+    backgroundColor: '#9CA3AF',
+  },
+  doneButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   routeLocation: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#202124',
     fontWeight: '600',
-    lineHeight: 22,
+    lineHeight: 18,
   },
   summaryCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 12,
+    padding: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 2,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1.5,
     borderColor: '#E8F4FD',
   },
+  warningMessage: {
+  backgroundColor: '#FEF2F2',
+  borderWidth: 1,
+  borderColor: '#FECACA',
+  borderRadius: 8,
+  padding: 12,
+  marginTop: 8,
+},
+warningText: {
+  fontSize: 12,
+  color: '#DC2626',
+  fontWeight: '600',
+  textAlign: 'center',
+},
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F3F4',
   },
   summaryLabel: {
-    fontSize: 16,
+    fontSize: 13,
     color: '#5F6368',
     fontWeight: '500',
   },
   summaryValue: {
-    fontSize: 16,
+    fontSize: 13,
     color: '#1E40AF',
     fontWeight: '600',
   },
   priceCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 12,
+    padding: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 4,
     borderWidth: 1,
     borderColor: '#E8EAED',
   },
@@ -880,38 +1056,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F3F4',
   },
   totalRow: {
     borderBottomWidth: 0,
-    paddingTop: 16,
-    borderTopWidth: 2,
+    paddingTop: 12,
+    borderTopWidth: 1.5,
     borderTopColor: '#E8EAED',
     backgroundColor: '#F8FDF9',
-    marginHorizontal: -20,
-    paddingHorizontal: 20,
-    borderRadius: 12,
+    marginHorizontal: -16,
+    paddingHorizontal: 16,
+    borderRadius: 8,
   },
   priceLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#5F6368',
     fontWeight: '500',
     flex: 1,
+    paddingRight: 8,
   },
   priceValue: {
-    fontSize: 16,
+    fontSize: 13,
     color: '#202124',
     fontWeight: '600',
   },
   totalLabel: {
-    fontSize: 18,
+    fontSize: 14,
     color: '#202124',
     fontWeight: '600',
   },
   totalValue: {
-    fontSize: 22,
+    fontSize: 16,
     color: '#059669',
     fontWeight: 'bold',
   },
@@ -919,22 +1096,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 10,
+    padding: 14,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
     elevation: 2,
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
   pickerIcon: {
-    marginRight: 12,
+    marginRight: 10,
   },
   pickerText: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 14,
     color: '#202124',
     fontWeight: '500',
   },
@@ -942,27 +1119,27 @@ const styles = StyleSheet.create({
     color: '#9AA0A6',
   },
   notesText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#202124',
-    lineHeight: 24,
+    lineHeight: 20,
   },
   confirmButton: {
-    marginVertical: 32,
-    borderRadius: 16,
+    marginVertical: 24,
+    borderRadius: 12,
     overflow: 'hidden',
   },
   disabledButton: {
     opacity: 0.6,
   },
   gradientButton: {
-    paddingVertical: 18,
+    paddingVertical: 16,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
   },
   modalContainer: {
@@ -973,33 +1150,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 20,
+    paddingHorizontal: 20,
+    paddingTop: 50,
+    paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E8EAED',
     backgroundColor: '#FFFFFF',
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#202124',
   },
   modalCloseButton: {
-    padding: 8,
+    padding: 6,
   },
   modalContent: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingHorizontal: 20,
+    paddingTop: 16,
   },
   modalOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    marginBottom: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    marginBottom: 6,
     backgroundColor: '#F8F9FA',
     borderWidth: 1,
     borderColor: '#E5E7EB',
@@ -1010,20 +1187,20 @@ const styles = StyleSheet.create({
   },
   modalOptionContent: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: 10,
   },
   modalOptionText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#6B7280',
     fontWeight: '500',
-    marginBottom: 2,
+    marginBottom: 1,
   },
   modalOptionTextActive: {
     color: '#1E40AF',
     fontWeight: '600',
   },
   modalOptionSubtext: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#9CA3AF',
   },
 });

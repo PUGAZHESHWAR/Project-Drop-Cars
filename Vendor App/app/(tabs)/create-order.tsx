@@ -76,17 +76,26 @@ interface FormData {
   extra_cost_for_addon_km: string;
   pickup_notes: string;
   send_to: string;
-  near_city: string;
+  near_city: string[];
+  night_charges: string
 }
 
 const carTypes = [
-  'Hatchback',
-  'Sedan', 
-  'New Sedan',
-  'SUV',
-  'Innova',
-  'Innova Crysta'
+  "HATCHBACK",
+  "SEDAN_4_PLUS_1",
+  "NEW_SEDAN_2022_MODEL",
+  "ETIOS_4_PLUS_1",
+  "SUV",
+  "SUV_6_PLUS_1",
+  "SUV_7_PLUS_1",
+  "INNOVA",
+  "INNOVA_6_PLUS_1",
+  "INNOVA_7_PLUS_1",
+  "INNOVA_CRYSTA",
+  "INNOVA_CRYSTA_6_PLUS_1",
+  "INNOVA_CRYSTA_7_PLUS_1"
 ];
+
 
 const tripTypes = [
   { value: 'Oneway', label: 'One Way', minLocations: 2, maxLocations: 2, icon: Car },
@@ -99,7 +108,7 @@ export default function CreateOrderScreen() {
   const [formData, setFormData] = useState<FormData>({
     vendor_id: '83a93a3f-2f6e-4bf6-9f78-1c3f9f42b7b1',
     trip_type: 'Oneway',
-    car_type: 'Sedan',
+    car_type: 'SEDAN_4_PLUS_1',
     pickup_drop_location: { '0': '', '1': '' },
     start_date_time: new Date(),
     customer_name: '',
@@ -115,7 +124,7 @@ export default function CreateOrderScreen() {
     permit_charges: '',
     extra_permit_charges: '',
     hill_charges: '',
-    toll_charges: '',
+    toll_charges: '0',
     // Hourly rental fields
     package_hours: null,
     cost_per_hour: '',
@@ -124,7 +133,8 @@ export default function CreateOrderScreen() {
     extra_cost_for_addon_km: '',
     pickup_notes: '',
     send_to: 'ALL',
-    near_city: ''
+    near_city: ['ALL'],
+    night_charges: ''
   });
 
   const [showCarTypePicker, setShowCarTypePicker] = useState(false);
@@ -427,34 +437,63 @@ export default function CreateOrderScreen() {
     }
   };
 
-  const confirmOrder = async (sendTo: string, nearCity?: string) => {
-    setIsLoading(true);
+  // const confirmOrder = async (sendTo: string, nearCity?: string) => {
+  //   setIsLoading(true);
     
-    try {
-      let orderResponse;
+  //   try {
+  //     let orderResponse;
       
-      if (formData.trip_type === 'Hourly Rental') {
-        // Use hourly rental confirm API
-        const apiData = formatHourlyOrderData(formData, sendTo, nearCity);
-        orderResponse = await confirmHourlyOrder(apiData);
-      } else {
-        // Use regular trip confirm API
-        const apiData = formatOrderData(formData, sendTo, nearCity);
-        orderResponse = await confirmOrderAPI(apiData);
-      }
+  //     if (formData.trip_type === 'Hourly Rental') {
+  //       // Use hourly rental confirm API
+  //       const apiData = formatHourlyOrderData(formData, sendTo, nearCity);
+  //       orderResponse = await confirmHourlyOrder(apiData);
+  //     } else {
+  //       // Use regular trip confirm API
+  //       const apiData = formatOrderData(formData, sendTo, nearCity);
+  //       orderResponse = await confirmOrderAPI(apiData);
+  //     }
       
-      setOrderResponse(orderResponse);
-      setShowQuoteReview(false);
-      setShowOrderSuccess(true);
+  //     setOrderResponse(orderResponse);
+  //     setShowQuoteReview(false);
+  //     setShowOrderSuccess(true);
       
-    } catch (error: any) {
-      console.error('Error confirming order:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
-      Alert.alert('Error', `Failed to create order: ${errorMessage}`);
-    } finally {
-      setIsLoading(false);
+  //   } catch (error: any) {
+  //     console.error('Error confirming order:', error);
+  //     const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
+  //     Alert.alert('Error', `Failed to create order: ${errorMessage}`);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  const confirmOrder = async (sendTo: string, nearCity?: string[]) => { // Change to string[]
+  setIsLoading(true);
+  
+  try {
+    let orderResponse;
+    
+    if (formData.trip_type === 'Hourly Rental') {
+      // Use hourly rental confirm API
+      const apiData = formatHourlyOrderData(formData, sendTo, nearCity); // Pass array
+      orderResponse = await confirmHourlyOrder(apiData);
+    } else {
+      // Use regular trip confirm API
+      const apiData = formatOrderData(formData, sendTo, nearCity); // Pass array
+      orderResponse = await confirmOrderAPI(apiData);
     }
-  };
+    
+    setOrderResponse(orderResponse);
+    setShowQuoteReview(false);
+    setShowOrderSuccess(true);
+    
+  } catch (error: any) {
+    console.error('Error confirming order:', error);
+    const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
+    Alert.alert('Error', `Failed to create order: ${errorMessage}`);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const formatDateTime = (date: Date) => {
     return {
@@ -487,7 +526,6 @@ export default function CreateOrderScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Create {formData.trip_type} Order</Text>
       </View>
@@ -496,12 +534,13 @@ export default function CreateOrderScreen() {
         {/* Trip Type Selection */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Route size={24} color="#1E40AF" />
+            <Route size={20} color="#1E40AF" />
             <Text style={styles.sectionTitle}>Trip Type</Text>
           </View>
           
+          <Text style={styles.fieldLabel}>Select Trip Type</Text>
           <View style={styles.inputContainer}>
-            <Route size={20} color="#6B7280" style={styles.inputIcon} />
+            <Route size={18} color="#6B7280" style={styles.inputIcon} />
             <TouchableOpacity
               style={styles.pickerButton}
               onPress={() => setShowTripTypePicker(true)}
@@ -509,7 +548,7 @@ export default function CreateOrderScreen() {
               <Text style={[styles.pickerButtonText, formData.trip_type ? styles.pickerButtonTextActive : styles.pickerButtonTextPlaceholder]}>
                 {getCurrentTripType().label}
               </Text>
-              <ChevronDown size={20} color="#6B7280" />
+              <ChevronDown size={18} color="#6B7280" />
             </TouchableOpacity>
           </View>
         </View>
@@ -517,26 +556,28 @@ export default function CreateOrderScreen() {
         {/* Customer Details Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <User size={24} color="#1E40AF" />
+            <User size={20} color="#1E40AF" />
             <Text style={styles.sectionTitle}>Customer Details</Text>
           </View>
           
+          <Text style={styles.fieldLabel}>Customer Name *</Text>
           <View style={styles.inputContainer}>
-            <User size={20} color="#6B7280" style={styles.inputIcon} />
+            <User size={18} color="#6B7280" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="Customer Name"
+              placeholder="Enter customer name"
               value={formData.customer_name}
               onChangeText={(value) => handleInputChange('customer_name', value)}
               placeholderTextColor="#9CA3AF"
             />
           </View>
 
+          <Text style={styles.fieldLabel}>Customer Mobile Number *</Text>
           <View style={styles.inputContainer}>
-            <Phone size={20} color="#6B7280" style={styles.inputIcon} />
+            <Phone size={18} color="#6B7280" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="Customer Mobile Number"
+              placeholder="Enter mobile number"
               value={formData.customer_number}
               onChangeText={(value) => handleInputChange('customer_number', value)}
               keyboardType="phone-pad"
@@ -548,46 +589,42 @@ export default function CreateOrderScreen() {
         {/* Order Configuration */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Clock size={24} color="#1E40AF" />
+            <Clock size={20} color="#1E40AF" />
             <Text style={styles.sectionTitle}>Order Configuration</Text>
           </View>
           
-          {/* Max Time to Assign Order */}
-          <View style={styles.timeInputSection}>
-            <Text style={styles.fieldLabel}>Max Time to Assign Order</Text>
-            <View style={styles.timeInputRow}>
-              <View style={[styles.inputContainer, styles.timeInput]}>
-                <Clock size={20} color="#6B7280" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Hours"
-                  value={formData.max_time_hours}
-                  onChangeText={(value) => handleInputChange('max_time_hours', value)}
-                  keyboardType="numeric"
-                  placeholderTextColor="#9CA3AF"
-                />
-                <Text style={styles.timeUnit}>hrs</Text>
-              </View>
-              
-              <View style={[styles.inputContainer, styles.timeInput]}>
-                <Clock size={20} color="#6B7280" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Minutes"
-                  value={formData.max_time_minutes}
-                  onChangeText={(value) => handleInputChange('max_time_minutes', value)}
-                  keyboardType="numeric"
-                  placeholderTextColor="#9CA3AF"
-                />
-                <Text style={styles.timeUnit}>min</Text>
-              </View>
+          <Text style={styles.fieldLabel}>Max Time to Assign Order</Text>
+          <View style={styles.timeInputRow}>
+            <View style={[styles.inputContainer, styles.timeInput]}>
+              <Clock size={18} color="#6B7280" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Hours"
+                value={formData.max_time_hours}
+                onChangeText={(value) => handleInputChange('max_time_hours', value)}
+                keyboardType="numeric"
+                placeholderTextColor="#9CA3AF"
+              />
+              <Text style={styles.timeUnit}>hrs</Text>
+            </View>
+            
+            <View style={[styles.inputContainer, styles.timeInput]}>
+              <Clock size={18} color="#6B7280" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Minutes"
+                value={formData.max_time_minutes}
+                onChangeText={(value) => handleInputChange('max_time_minutes', value)}
+                keyboardType="numeric"
+                placeholderTextColor="#9CA3AF"
+              />
+              <Text style={styles.timeUnit}>min</Text>
             </View>
           </View>
 
-          {/* Toll Charge Update */}
           <View style={styles.switchContainer}>
             <View style={styles.switchLabel}>
-              <IndianRupee size={20} color="#6B7280" />
+              <IndianRupee size={18} color="#6B7280" />
               <Text style={styles.switchText}>Toll Charge Update</Text>
             </View>
             <Switch
@@ -602,54 +639,61 @@ export default function CreateOrderScreen() {
         {/* Trip Details Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Car size={24} color="#1E40AF" />
+            <Car size={20} color="#1E40AF" />
             <Text style={styles.sectionTitle}>Trip Details</Text>
           </View>
           
+          <Text style={styles.fieldLabel}>Car Type *</Text>
           <View style={styles.inputContainer}>
-            <Car size={20} color="#6B7280" style={styles.inputIcon} />
+            <Car size={18} color="#6B7280" style={styles.inputIcon} />
             <TouchableOpacity
               style={styles.pickerButton}
               onPress={() => setShowCarTypePicker(true)}
             >
               <Text style={[styles.pickerButtonText, formData.car_type ? styles.pickerButtonTextActive : styles.pickerButtonTextPlaceholder]}>
-                {formData.car_type || 'Select Car Type'}
+                {formData.car_type || 'Select car type'}
               </Text>
-              <ChevronDown size={20} color="#6B7280" />
+              <ChevronDown size={18} color="#6B7280" />
             </TouchableOpacity>
           </View>
 
           <View style={styles.row}>
-            <View style={[styles.inputContainer, styles.halfWidth]}>
-              <Calendar size={20} color="#6B7280" style={styles.inputIcon} />
-              <TouchableOpacity
-                style={styles.pickerButton}
-                onPress={() => showDateTimePicker('date')}
-              >
-                <Text style={styles.pickerButtonText}>
-                  {formatDateTime(formData.start_date_time).date}
-                </Text>
-              </TouchableOpacity>
+            <View style={[styles.halfWidth, { marginRight: 8 }]}>
+              <Text style={styles.fieldLabel}>Start Date *</Text>
+              <View style={styles.inputContainer}>
+                <Calendar size={18} color="#6B7280" style={styles.inputIcon} />
+                <TouchableOpacity 
+                  style={styles.pickerButton}
+                  onPress={() => setShowDatePicker(true)}
+                >
+                  <Text style={styles.pickerButtonText}>
+                    {formatDateTime(formData.start_date_time).date}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
-            <View style={[styles.inputContainer, styles.halfWidth]}>
-              <Clock size={20} color="#6B7280" style={styles.inputIcon} />
-              <TouchableOpacity
-                style={styles.pickerButton}
-                onPress={() => showDateTimePicker('time')}
-              >
-                <Text style={styles.pickerButtonText}>
-                  {formatDateTime(formData.start_date_time).time}
-                </Text>
-              </TouchableOpacity>
+            <View style={[styles.halfWidth, { marginLeft: 8 }]}>
+              <Text style={styles.fieldLabel}>Start Time *</Text>
+              <View style={styles.inputContainer}>
+                <Clock size={18} color="#6B7280" style={styles.inputIcon} />
+                <TouchableOpacity 
+                  style={styles.pickerButton}
+                  onPress={() => setShowTimePicker(true)}
+                >
+                  <Text style={styles.pickerButtonText}>
+                    {formatDateTime(formData.start_date_time).time}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </View>
 
-        {/* Enhanced Dynamic Locations Section */}
+        {/* Locations Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <MapPin size={24} color="#1E40AF" />
+            <MapPin size={20} color="#1E40AF" />
             <Text style={styles.sectionTitle}>Locations ({getLocationKeys().length})</Text>
             {canReorderLocations() && (
               <Text style={styles.reorderHint}>Use ↑↓ to reorder</Text>
@@ -657,59 +701,59 @@ export default function CreateOrderScreen() {
           </View>
           
           {getLocationKeys().map((index, position) => (
-            <View key={index} style={styles.locationItem}>
-              <View style={styles.locationNumberContainer}>
-                <Text style={styles.locationNumber}>{parseInt(index) + 1}</Text>
-              </View>
-              
-              <TouchableOpacity
-                style={styles.locationInputContainer}
-                onPress={() => openLocationPicker(index)}
-              >
-                <View style={styles.locationTextContainer}>
-                  <Text style={styles.locationLabelText}>
-                    {getLocationLabel(index)}
-                  </Text>
-                  <Text style={[
-                    styles.locationInputText, 
-                    formData.pickup_drop_location[index] ? styles.locationInputTextActive : styles.locationInputTextPlaceholder
-                  ]}>
-                    {formData.pickup_drop_location[index] || 'Tap to select location'}
-                  </Text>
+            <View key={index}>
+              <Text style={styles.fieldLabel}>{getLocationLabel(index)} *</Text>
+              <View style={styles.locationItem}>
+                <View style={styles.locationNumberContainer}>
+                  <Text style={styles.locationNumber}>{parseInt(index) + 1}</Text>
                 </View>
-                <MapPin size={20} color="#1E40AF" />
-              </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={styles.locationInputContainer}
+                  onPress={() => openLocationPicker(index)}
+                >
+                  <View style={styles.locationTextContainer}>
+                    <Text style={[
+                      styles.locationInputText, 
+                      formData.pickup_drop_location[index] ? styles.locationInputTextActive : styles.locationInputTextPlaceholder
+                    ]}>
+                      {formData.pickup_drop_location[index] || 'Tap to select location'}
+                    </Text>
+                  </View>
+                  <MapPin size={18} color="#1E40AF" />
+                </TouchableOpacity>
 
-              {canReorderLocations() && (
-                <View style={styles.reorderControls}>
-                  <TouchableOpacity 
-                    style={[styles.reorderButton, parseInt(index) === 0 && styles.disabledReorderButton]}
-                    onPress={() => {
-                      const currentIndex = parseInt(index);
-                      if (currentIndex > 0) {
-                        moveLocation(currentIndex, currentIndex - 1);
-                      }
-                    }}
-                    disabled={parseInt(index) === 0}
-                  >
-                    <ChevronUp size={16} color={parseInt(index) === 0 ? "#9CA3AF" : "#6B7280"} />
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={[styles.reorderButton, parseInt(index) === getLocationKeys().length - 1 && styles.disabledReorderButton]}
-                    onPress={() => {
-                      const currentIndex = parseInt(index);
-                      const keys = getLocationKeys();
-                      if (currentIndex < keys.length - 1) {
-                        moveLocation(currentIndex, currentIndex + 1);
-                      }
-                    }}
-                    disabled={parseInt(index) === getLocationKeys().length - 1}
-                  >
-                    <ChevronDownIcon size={16} color={parseInt(index) === getLocationKeys().length - 1 ? "#9CA3AF" : "#6B7280"} />
-                  </TouchableOpacity>
-                </View>
-              )}
+                {canReorderLocations() && (
+                  <View style={styles.reorderControls}>
+                    <TouchableOpacity 
+                      style={[styles.reorderButton, parseInt(index) === 0 && styles.disabledReorderButton]}
+                      onPress={() => {
+                        const currentIndex = parseInt(index);
+                        if (currentIndex > 0) {
+                          moveLocation(currentIndex, currentIndex - 1);
+                        }
+                      }}
+                      disabled={parseInt(index) === 0}
+                    >
+                      <ChevronUp size={14} color={parseInt(index) === 0 ? "#9CA3AF" : "#6B7280"} />
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity 
+                      style={[styles.reorderButton, parseInt(index) === getLocationKeys().length - 1 && styles.disabledReorderButton]}
+                      onPress={() => {
+                        const currentIndex = parseInt(index);
+                        const keys = getLocationKeys();
+                        if (currentIndex < keys.length - 1) {
+                          moveLocation(currentIndex, currentIndex + 1);
+                        }
+                      }}
+                      disabled={parseInt(index) === getLocationKeys().length - 1}
+                    >
+                      <ChevronDownIcon size={14} color={parseInt(index) === getLocationKeys().length - 1 ? "#9CA3AF" : "#6B7280"} />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
             </View>
           ))}
           
@@ -720,206 +764,259 @@ export default function CreateOrderScreen() {
           )}
         </View>
 
-        {/* Conditional Pricing Section */}
+        {/* Pricing Section */}
         {formData.trip_type === 'Hourly Rental' ? (
-          /* Hourly Rental Pricing */
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Timer size={24} color="#8B5A3C" />
+              <Timer size={20} color="#8B5A3C" />
               <Text style={styles.sectionTitle}>Hourly Rental Pricing</Text>
             </View>
             
+            <Text style={styles.fieldLabel}>Package Hours *</Text>
             <View style={styles.inputContainer}>
-              <Timer size={20} color="#6B7280" style={styles.inputIcon} />
+              <Timer size={18} color="#6B7280" style={styles.inputIcon} />
               <TouchableOpacity
                 style={styles.pickerButton}
                 onPress={() => setShowPackageHoursPicker(true)}
               >
                 <Text style={[styles.pickerButtonText, formData.package_hours ? styles.pickerButtonTextActive : styles.pickerButtonTextPlaceholder]}>
-                  {formData.package_hours ? `${formData.package_hours.hours} hrs (${formData.package_hours.km_range} km)` : 'Select Package Hours'}
+                  {formData.package_hours ? `${formData.package_hours.hours} hrs (${formData.package_hours.km_range} km)` : 'Select package hours'}
                 </Text>
-                <ChevronDown size={20} color="#6B7280" />
+                <ChevronDown size={18} color="#6B7280" />
               </TouchableOpacity>
             </View>
 
             <View style={styles.row}>
-              <View style={[styles.inputContainer, styles.halfWidth]}>
-                <IndianRupee size={20} color="#6B7280" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Cost per Hour"
-                  value={formData.cost_per_hour}
-                  onChangeText={(value) => handleInputChange('cost_per_hour', value)}
-                  keyboardType="numeric"
-                  placeholderTextColor="#9CA3AF"
-                />
+              <View style={[styles.halfWidth, { marginRight: 8 }]}>
+                <Text style={styles.fieldLabel}>Cost per Hour *</Text>
+                <View style={styles.inputContainer}>
+                  <IndianRupee size={18} color="#6B7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Cost/hour"
+                    value={formData.cost_per_hour}
+                    onChangeText={(value) => handleInputChange('cost_per_hour', value)}
+                    keyboardType="numeric"
+                    placeholderTextColor="#9CA3AF"
+                  />
+                </View>
               </View>
 
-              <View style={[styles.inputContainer, styles.halfWidth]}>
-                <IndianRupee size={20} color="#6B7280" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Extra Cost per Hour"
-                  value={formData.extra_cost_per_hour}
-                  onChangeText={(value) => handleInputChange('extra_cost_per_hour', value)}
-                  keyboardType="numeric"
-                  placeholderTextColor="#9CA3AF"
-                />
+              <View style={[styles.halfWidth, { marginLeft: 8 }]}>
+                <Text style={styles.fieldLabel}>Extra Cost per Hour</Text>
+                <View style={styles.inputContainer}>
+                  <IndianRupee size={18} color="#6B7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Extra/hour"
+                    value={formData.extra_cost_per_hour}
+                    onChangeText={(value) => handleInputChange('extra_cost_per_hour', value)}
+                    keyboardType="numeric"
+                    placeholderTextColor="#9CA3AF"
+                  />
+                </View>
               </View>
             </View>
 
             <View style={styles.row}>
-              <View style={[styles.inputContainer, styles.halfWidth]}>
-                <IndianRupee size={20} color="#6B7280" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Cost for Addon KM"
-                  value={formData.cost_for_addon_km}
-                  onChangeText={(value) => handleInputChange('cost_for_addon_km', value)}
-                  keyboardType="numeric"
-                  placeholderTextColor="#9CA3AF"
-                />
+              <View style={[styles.halfWidth, { marginRight: 8 }]}>
+                <Text style={styles.fieldLabel}>Cost for Addon KM</Text>
+                <View style={styles.inputContainer}>
+                  <IndianRupee size={18} color="#6B7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Cost/KM"
+                    value={formData.cost_for_addon_km}
+                    onChangeText={(value) => handleInputChange('cost_for_addon_km', value)}
+                    keyboardType="numeric"
+                    placeholderTextColor="#9CA3AF"
+                  />
+                </View>
               </View>
 
-              <View style={[styles.inputContainer, styles.halfWidth]}>
-                <IndianRupee size={20} color="#6B7280" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Extra Cost for Addon KM"
-                  value={formData.extra_cost_for_addon_km}
-                  onChangeText={(value) => handleInputChange('extra_cost_for_addon_km', value)}
-                  keyboardType="numeric"
-                  placeholderTextColor="#9CA3AF"
-                />
+              <View style={[styles.halfWidth, { marginLeft: 8 }]}>
+                <Text style={styles.fieldLabel}>Extra Cost for Addon KM</Text>
+                <View style={styles.inputContainer}>
+                  <IndianRupee size={18} color="#6B7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Extra/KM"
+                    value={formData.extra_cost_for_addon_km}
+                    onChangeText={(value) => handleInputChange('extra_cost_for_addon_km', value)}
+                    keyboardType="numeric"
+                    placeholderTextColor="#9CA3AF"
+                  />
+                </View>
               </View>
             </View>
           </View>
         ) : (
-          /* Regular Trip Pricing */
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <IndianRupee size={24} color="#1E40AF" />
+              <IndianRupee size={20} color="#1E40AF" />
               <Text style={styles.sectionTitle}>Pricing Details</Text>
             </View>
             
             <View style={styles.row}>
-              <View style={[styles.inputContainer, styles.halfWidth]}>
-                <IndianRupee size={20} color="#6B7280" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Cost per KM"
-                  value={formData.cost_per_km}
-                  onChangeText={(value) => handleInputChange('cost_per_km', value)}
-                  keyboardType="numeric"
-                  placeholderTextColor="#9CA3AF"
-                />
+              <View style={[styles.halfWidth, { marginRight: 8 }]}>
+                <Text style={styles.fieldLabel}>Cost per KM *</Text>
+                <View style={styles.inputContainer}>
+                  <IndianRupee size={18} color="#6B7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Cost/KM"
+                    value={formData.cost_per_km}
+                    onChangeText={(value) => handleInputChange('cost_per_km', value)}
+                    keyboardType="numeric"
+                    placeholderTextColor="#9CA3AF"
+                  />
+                </View>
               </View>
 
-              <View style={[styles.inputContainer, styles.halfWidth]}>
-                <IndianRupee size={20} color="#6B7280" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Extra Cost per KM"
-                  value={formData.extra_cost_per_km}
-                  onChangeText={(value) => handleInputChange('extra_cost_per_km', value)}
-                  keyboardType="numeric"
-                  placeholderTextColor="#9CA3AF"
-                />
+              <View style={[styles.halfWidth, { marginLeft: 8 }]}>
+                <Text style={styles.fieldLabel}>Extra Cost per KM</Text>
+                <View style={styles.inputContainer}>
+                  <IndianRupee size={18} color="#6B7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Extra/KM"
+                    value={formData.extra_cost_per_km}
+                    onChangeText={(value) => handleInputChange('extra_cost_per_km', value)}
+                    keyboardType="numeric"
+                    placeholderTextColor="#9CA3AF"
+                  />
+                </View>
               </View>
             </View>
 
             <View style={styles.row}>
-              <View style={[styles.inputContainer, styles.halfWidth]}>
-                <Car size={20} color="#6B7280" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Driver Allowance"
-                  value={formData.driver_allowance}
-                  onChangeText={(value) => handleInputChange('driver_allowance', value)}
-                  keyboardType="numeric"
-                  placeholderTextColor="#9CA3AF"
-                />
+              <View style={[styles.halfWidth, { marginRight: 8 }]}>
+                <Text style={styles.fieldLabel}>Driver Allowance</Text>
+                <View style={styles.inputContainer}>
+                  <Car size={18} color="#6B7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="DA"
+                    value={formData.driver_allowance}
+                    onChangeText={(value) => handleInputChange('driver_allowance', value)}
+                    keyboardType="numeric"
+                    placeholderTextColor="#9CA3AF"
+                  />
+                </View>
               </View>
 
-              <View style={[styles.inputContainer, styles.halfWidth]}>
-                <Car size={20} color="#6B7280" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Extra Driver Allowance"
-                  value={formData.extra_driver_allowance}
-                  onChangeText={(value) => handleInputChange('extra_driver_allowance', value)}
-                  keyboardType="numeric"
-                  placeholderTextColor="#9CA3AF"
-                />
+              <View style={[styles.halfWidth, { marginLeft: 8 }]}>
+                <Text style={styles.fieldLabel}>Extra Driver Allowance</Text>
+                <View style={styles.inputContainer}>
+                  <Car size={18} color="#6B7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Extra DA"
+                    value={formData.extra_driver_allowance}
+                    onChangeText={(value) => handleInputChange('extra_driver_allowance', value)}
+                    keyboardType="numeric"
+                    placeholderTextColor="#9CA3AF"
+                  />
+                </View>
               </View>
             </View>
 
             <View style={styles.row}>
-              <View style={[styles.inputContainer, styles.halfWidth]}>
-                <FileText size={20} color="#6B7280" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Permit Charges"
-                  value={formData.permit_charges}
-                  onChangeText={(value) => handleInputChange('permit_charges', value)}
-                  keyboardType="numeric"
-                  placeholderTextColor="#9CA3AF"
-                />
+              <View style={[styles.halfWidth, { marginRight: 8 }]}>
+                <Text style={styles.fieldLabel}>Permit Charges</Text>
+                <View style={styles.inputContainer}>
+                  <FileText size={18} color="#6B7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Permit"
+                    value={formData.permit_charges}
+                    onChangeText={(value) => handleInputChange('permit_charges', value)}
+                    keyboardType="numeric"
+                    placeholderTextColor="#9CA3AF"
+                  />
+                </View>
               </View>
 
-              <View style={[styles.inputContainer, styles.halfWidth]}>
-                <FileText size={20} color="#6B7280" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Extra Permit Charges"
-                  value={formData.extra_permit_charges}
-                  onChangeText={(value) => handleInputChange('extra_permit_charges', value)}
-                  keyboardType="numeric"
-                  placeholderTextColor="#9CA3AF"
-                />
+              <View style={[styles.halfWidth, { marginLeft: 8 }]}>
+                <Text style={styles.fieldLabel}>Extra Permit Charges</Text>
+                <View style={styles.inputContainer}>
+                  <FileText size={18} color="#6B7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Ext Permit"
+                    value={formData.extra_permit_charges}
+                    onChangeText={(value) => handleInputChange('extra_permit_charges', value)}
+                    keyboardType="numeric"
+                    placeholderTextColor="#9CA3AF"
+                  />
+                </View>
               </View>
             </View>
 
             <View style={styles.row}>
-              <View style={[styles.inputContainer, styles.halfWidth]}>
-                <Mountain size={20} color="#6B7280" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Hill Charges"
-                  value={formData.hill_charges}
-                  onChangeText={(value) => handleInputChange('hill_charges', value)}
-                  keyboardType="numeric"
-                  placeholderTextColor="#9CA3AF"
-                />
+              <View style={[styles.halfWidth, { marginRight: 8 }]}>
+                <Text style={styles.fieldLabel}>Hill Charges</Text>
+                <View style={styles.inputContainer}>
+                  <Mountain size={18} color="#6B7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Hill charges"
+                    value={formData.hill_charges}
+                    onChangeText={(value) => handleInputChange('hill_charges', value)}
+                    keyboardType="numeric"
+                    placeholderTextColor="#9CA3AF"
+                  />
+                </View>
               </View>
 
-              <View style={[styles.inputContainer, styles.halfWidth]}>
-                <IndianRupee size={20} color="#6B7280" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Toll Charges"
-                  value={formData.toll_charges}
-                  onChangeText={(value) => handleInputChange('toll_charges', value)}
-                  keyboardType="numeric"
-                  placeholderTextColor="#9CA3AF"
-                />
+              <View style={[styles.halfWidth, { marginLeft: 8 }]}>
+                <Text style={styles.fieldLabel}>Night Charges</Text>
+                <View style={styles.inputContainer}>
+                  <IndianRupee size={18} color="#6B7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Ngt charges"
+                    value={formData.night_charges}
+                    onChangeText={(value) => handleInputChange('night_charges', value)}
+                    keyboardType="numeric"
+                    placeholderTextColor="#9CA3AF"
+                  />
+                </View>
               </View>
             </View>
+
+            {!formData.toll_charge_update && (
+              <>
+                <Text style={styles.fieldLabel}>Toll Charges</Text>
+                <View style={styles.inputContainer}>
+                  <IndianRupee size={18} color="#6B7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Toll charges"
+                    value={formData.toll_charges}
+                    onChangeText={(value) => handleInputChange('toll_charges', value)}
+                    keyboardType="numeric"
+                    placeholderTextColor="#9CA3AF"
+                  />
+                </View>
+              </>
+            )}
           </View>
         )}
 
         {/* Additional Notes Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <FileText size={24} color="#1E40AF" />
+            <FileText size={20} color="#1E40AF" />
             <Text style={styles.sectionTitle}>Additional Notes</Text>
           </View>
           
+          <Text style={styles.fieldLabel}>Pickup Notes (Optional)</Text>
           <View style={styles.inputContainer}>
-            <FileText size={20} color="#6B7280" style={styles.inputIcon} />
+            <FileText size={18} color="#6B7280" style={styles.inputIcon} />
             <TextInput
               style={[styles.input, styles.textArea]}
-              placeholder="Pickup Notes (Optional)"
+              placeholder="Enter any special instructions"
               value={formData.pickup_notes}
               onChangeText={(value) => handleInputChange('pickup_notes', value)}
               placeholderTextColor="#9CA3AF"
@@ -939,7 +1036,7 @@ export default function CreateOrderScreen() {
             colors={getTripTypeColors()}
             style={styles.gradientButton}
           >
-            <Calculator size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+            <Calculator size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
             <Text style={styles.buttonText}>
               {isLoading ? 'Generating Quote...' : 'Get Quote'}
             </Text>
@@ -947,67 +1044,26 @@ export default function CreateOrderScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Date Time Pickers */}
+      {/* Date Picker */}
       {showDatePicker && (
         <DateTimePicker
           value={formData.start_date_time}
           mode="date"
-          display="default"
-          onChange={handleDateTimeChange}
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          // onChange={onDateChange}
           minimumDate={new Date()}
         />
       )}
 
+      {/* Time Picker */}
       {showTimePicker && (
         <DateTimePicker
           value={formData.start_date_time}
           mode="time"
-          display="default"
-          onChange={handleDateTimeChange}
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          // onChange={onTimeChange}
         />
       )}
-
-      {/* Car Type Picker Modal */}
-      <Modal
-        visible={showCarTypePicker}
-        animationType="slide"
-        presentationStyle="pageSheet"
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Select Car Type</Text>
-            <TouchableOpacity
-              onPress={() => setShowCarTypePicker(false)}
-              style={styles.closeButton}
-            >
-              <X size={24} color="#5F6368" />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.modalContent}>
-            {carTypes.map((type) => (
-              <TouchableOpacity
-                key={type}
-                style={[
-                  styles.modalOption,
-                  formData.car_type === type && styles.modalOptionActive
-                ]}
-                onPress={() => {
-                  handleInputChange('car_type', type);
-                  setShowCarTypePicker(false);
-                }}
-              >
-                <Car size={20} color={formData.car_type === type ? "#1E40AF" : "#6B7280"} />
-                <Text style={[
-                  styles.modalOptionText,
-                  formData.car_type === type && styles.modalOptionTextActive
-                ]}>
-                  {type}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-      </Modal>
 
       {/* Trip Type Picker Modal */}
       <Modal
@@ -1022,34 +1078,80 @@ export default function CreateOrderScreen() {
               onPress={() => setShowTripTypePicker(false)}
               style={styles.closeButton}
             >
-              <X size={24} color="#5F6368" />
+              <X size={22} color="#5F6368" />
             </TouchableOpacity>
           </View>
           <View style={styles.modalContent}>
-            {tripTypes.map((type) => {
-              const IconComponent = type.icon;
-              return (
+            {tripTypes.map((type) => (
+              <TouchableOpacity
+                key={type.value}
+                style={[
+                  styles.modalOption,
+                  formData.trip_type === type.value && styles.modalOptionActive
+                ]}
+                onPress={() => {
+                  handleTripTypeChange(type.value);
+                  setShowTripTypePicker(false);
+                }}
+              >
+                <type.icon size={18} color={formData.trip_type === type.value ? "#1E40AF" : "#6B7280"} />
+                <Text style={[
+                  styles.modalOptionText,
+                  formData.trip_type === type.value && styles.modalOptionTextActive
+                ]}>
+                  {type.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Car Type Picker Modal */}
+      <Modal
+        visible={showCarTypePicker}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Select Car Type</Text>
+            <TouchableOpacity
+              onPress={() => setShowCarTypePicker(false)}
+              style={styles.closeButton}
+            >
+              <X size={22} color="#5F6368" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.modalContent}>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {carTypes.map((type) => (
                 <TouchableOpacity
-                  key={type.value}
+                  key={type}
                   style={[
                     styles.modalOption,
-                    formData.trip_type === type.value && styles.modalOptionActive
+                    formData.car_type === type && styles.modalOptionActive
                   ]}
                   onPress={() => {
-                    handleTripTypeChange(type.value);
-                    setShowTripTypePicker(false);
+                    handleInputChange("car_type", type);
+                    setShowCarTypePicker(false);
                   }}
                 >
-                  <IconComponent size={20} color={formData.trip_type === type.value ? "#1E40AF" : "#6B7280"} />
-                  <Text style={[
-                    styles.modalOptionText,
-                    formData.trip_type === type.value && styles.modalOptionTextActive
-                  ]}>
-                    {type.label}
+                  <Car
+                    size={18}
+                    color={formData.car_type === type ? "#1E40AF" : "#6B7280"}
+                  />
+                  <Text
+                    style={[
+                      styles.modalOptionText,
+                      formData.car_type === type && styles.modalOptionTextActive
+                    ]}
+                  >
+                    {type}
                   </Text>
                 </TouchableOpacity>
-              );
-            })}
+              ))}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -1067,7 +1169,7 @@ export default function CreateOrderScreen() {
               onPress={() => setShowPackageHoursPicker(false)}
               style={styles.closeButton}
             >
-              <X size={24} color="#5F6368" />
+              <X size={22} color="#5F6368" />
             </TouchableOpacity>
           </View>
           <View style={styles.modalContent}>
@@ -1083,7 +1185,7 @@ export default function CreateOrderScreen() {
                   setShowPackageHoursPicker(false);
                 }}
               >
-                <Timer size={20} color={formData.package_hours?.hours === option.hours && formData.package_hours?.km_range === option.km_range ? "#8B5A3C" : "#6B7280"} />
+                <Timer size={18} color={formData.package_hours?.hours === option.hours && formData.package_hours?.km_range === option.km_range ? "#8B5A3C" : "#6B7280"} />
                 <Text style={[
                   styles.modalOptionText,
                   formData.package_hours?.hours === option.hours && formData.package_hours?.km_range === option.km_range && styles.modalOptionTextActive
@@ -1104,14 +1206,12 @@ export default function CreateOrderScreen() {
           if (activeLocationField) {
             handleLocationChange(activeLocationField, location);
           }
-          setShowLocationPicker(false);
         }}
         title={activeLocationField ? `Select ${getLocationLabel(activeLocationField)}` : 'Select Location'}
         placeholder="Search for a location..."
-        initialValue={activeLocationField ? formData.pickup_drop_location[activeLocationField] : ''}
       />
 
-      {/* Quote Review */}
+         {/* Quote Review */}
       <QuoteReview
         visible={showQuoteReview}
         onClose={() => setShowQuoteReview(false)}
@@ -1129,7 +1229,7 @@ export default function CreateOrderScreen() {
           setFormData({
             vendor_id: '83a93a3f-2f6e-4bf6-9f78-1c3f9f42b7b1',
             trip_type: 'Oneway',
-            car_type: 'Sedan',
+            car_type: 'SEDAN_4_PLUS_1',
             pickup_drop_location: { '0': '', '1': '' },
             start_date_time: new Date(),
             customer_name: '',
@@ -1144,7 +1244,7 @@ export default function CreateOrderScreen() {
             permit_charges: '',
             extra_permit_charges: '',
             hill_charges: '',
-            toll_charges: '',
+            toll_charges: '0',
             package_hours: null,
             cost_per_hour: '',
             extra_cost_per_hour: '',
@@ -1152,13 +1252,15 @@ export default function CreateOrderScreen() {
             extra_cost_for_addon_km: '',
             pickup_notes: '',
             send_to: 'ALL',
-            near_city: ''
+            near_city: ['ALL'],
+            night_charges:''
           });
           setQuoteResponse(null);
           setOrderResponse(null);
         }}
         orderData={orderResponse}
       />
+
     </View>
   );
 }
@@ -1176,7 +1278,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
@@ -1185,29 +1287,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   section: {
-    marginTop: 24,
+    marginTop: 20,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '600',
     color: '#202124',
-    marginLeft: 12,
+    marginLeft: 8,
     flex: 1,
   },
-  reorderHint: {
+  fieldLabel: {
     fontSize: 12,
+    fontWeight: '500',
+    color: '#374151',
+    marginBottom: 6,
+    marginLeft: 4,
+  },
+  reorderHint: {
+    fontSize: 10,
     color: '#6B7280',
     fontStyle: 'italic',
   },
   addLocationButton: {
     backgroundColor: '#F0F7FF',
     borderRadius: 12,
-    paddingVertical: 16,
+    paddingVertical: 14,
     alignItems: 'center',
     marginTop: 12,
     borderWidth: 2,
@@ -1215,18 +1324,14 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
   addLocationText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#1E40AF',
   },
   locationItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
-  },
-  dragHandle: {
-    padding: 8,
-    marginLeft: 8,
+    marginBottom: 12,
   },
   reorderControls: {
     flexDirection: 'column',
@@ -1242,16 +1347,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB',
   },
   locationNumberContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: '#1E40AF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
   locationNumber: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: '#FFFFFF',
   },
@@ -1260,9 +1365,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
@@ -1275,9 +1380,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    marginBottom: 16,
-    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginBottom: 12,
+    paddingHorizontal: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
@@ -1287,34 +1392,25 @@ const styles = StyleSheet.create({
     borderColor: '#E8EAED',
   },
   inputIcon: {
-    marginRight: 16,
+    marginRight: 12,
   },
   input: {
     flex: 1,
-    height: 56,
-    fontSize: 16,
+    height: 48,
+    fontSize: 14,
     color: '#202124',
   },
   textArea: {
-    height: 100,
+    height: 80,
     textAlignVertical: 'top',
-    paddingTop: 35,
+    paddingTop: 12,
   },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'flex-end',
   },
   halfWidth: {
-    width: '48%',
-  },
-  timeInputSection: {
-    marginBottom: 16,
-  },
-  fieldLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
+    flex: 1,
   },
   timeInputRow: {
     flexDirection: 'row',
@@ -1324,7 +1420,7 @@ const styles = StyleSheet.create({
     width: '48%',
   },
   timeUnit: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#6B7280',
     fontWeight: '500',
   },
@@ -1333,9 +1429,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
@@ -1350,9 +1446,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   switchText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#374151',
-    marginLeft: 16,
+    marginLeft: 12,
     fontWeight: '500',
   },
   pickerButton: {
@@ -1360,10 +1456,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    height: 56,
+    height: 48,
   },
   pickerButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#202124',
     fontWeight: '500',
   },
@@ -1376,14 +1472,8 @@ const styles = StyleSheet.create({
   locationTextContainer: {
     flex: 1,
   },
-  locationLabelText: {
-    fontSize: 12,
-    color: '#5F6368',
-    fontWeight: '500',
-    marginBottom: 4,
-  },
   locationInputText: {
-    fontSize: 16,
+    fontSize: 14,
   },
   locationInputTextActive: {
     color: '#202124',
@@ -1393,8 +1483,8 @@ const styles = StyleSheet.create({
     color: '#9AA0A6',
   },
   quoteButton: {
-    marginVertical: 32,
-    borderRadius: 16,
+    marginVertical: 24,
+    borderRadius: 14,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -1406,14 +1496,14 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   gradientButton: {
-    paddingVertical: 18,
+    paddingVertical: 16,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
   },
   modalContainer: {
@@ -1431,7 +1521,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E8EAED',
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#202124',
   },
@@ -1446,7 +1536,7 @@ const styles = StyleSheet.create({
   modalOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 12,
     marginBottom: 8,
@@ -1459,7 +1549,7 @@ const styles = StyleSheet.create({
     borderColor: '#1E40AF',
   },
   modalOptionText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#6B7280',
     marginLeft: 12,
     fontWeight: '500',

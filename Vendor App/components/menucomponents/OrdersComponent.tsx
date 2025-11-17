@@ -5,7 +5,8 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  ActivityIndicator
+  ActivityIndicator,
+  RefreshControl
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import api from '../../app/api/api'; // Adjust the path as necessary
@@ -26,6 +27,7 @@ interface Order {
   trip_time: string;
   estimated_price: number;
   vendor_price: number;
+  max_time: number;
   platform_fees_percent: number;
   created_at: string;
   cost_per_km: number;
@@ -37,6 +39,7 @@ export default function OrdersComponent(){
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
     
   useEffect(() => {
     fetchOrders();
@@ -49,12 +52,18 @@ export default function OrdersComponent(){
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
       setOrders(sortedOrders);
-      console.log("Fetched orders:", orders);
+      console.log("Fetched orders:", sortedOrders);
     } catch (err: any) {
       console.error("Error fetching vendor orders:", err);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchOrders();
   };
 
   const getStatusColor = (status: string) => {
@@ -62,7 +71,7 @@ export default function OrdersComponent(){
       case 'CONFIRMED': return '#F59E0B';
       case 'DRIVER_ASSIGNED': return '#3B82F6';
       case 'TRIP_STARTED': return '#10B981';
-      case 'TRIP_COMPLETED': return '#059669';
+      case 'COMPLETED': return '#059669';
       case 'CANCELLED': return '#DC2626';
       case 'PENDING': return '#6B7280';
       default: return '#6B7280';
@@ -74,7 +83,7 @@ export default function OrdersComponent(){
       case 'CONFIRMED': return <AlertCircle size={16} color="#F59E0B" />;
       case 'DRIVER_ASSIGNED': return <Car size={16} color="#3B82F6" />;
       case 'TRIP_STARTED': return <CheckCircle size={16} color="#10B981" />;
-      case 'TRIP_COMPLETED': return <CheckCircle size={16} color="#059669" />;
+      case 'COMPLETED': return <CheckCircle size={16} color="#059669" />;
       case 'CANCELLED': return <AlertCircle size={16} color="#DC2626" />;
       case 'PENDING': return <Clock size={16} color="#6B7280" />;
       default: return <AlertCircle size={16} color="#6B7280" />;
@@ -143,6 +152,12 @@ export default function OrdersComponent(){
                 {formatDate(item.start_date_time)} at {formatTime(item.start_date_time)}
               </Text>
             </View>
+              <View style={styles.dateTimeContainer}>
+              <Calendar size={16} color="#9c1a2dff" />
+              <Text style={styles.dateTimeText}>
+                {"Assign Max Time : "+item.max_time+" Min"}
+              </Text>
+            </View>
           </View>
 
           <View style={styles.routeInfo}>
@@ -208,7 +223,7 @@ export default function OrdersComponent(){
                     : "Null"}
                 </Text>
               ) : (
-                <Text style={styles.platformFeeValue}>₹{item.estimated_price/10}</Text>
+                <Text style={styles.platformFeeValue}>₹{item.admin_profit?item.admin_profit:Math.round((item.vendor_price - item.estimated_price)*item.platform_fees_percent/100)}</Text>
               )}
             </View>
           </View>
@@ -246,6 +261,16 @@ export default function OrdersComponent(){
             keyExtractor={(item) => item.id.toString()}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.ordersList}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={['#0d5464']}
+                tintColor="#0d5464"
+                title="Refreshing orders..."
+                titleColor="#666"
+              />
+            }
           />
         )}
       </View>

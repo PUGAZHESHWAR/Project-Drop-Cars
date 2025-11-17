@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { Link, router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { User, Phone, Lock, FileText, Camera, Eye, EyeOff, ArrowRight, CircleCheck as CheckCircle, MapPin, Trash2 } from 'lucide-react-native';
+import { User, Phone, Lock, FileText, Camera, Eye, EyeOff, ArrowRight, CircleCheck as CheckCircle, MapPin, Trash2, Mail } from 'lucide-react-native';
 import { useVendorAuth } from '../../hooks/useVendorAuth';
 import { pickImage, ImageInfo } from '../../utils/imageUtils';
 import { validateFormData } from '../../utils/validation';
@@ -28,6 +28,8 @@ export default function SignUp() {
     primary_number: '',
     secondary_number: '',
     address: '',
+    pincode: '',
+    city: '',
     aadhar_number: '',
     gpay_number: '',
     password: '',
@@ -53,7 +55,7 @@ export default function SignUp() {
         setAadharImage(image);
       }
     } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to pick image');
+      Alert.alert('Error', error instanceof Error ? "Target" : 'Failed to pick image');
     }
   };
 
@@ -74,6 +76,14 @@ export default function SignUp() {
         }
         if (!formData.address.trim()) {
           Alert.alert('Error', 'Please enter your address');
+          return false;
+        }
+        if (!formData.pincode.trim()) {
+          Alert.alert('Error', 'Please enter your pincode');
+          return false;
+        }
+        if (!formData.city.trim()) {
+          Alert.alert('Error', 'Please enter your city');
           return false;
         }
         return true;
@@ -177,52 +187,105 @@ export default function SignUp() {
       </View>
       
       <View style={styles.inputGroup}>
-        <View style={styles.inputContainer}>
-          <User size={20} color="#3B82F6" style={styles.inputIcon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Full Name"
-            value={formData.full_name}
-            onChangeText={(value) => handleInputChange('full_name', value)}
-            placeholderTextColor="#9CA3AF"
-          />
+        {/* Full Name */}
+        <View style={styles.inputWrapper}>
+          <Text style={styles.inputLabel}>Full Name</Text>
+          <View style={styles.inputContainer}>
+            <User size={20} color="#3B82F6" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Rajesh Kumar"
+              value={formData.full_name}
+              onChangeText={(value) => handleInputChange('full_name', value)}
+              placeholderTextColor="#9CA3AF"
+            />
+          </View>
         </View>
 
-        <View style={styles.inputContainer}>
-          <Phone size={20} color="#3B82F6" style={styles.inputIcon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Primary Mobile Number"
-            value={formData.primary_number}
-            onChangeText={(value) => handleInputChange('primary_number', value)}
-            keyboardType="phone-pad"
-            placeholderTextColor="#9CA3AF"
-          />
+        {/* Primary Mobile Number */}
+        <View style={styles.inputWrapper}>
+          <Text style={styles.inputLabel}>Primary Mobile Number</Text>
+          <View style={styles.inputContainer}>
+            <Phone size={20} color="#3B82F6" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="9876543210"
+              value={formData.primary_number}
+              onChangeText={(value) => handleInputChange('primary_number', value)}
+              keyboardType="phone-pad"
+              placeholderTextColor="#9CA3AF"
+              maxLength={10}
+            />
+          </View>
         </View>
 
-        <View style={styles.inputContainer}>
-          <Phone size={20} color="#6B7280" style={styles.inputIcon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Secondary Mobile Number"
-            value={formData.secondary_number}
-            onChangeText={(value) => handleInputChange('secondary_number', value)}
-            keyboardType="phone-pad"
-            placeholderTextColor="#9CA3AF"
-          />
+        {/* Secondary Mobile Number */}
+        <View style={styles.inputWrapper}>
+          <Text style={styles.inputLabel}>Secondary Mobile Number (Optional)</Text>
+          <View style={styles.inputContainer}>
+            <Phone size={20} color="#6B7280" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="9876543210"
+              value={formData.secondary_number}
+              onChangeText={(value) => handleInputChange('secondary_number', value)}
+              keyboardType="phone-pad"
+              placeholderTextColor="#9CA3AF"
+              maxLength={10}
+            />
+          </View>
         </View>
 
-        <View style={styles.inputContainer}>
-          <MapPin size={20} color="#3B82F6" style={styles.inputIcon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Address (Minimum 10 characters)"
-            value={formData.address}
-            onChangeText={(value) => handleInputChange('address', value)}
-            multiline
-            numberOfLines={3}
-            placeholderTextColor="#9CA3AF"
-          />
+        {/* Address */}
+        <View style={styles.inputWrapper}>
+          <Text style={styles.inputLabel}>Address</Text>
+          <View style={styles.inputContainer}>
+            <MapPin size={20} color="#3B82F6" style={styles.inputIcon} />
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="House No. 123, Street Name, Area"
+              value={formData.address}
+              onChangeText={(value) => handleInputChange('address', value)}
+              multiline
+              numberOfLines={3}
+              placeholderTextColor="#9CA3AF"
+            />
+          </View>
+        </View>
+
+        {/* Pincode and City in Row */}
+        <View style={styles.rowContainer}>
+          {/* Pincode */}
+          <View style={[styles.inputWrapper, styles.halfWidth]}>
+            <Text style={styles.inputLabel}>Pincode</Text>
+            <View style={styles.inputContainer}>
+              <MapPin size={20} color="#3B82F6" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="560001"
+                value={formData.pincode}
+                onChangeText={(value) => handleInputChange('pincode', value)}
+                keyboardType="numeric"
+                placeholderTextColor="#9CA3AF"
+                maxLength={6}
+              />
+            </View>
+          </View>
+
+          {/* City */}
+          <View style={[styles.inputWrapper, styles.halfWidth]}>
+            <Text style={styles.inputLabel}>City</Text>
+            <View style={styles.inputContainer}>
+              <MapPin size={20} color="#3B82F6" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Bangalore"
+                value={formData.city}
+                onChangeText={(value) => handleInputChange('city', value)}
+                placeholderTextColor="#9CA3AF"
+              />
+            </View>
+          </View>
         </View>
       </View>
     </View>
@@ -236,33 +299,43 @@ export default function SignUp() {
       </View>
       
       <View style={styles.inputGroup}>
-        <View style={styles.inputContainer}>
-          <FileText size={20} color="#3B82F6" style={styles.inputIcon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Aadhar Number (12 digits)"
-            value={formData.aadhar_number}
-            onChangeText={(value) => handleInputChange('aadhar_number', value)}
-            keyboardType="numeric"
-            maxLength={12}
-            placeholderTextColor="#9CA3AF"
-          />
+        {/* Aadhar Number */}
+        <View style={styles.inputWrapper}>
+          <Text style={styles.inputLabel}>Aadhar Number</Text>
+          <View style={styles.inputContainer}>
+            <FileText size={20} color="#3B82F6" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="1234 5678 9012"
+              value={formData.aadhar_number}
+              onChangeText={(value) => handleInputChange('aadhar_number', value)}
+              keyboardType="numeric"
+              maxLength={12}
+              placeholderTextColor="#9CA3AF"
+            />
+          </View>
         </View>
 
-        <View style={styles.inputContainer}>
-          <Phone size={20} color="#3B82F6" style={styles.inputIcon} />
-          <TextInput
-            style={styles.input}
-            placeholder="GPay Number"
-            value={formData.gpay_number}
-            onChangeText={(value) => handleInputChange('gpay_number', value)}
-            keyboardType="phone-pad"
-            placeholderTextColor="#9CA3AF"
-          />
+        {/* GPay Number */}
+        <View style={styles.inputWrapper}>
+          <Text style={styles.inputLabel}>GPay Number</Text>
+          <View style={styles.inputContainer}>
+            <Phone size={20} color="#3B82F6" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="9876543210"
+              value={formData.gpay_number}
+              onChangeText={(value) => handleInputChange('gpay_number', value)}
+              keyboardType="phone-pad"
+              placeholderTextColor="#9CA3AF"
+              maxLength={10}
+            />
+          </View>
         </View>
 
+        {/* Aadhar Image */}
         <View style={styles.imageSection}>
-          <Text style={styles.imageLabel}>Aadhar Front Image (Optional)</Text>
+          <Text style={styles.inputLabel}>Aadhar Front Image (Optional)</Text>
           <Text style={styles.imageSubtext}>Max size: 5MB, Format: JPG/PNG</Text>
           
           {aadharImage ? (
@@ -291,46 +364,54 @@ export default function SignUp() {
       </View>
       
       <View style={styles.inputGroup}>
-        <View style={styles.inputContainer}>
-          <Lock size={20} color="#3B82F6" style={styles.inputIcon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            value={formData.password}
-            onChangeText={(value) => handleInputChange('password', value)}
-            secureTextEntry={!showPassword}
-            placeholderTextColor="#9CA3AF"
-          />
-          <TouchableOpacity 
-            onPress={() => setShowPassword(!showPassword)}
-            style={styles.eyeIcon}
-          >
-            {showPassword ? 
-              <EyeOff size={20} color="#6B7280" /> : 
-              <Eye size={20} color="#6B7280" />
-            }
-          </TouchableOpacity>
+        {/* Password */}
+        <View style={styles.inputWrapper}>
+          <Text style={styles.inputLabel}>Password</Text>
+          <View style={styles.inputContainer}>
+            <Lock size={20} color="#3B82F6" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your password"
+              value={formData.password}
+              onChangeText={(value) => handleInputChange('password', value)}
+              secureTextEntry={!showPassword}
+              placeholderTextColor="#9CA3AF"
+            />
+            <TouchableOpacity 
+              onPress={() => setShowPassword(!showPassword)}
+              style={styles.eyeIcon}
+            >
+              {showPassword ? 
+                <EyeOff size={20} color="#6B7280" /> : 
+                <Eye size={20} color="#6B7280" />
+              }
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <View style={styles.inputContainer}>
-          <Lock size={20} color="#3B82F6" style={styles.inputIcon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Confirm Password"
-            value={formData.confirmPassword}
-            onChangeText={(value) => handleInputChange('confirmPassword', value)}
-            secureTextEntry={!showConfirmPassword}
-            placeholderTextColor="#9CA3AF"
-          />
-          <TouchableOpacity 
-            onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-            style={styles.eyeIcon}
-          >
-            {showConfirmPassword ? 
-              <EyeOff size={20} color="#6B7280" /> : 
-              <Eye size={20} color="#6B7280" />
-            }
-          </TouchableOpacity>
+        {/* Confirm Password */}
+        <View style={styles.inputWrapper}>
+          <Text style={styles.inputLabel}>Confirm Password</Text>
+          <View style={styles.inputContainer}>
+            <Lock size={20} color="#3B82F6" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Re-enter your password"
+              value={formData.confirmPassword}
+              onChangeText={(value) => handleInputChange('confirmPassword', value)}
+              secureTextEntry={!showConfirmPassword}
+              placeholderTextColor="#9CA3AF"
+            />
+            <TouchableOpacity 
+              onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+              style={styles.eyeIcon}
+            >
+              {showConfirmPassword ? 
+                <EyeOff size={20} color="#6B7280" /> : 
+                <Eye size={20} color="#6B7280" />
+              }
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -342,7 +423,6 @@ export default function SignUp() {
       </View>
     </View>
   );
-
 
   return (
     <KeyboardAvoidingView 
@@ -540,12 +620,21 @@ const styles = StyleSheet.create({
   inputGroup: {
     marginBottom: 30,
   },
+  inputWrapper: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+    marginLeft: 4,
+  },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F9FAFB',
     borderRadius: 16,
-    marginBottom: 16,
     paddingHorizontal: 20,
     borderWidth: 2,
     borderColor: '#E5E7EB',
@@ -559,8 +648,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1F2937',
     fontWeight: '500',
-    textAlignVertical: 'top',
+    textAlignVertical: 'center',
     paddingVertical: 8,
+  },
+  textArea: {
+    textAlignVertical: 'top',
+    minHeight: 80,
+    paddingTop: 12,
   },
   eyeIcon: {
     padding: 8,
@@ -675,18 +769,12 @@ const styles = StyleSheet.create({
   },
   imageSection: {
     marginTop: 20,
-    paddingHorizontal: 20,
-  },
-  imageLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 8,
   },
   imageSubtext: {
     fontSize: 12,
     color: '#6B7280',
     marginBottom: 16,
+    marginLeft: 4,
   },
   imagePreviewContainer: {
     width: '100%',
@@ -728,5 +816,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     marginLeft: 8,
+  },
+  rowContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  halfWidth: {
+    flex: 1,
   },
 });
