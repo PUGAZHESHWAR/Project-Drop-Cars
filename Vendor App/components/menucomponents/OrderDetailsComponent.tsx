@@ -45,6 +45,9 @@ interface OrderDetail {
   max_time_to_assign_order: string;
   toll_charge_update: boolean;
   data_visibility_vehicle_owner: boolean;
+  night_charges: number;
+  waiting_time: number;
+  vendor_earns_estimation: number
   
   // Oneway/Roundtrip specific fields
   cost_per_km: number | null;
@@ -60,9 +63,9 @@ interface OrderDetail {
   // Hourly rental specific fields
   package_hours: { hours: number; km_range: number } | null;
   cost_per_hour: number | null;
-  extra_cost_per_hour: number | null;
+  extra_cost_per_hour: number;
   cost_for_addon_km: number | null;
-  extra_cost_for_addon_km: number | null;
+  extra_cost_for_addon_km: number;
   
   assignments: Assignment[];
   end_records: EndRecord[];
@@ -745,6 +748,18 @@ export default function OrderDetailsComponent() {
                     <Text style={styles.financialValue}>₹{orderDetails.toll_charges}</Text>
                   </View>
                 )}
+                {orderDetails.night_charges > 0 && (
+                  <View style={styles.financialRow}>
+                    <Text style={styles.financialLabel}>Night Charges</Text>
+                    <Text style={styles.financialValue}>₹{orderDetails.night_charges}</Text>
+                  </View>
+                )}
+                {orderDetails.waiting_time > 0 && (
+                  <View style={styles.financialRow}>
+                    <Text style={styles.financialLabel}>Waiting Charges</Text>
+                    <Text style={styles.financialValue}>₹{orderDetails.waiting_time}</Text>
+                  </View>
+                )}
               </>
             ) : (
               // Hourly rental costs
@@ -760,13 +775,13 @@ export default function OrderDetailsComponent() {
                 {orderDetails.cost_per_hour && (
                   <View style={styles.financialRow}>
                     <Text style={styles.financialLabel}>Cost per Hour</Text>
-                    <Text style={styles.financialValue}>₹{orderDetails.cost_per_hour}</Text>
+                    <Text style={styles.financialValue}>₹{orderDetails.cost_per_hour + orderDetails.extra_cost_per_hour}</Text>
                   </View>
                 )}
                 {orderDetails.cost_for_addon_km && (
                   <View style={styles.financialRow}>
                     <Text style={styles.financialLabel}>Cost for Add-on KM</Text>
-                    <Text style={styles.financialValue}>₹{orderDetails.cost_for_addon_km}</Text>
+                    <Text style={styles.financialValue}>₹{orderDetails.cost_for_addon_km + orderDetails.extra_cost_for_addon_km}</Text>
                   </View>
                 )}
               </>
@@ -777,14 +792,15 @@ export default function OrderDetailsComponent() {
               <Text style={styles.financialLabel}>Your Earning</Text>
               <Text style={[styles.financialValue, styles.profit]}>
                 +₹{orderDetails.vendor_profit? orderDetails.vendor_profit : orderDetails.source == "NEW_ORDERS"?
-                ((orderDetails.vendor_price-orderDetails.estimated_price)+Math.round(((orderDetails.cost_per_km || 0) * (orderDetails.trip_distance || 0))*orderDetails.platform_fees_percent)/100) - Math.round((((orderDetails.vendor_price-orderDetails.estimated_price)+Math.round(((orderDetails.cost_per_km || 0) * (orderDetails.trip_distance || 0))*orderDetails.platform_fees_percent)/100))* orderDetails.platform_fees_percent/100)
+                orderDetails.vendor_earns_estimation 
+                // ((orderDetails.vendor_price-orderDetails.estimated_price)+Math.round(((orderDetails.cost_per_km || 0) * (orderDetails.trip_distance || 0))*orderDetails.platform_fees_percent)/100) - Math.round((((orderDetails.vendor_price-orderDetails.estimated_price)+Math.round(((orderDetails.cost_per_km || 0) * (orderDetails.trip_distance || 0))*orderDetails.platform_fees_percent)/100))* orderDetails.platform_fees_percent/100)
                 :
                 (orderDetails.vendor_price-orderDetails.estimated_price) - Math.round((orderDetails.vendor_price-orderDetails.estimated_price)*orderDetails.platform_fees_percent/100)
                 }
                 
               </Text>
             </View>
-            <View style={styles.financialRow}>
+            {/* <View style={styles.financialRow}>
               <Text style={styles.financialLabel}>Platform Fee ({orderDetails.platform_fees_percent}%)</Text>
               <Text style={[styles.financialValue, styles.fee]}>
                 -₹{orderDetails.admin_profit? orderDetails.admin_profit :orderDetails.source == "NEW_ORDERS"?
@@ -793,7 +809,7 @@ export default function OrderDetailsComponent() {
                 Math.round((orderDetails.vendor_price-orderDetails.estimated_price)*orderDetails.platform_fees_percent/100)
               }
               </Text>
-            </View>
+            </View> */}
             {orderDetails.closed_vendor_price && (
               <>
                 <View style={styles.divider} />
@@ -879,7 +895,6 @@ export default function OrderDetailsComponent() {
     </>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -892,8 +907,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
   },
   loadingText: {
-    marginTop: 16,
-    fontSize: 16,
+    marginTop: 12,
+    fontSize: 14,
     color: '#6B7280',
   },
   errorContainer: {
@@ -901,74 +916,74 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F8F9FA',
-    padding: 24,
+    padding: 20,
   },
   errorText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#DC2626',
     textAlign: 'center',
-    marginTop: 16,
-    marginBottom: 24,
+    marginTop: 12,
+    marginBottom: 20,
   },
   retryButton: {
     backgroundColor: '#0d5464ff',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     borderRadius: 8,
   },
   retryButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
   header: {
-    paddingTop: 50,
-    paddingBottom: 20,
-    paddingHorizontal: 24,
+    paddingTop: 45,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
   },
   statusText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
-    marginLeft: 6,
+    marginLeft: 5,
     textTransform: 'capitalize',
   },
   headerActions: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 6,
     justifyContent: 'center',
     flex: 1,
   },
@@ -983,38 +998,38 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
-    marginLeft: 8,
+    marginLeft: 6,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 16,
+    paddingHorizontal: 20,
+    paddingTop: 12,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#202124',
-    marginLeft: 8,
+    marginLeft: 6,
   },
   customerCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 10,
+    padding: 14,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 3,
   },
   customerRow: {
     flexDirection: 'row',
@@ -1022,7 +1037,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   customerName: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '600',
     color: '#202124',
   },
@@ -1030,15 +1045,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#10B981',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
   },
   phoneButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
-    marginLeft: 6,
+    marginLeft: 5,
   },
   clickablePhone: {
     color: '#10B981',
@@ -1046,52 +1061,52 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 10,
+    padding: 14,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 3,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 6,
   },
   infoLabel: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#6B7280',
-    marginLeft: 8,
+    marginLeft: 6,
     flex: 1,
   },
   infoValue: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#202124',
   },
   routeCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 10,
+    padding: 14,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 3,
   },
   routeItem: {
     flexDirection: 'row',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   routeLeft: {
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 14,
   },
   routeDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     zIndex: 1,
   },
   routeDotStart: {
@@ -1104,80 +1119,80 @@ const styles = StyleSheet.create({
     backgroundColor: '#DC2626',
   },
   routeLine: {
-    width: 2,
-    height: 30,
+    width: 1.5,
+    height: 24,
     backgroundColor: '#E5E7EB',
-    marginTop: 4,
+    marginTop: 3,
   },
   routeRight: {
     flex: 1,
   },
   routeLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#9CA3AF',
     fontWeight: '600',
     textTransform: 'uppercase',
   },
   routeAddress: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#202124',
     marginTop: 2,
   },
   assignmentCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 10,
+    padding: 14,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 3,
   },
   assignmentRow: {
-    marginBottom: 16,
+    marginBottom: 14,
   },
   assignmentItem: {
     flex: 1,
   },
   assignmentLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#9CA3AF',
     fontWeight: '600',
     textTransform: 'uppercase',
-    marginBottom: 4,
+    marginBottom: 3,
   },
   assignmentValue: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#202124',
   },
   assignmentSubValue: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#6B7280',
     marginTop: 2,
   },
   financialCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 10,
+    padding: 14,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 3,
   },
   financialRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 6,
   },
   financialLabel: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#6B7280',
   },
   financialValue: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#202124',
   },
@@ -1191,48 +1206,48 @@ const styles = StyleSheet.create({
     color: '#DC2626',
   },
   finalLabel: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#202124',
   },
   finalValue: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#10B981',
   },
   divider: {
     height: 1,
     backgroundColor: '#E5E7EB',
-    marginVertical: 8,
+    marginVertical: 6,
   },
   endRecordCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 10,
+    padding: 14,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 3,
   },
   kmRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   kmItem: {
     alignItems: 'center',
     flex: 1,
   },
   kmLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#9CA3AF',
     fontWeight: '600',
     textTransform: 'uppercase',
-    marginBottom: 4,
+    marginBottom: 3,
   },
   kmValue: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#202124',
   },
@@ -1240,51 +1255,51 @@ const styles = StyleSheet.create({
     color: '#10B981',
   },
   imageSection: {
-    marginTop: 16,
+    marginTop: 14,
   },
   imageLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#202124',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   imageRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
   },
   imageButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F8F9FA',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 6,
     borderWidth: 1,
     borderColor: '#E5E7EB',
     flex: 1,
     justifyContent: 'center',
   },
   imageButtonText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#0d5464ff',
     fontWeight: '600',
-    marginLeft: 8,
+    marginLeft: 6,
   },
   imageContainer: {
     alignItems: 'center',
   },
   bottomSpacing: {
-    height: 24,
+    height: 20,
   },
   visibilityCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 10,
+    padding: 14,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 3,
   },
   visibilityRow: {
     flexDirection: 'row',
@@ -1293,22 +1308,22 @@ const styles = StyleSheet.create({
   },
   visibilityInfo: {
     flex: 1,
-    marginRight: 16,
+    marginRight: 14,
   },
   visibilityLabel: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#202124',
-    marginBottom: 4,
+    marginBottom: 3,
   },
   visibilityDescription: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#6B7280',
   },
   switchContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 60,
-    height: 40,
+    width: 54,
+    height: 36,
   },
 });

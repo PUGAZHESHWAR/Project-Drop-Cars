@@ -1,31 +1,57 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Alert } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  RefreshControl, 
+  TouchableOpacity, 
+  Alert, 
+  Modal 
+} from 'react-native';
 import api from '../api/api';
-import { History as HistoryIcon, ArrowUpRight, Clock, CircleCheck as CheckCircle, Circle as XCircle, Filter } from 'lucide-react-native';
+import { 
+  History as HistoryIcon, 
+  ArrowUpRight, 
+  Clock, 
+  CircleCheck as CheckCircle, 
+  Circle as XCircle, 
+  Filter, 
+  ChevronRight, 
+  X, 
+  Calendar, 
+  Wallet, 
+  Banknote, 
+  MessageSquare 
+} from 'lucide-react-native';
 
-// Mock data store
-// import { getTransferHistory } from '../store/mockData';
+interface Transfer {
+  id: string;
+  status: 'Pending' | 'Approved' | 'Rejected';
+  requested_amount: number;
+  created_at: string;
+  wallet_balance_before: number;
+  bank_balance_before: number;
+  wallet_balance_after?: number;
+  bank_balance_after?: number;
+  admin_notes?: string;
+}
 
 export default function HistoryScreen() {
-  const [transfers, setTransfers] = useState<any[]>([]);
+  const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState('all');
+  const [selectedTransfer, setSelectedTransfer] = useState<Transfer | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
-  // const loadHistory = () => {
-  //   setTransfers(getTransferHistory());
-  // };
-
-    const loadHistory = async () => {
-      try {
-        // await requestTransfer(transferAmount);
-        const response = await api.get('/transfer/history?skip=0&limit=100');
-        setTransfers(response.data["transactions"]);
-
-      } catch (error) {
-        Alert.alert('Error', 'Failed to create transfer request');
-      }
-    };
+  const loadHistory = async () => {
+    try {
+      const response = await api.get('/transfer/history?skip=0&limit=100');
+      setTransfers(response.data["transactions"]);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to load transfer history');
+    }
+  };
 
   useEffect(() => {
     loadHistory();
@@ -40,13 +66,13 @@ export default function HistoryScreen() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'Approved':
-        return <CheckCircle size={20} color="#10B981" />;
+        return <CheckCircle size={16} color="#10B981" />;
       case 'Rejected':
-        return <XCircle size={20} color="#EF4444" />;
+        return <XCircle size={16} color="#EF4444" />;
       case 'Pending':
-        return <Clock size={20} color="#F59E0B" />;
+        return <Clock size={16} color="#F59E0B" />;
       default:
-        return <Clock size={20} color="#6B7280" />;
+        return <Clock size={16} color="#6B7280" />;
     }
   };
 
@@ -90,6 +116,24 @@ export default function HistoryScreen() {
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  const formatDateShort = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const openTransferDetails = (transfer: Transfer) => {
+    setSelectedTransfer(transfer);
+    setModalVisible(true);
+  };
+
+  const closeTransferDetails = () => {
+    setModalVisible(false);
+    setSelectedTransfer(null);
   };
 
   const FilterButton = ({ status, label }: { status: string; label: string }) => (
@@ -136,7 +180,6 @@ export default function HistoryScreen() {
               <FilterButton status="all" label="All" />
               <FilterButton status="pending" label="Pending" />
               <FilterButton status="approved" label="Approved" />
-              {/* <FilterButton status="rejected" label="Rejected" /> */}
             </View>
           </ScrollView>
         </View>
@@ -149,7 +192,7 @@ export default function HistoryScreen() {
         >
           {filteredTransfers.length === 0 ? (
             <View style={styles.emptyState}>
-              <HistoryIcon size={64} color="#D1D5DB" />
+              <HistoryIcon size={48} color="#D1D5DB" />
               <Text style={styles.emptyTitle}>No transfers found</Text>
               <Text style={styles.emptySubtitle}>
                 {filter === 'all' 
@@ -161,81 +204,164 @@ export default function HistoryScreen() {
           ) : (
             <View style={styles.transferList}>
               {filteredTransfers.map((transfer) => (
-                <View key={transfer.id} style={styles.transferCard}>
+                <TouchableOpacity
+                  key={transfer.id}
+                  style={styles.transferCard}
+                  onPress={() => openTransferDetails(transfer)}
+                >
                   <View style={styles.transferHeader}>
                     <View style={styles.transferIcon}>
-                      <ArrowUpRight size={20} color="#3B82F6" />
+                      <ArrowUpRight size={16} color="#3B82F6" />
                     </View>
                     <View style={styles.transferInfo}>
                       <Text style={styles.transferAmount}>
                         ₹{transfer.requested_amount.toLocaleString('en-IN')}
                       </Text>
                       <Text style={styles.transferDate}>
-                        {formatDate(transfer.created_at)}
+                        {formatDateShort(transfer.created_at)}
                       </Text>
                     </View>
-                    <View style={[
-                      styles.statusBadge,
-                      { backgroundColor: getStatusBackgroundColor(transfer.status) }
-                    ]}>
-                      {getStatusIcon(transfer.status)}
-                      <Text style={[
-                        styles.statusText,
-                        { color: getStatusColor(transfer.status) }
+                    <View style={styles.transferRight}>
+                      <View style={[
+                        styles.statusBadge,
+                        { backgroundColor: getStatusBackgroundColor(transfer.status) }
                       ]}>
-                        {transfer.status}
-                      </Text>
+                        {getStatusIcon(transfer.status)}
+                        <Text style={[
+                          styles.statusText,
+                          { color: getStatusColor(transfer.status) }
+                        ]}>
+                          {transfer.status}
+                        </Text>
+                      </View>
+                      <ChevronRight size={16} color="#9CA3AF" />
                     </View>
                   </View>
-
-                  <View style={styles.transferDetails}>
-                    <View style={styles.balanceRow}>
-                      <Text style={styles.balanceLabel}>Wallet Before</Text>
-                      <Text style={styles.balanceValue}>
-                        ₹{transfer.wallet_balance_before.toLocaleString('en-IN')}
-                      </Text>
-                    </View>
-                    <View style={styles.balanceRow}>
-                      <Text style={styles.balanceLabel}>Bank Before</Text>
-                      <Text style={styles.balanceValue}>
-                        ₹{transfer.bank_balance_before.toLocaleString('en-IN')}
-                      </Text>
-                    </View>
-                    
-                    {transfer.status === 'Approved' && (
-                      <>
-                        <View style={styles.separator} />
-                        <View style={styles.balanceRow}>
-                          <Text style={styles.balanceLabel}>Wallet After</Text>
-                          <Text style={[styles.balanceValue, { color: '#10B981' }]}>
-                            ₹{transfer.wallet_balance_after.toLocaleString('en-IN')}
-                          </Text>
-                        </View>
-                        <View style={styles.balanceRow}>
-                          <Text style={styles.balanceLabel}>Bank After</Text>
-                          <Text style={[styles.balanceValue, { color: '#10B981' }]}>
-                            ₹{transfer.bank_balance_after.toLocaleString('en-IN')}
-                          </Text>
-                        </View>
-                      </>
-                    )}
-
-                    {transfer.admin_notes && (
-                      <>
-                        <View style={styles.separator} />
-                        <View style={styles.notesSection}>
-                          <Text style={styles.notesLabel}>Admin Notes:</Text>
-                          <Text style={styles.notesText}>{transfer.admin_notes}</Text>
-                        </View>
-                      </>
-                    )}
-                  </View>
-                </View>
+                </TouchableOpacity>
               ))}
             </View>
           )}
         </ScrollView>
       </View>
+
+      {/* Transaction Detail Modal */}
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={closeTransferDetails}
+      >
+        {selectedTransfer && (
+          <View style={styles.modalContainer}>
+            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Transaction Details</Text>
+              <TouchableOpacity 
+                style={styles.closeButton}
+                onPress={closeTransferDetails}
+              >
+                <X size={24} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalContent}>
+              {/* Amount Card */}
+              <View style={styles.detailCard}>
+                <View style={styles.amountSection}>
+                  <Text style={styles.amountLabel}>Transfer Amount</Text>
+                  <Text style={styles.amountValue}>
+                    ₹{selectedTransfer.requested_amount.toLocaleString('en-IN')}
+                  </Text>
+                </View>
+                
+                <View style={styles.statusSection}>
+                  <View style={styles.statusRow}>
+                    <Calendar size={16} color="#6B7280" />
+                    <Text style={styles.dateText}>
+                      {formatDate(selectedTransfer.created_at)}
+                    </Text>
+                  </View>
+                  <View style={[
+                    styles.statusBadgeLarge,
+                    { backgroundColor: getStatusBackgroundColor(selectedTransfer.status) }
+                  ]}>
+                    {getStatusIcon(selectedTransfer.status)}
+                    <Text style={[
+                      styles.statusTextLarge,
+                      { color: getStatusColor(selectedTransfer.status) }
+                    ]}>
+                      {selectedTransfer.status}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Balance Details */}
+              <View style={styles.detailCard}>
+                <Text style={styles.sectionTitle}>Balance Details</Text>
+                
+                <View style={styles.balanceSection}>
+                  <View style={styles.balanceRow}>
+                    <View style={styles.balanceIcon}>
+                      <Wallet size={16} color="#3B82F6" />
+                    </View>
+                    <View style={styles.balanceInfo}>
+                      <Text style={styles.balanceLabel}>Wallet Balance</Text>
+                      <Text style={styles.balanceValue}>
+                        Before: ₹{selectedTransfer.wallet_balance_before.toLocaleString('en-IN')}
+                      </Text>
+                      {selectedTransfer.wallet_balance_after && (
+                        <Text style={[styles.balanceValue, styles.balanceAfter]}>
+                          After: ₹{selectedTransfer.wallet_balance_after.toLocaleString('en-IN')}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+
+                  <View style={styles.balanceRow}>
+                    <View style={styles.balanceIcon}>
+                      <Banknote size={16} color="#10B981" />
+                    </View>
+                    <View style={styles.balanceInfo}>
+                      <Text style={styles.balanceLabel}>Bank Balance</Text>
+                      <Text style={styles.balanceValue}>
+                        Before: ₹{selectedTransfer.bank_balance_before.toLocaleString('en-IN')}
+                      </Text>
+                      {selectedTransfer.bank_balance_after && (
+                        <Text style={[styles.balanceValue, styles.balanceAfter]}>
+                          After: ₹{selectedTransfer.bank_balance_after.toLocaleString('en-IN')}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              {/* Admin Notes */}
+              {selectedTransfer.admin_notes && (
+                <View style={styles.detailCard}>
+                  <View style={styles.notesHeader}>
+                    <MessageSquare size={16} color="#6B7280" />
+                    <Text style={styles.sectionTitle}>Admin Notes</Text>
+                  </View>
+                  <View style={styles.notesContent}>
+                    <Text style={styles.notesText}>{selectedTransfer.admin_notes}</Text>
+                  </View>
+                </View>
+              )}
+
+              {/* Transaction ID */}
+              <View style={styles.detailCard}>
+                <Text style={styles.sectionTitle}>Transaction Information</Text>
+                <View style={styles.transactionId}>
+                  <Text style={styles.idLabel}>Transaction ID:</Text>
+                  <Text style={styles.idValue}>{selectedTransfer.id}</Text>
+                </View>
+              </View>
+            </ScrollView>
+          </View>
+        )}
+      </Modal>
     </View>
   );
 }
@@ -278,28 +404,28 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   filterContainer: {
     backgroundColor: '#ffffff',
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 20,
-    elevation: 2,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
   filterHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   filterTitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: '#6B7280',
   },
@@ -308,12 +434,12 @@ const styles = StyleSheet.create({
   },
   filterButtons: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
   },
   filterButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
     backgroundColor: '#F9FAFB',
     borderWidth: 1,
     borderColor: '#E5E7EB',
@@ -323,7 +449,7 @@ const styles = StyleSheet.create({
     borderColor: '#3B82F6',
   },
   filterButtonText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     color: '#6B7280',
   },
@@ -336,109 +462,224 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
+    paddingVertical: 40,
   },
   emptyTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#6B7280',
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: 12,
+    marginBottom: 6,
   },
   emptySubtitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#9CA3AF',
     textAlign: 'center',
   },
   transferList: {
-    gap: 16,
-    paddingBottom: 20,
+    gap: 8,
+    paddingBottom: 16,
   },
   transferCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 16,
-    elevation: 2,
+    borderRadius: 12,
+    padding: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
   },
   transferHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
   },
   transferIcon: {
-    width: 40,
-    height: 40,
+    width: 32,
+    height: 32,
     backgroundColor: '#3B82F620',
-    borderRadius: 20,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
   transferInfo: {
     flex: 1,
   },
   transferAmount: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#1F2937',
   },
   transferDate: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#6B7280',
     marginTop: 2,
+  },
+  transferRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
   },
   statusText: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  // Modal Styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#F9FAFB',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1F2937',
+  },
+  closeButton: {
+    padding: 4,
+  },
+  modalContent: {
+    flex: 1,
+    padding: 16,
+  },
+  detailCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  amountSection: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  amountLabel: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 8,
+  },
+  amountValue: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1F2937',
+  },
+  statusSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  dateText: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  statusBadgeLarge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 6,
+  },
+  statusTextLarge: {
     fontSize: 12,
     fontWeight: '600',
   },
-  transferDetails: {
-    gap: 8,
-  },
-  balanceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  balanceLabel: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  balanceValue: {
+  sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
     color: '#1F2937',
+    marginBottom: 12,
   },
-  separator: {
-    height: 1,
-    backgroundColor: '#E5E7EB',
-    marginVertical: 8,
+  balanceSection: {
+    gap: 12,
   },
-  notesSection: {
-    backgroundColor: '#F9FAFB',
-    padding: 12,
-    borderRadius: 8,
+  balanceRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
   },
-  notesLabel: {
+  balanceIcon: {
+    width: 32,
+    height: 32,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  balanceInfo: {
+    flex: 1,
+  },
+  balanceLabel: {
     fontSize: 12,
     fontWeight: '600',
     color: '#6B7280',
     marginBottom: 4,
   },
-  notesText: {
-    fontSize: 14,
+  balanceValue: {
+    fontSize: 12,
     color: '#1F2937',
-    lineHeight: 20,
+    marginBottom: 2,
+  },
+  balanceAfter: {
+    color: '#10B981',
+    fontWeight: '500',
+  },
+  notesHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  notesContent: {
+    backgroundColor: '#F9FAFB',
+    padding: 12,
+    borderRadius: 8,
+  },
+  notesText: {
+    fontSize: 12,
+    color: '#1F2937',
+    lineHeight: 16,
+  },
+  transactionId: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  idLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  idValue: {
+    fontSize: 11,
+    color: '#1F2937',
+    fontFamily: 'monospace',
   },
 });

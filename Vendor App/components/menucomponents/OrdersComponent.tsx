@@ -213,10 +213,10 @@ export default function OrdersComponent(){
               <Text style={styles.profitLabel}>Your Earning: </Text>
               <Text style={styles.profitValue}>₹{item.trip_status === 'COMPLETED'? item.venodr_profit : Math.round((item.vendor_price - item.estimated_price)+((item.trip_distance * item.cost_per_km)*(item.platform_fees_percent/100))) - Math.round(((item.vendor_price - item.estimated_price)+((item.trip_distance * item.cost_per_km)*(item.platform_fees_percent/100)))*item.platform_fees_percent/100)}</Text>
             </View>
-            <View style={styles.profitRow}>
-              <Text style={styles.platformFeeLabel}>Platform Fee ({item.platform_fees_percent}%): </Text>
+            {/* <View style={styles.profitRow}>
+              <Text style={styles.platformFeeLabel}>Platform Fee ({item.platform_fees_percent}%): </Text> */}
               {/* <Text style={styles.platformFeeValue}>-₹{Math.round((item.cost_per_km * item.platform_fees_percent) / 100)}</Text> */}
-              {item.trip_type !== 'Hourly Rental' ? (
+              {/* {item.trip_type !== 'Hourly Rental' ? (
                 <Text style={styles.platformFeeValue}>
                   {item.cost_per_km !== null && item.cost_per_km !== undefined && item.trip_distance !== null
                     ? `-₹${item.trip_status === 'COMPLETED'? item.admin_profit : Math.round((((item.vendor_price - item.estimated_price)+((item.trip_distance * item.cost_per_km)*(item.platform_fees_percent/100)))*item.platform_fees_percent/100))}`
@@ -225,7 +225,7 @@ export default function OrdersComponent(){
               ) : (
                 <Text style={styles.platformFeeValue}>₹{item.admin_profit?item.admin_profit:Math.round((item.vendor_price - item.estimated_price)*item.platform_fees_percent/100)}</Text>
               )}
-            </View>
+            </View> */}
           </View>
         </View>
       </TouchableOpacity>
