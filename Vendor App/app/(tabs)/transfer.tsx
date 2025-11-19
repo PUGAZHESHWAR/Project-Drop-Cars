@@ -126,7 +126,7 @@ export default function TransferScreen() {
                   style={styles.amountInput}
                   value={amount}
                   onChangeText={setAmount}
-                  placeholder="0.00"
+                  placeholder="0"
                   keyboardType="numeric"
                   placeholderTextColor="#9CA3AF"
                 />

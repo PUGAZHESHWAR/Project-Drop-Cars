@@ -48,6 +48,7 @@ interface OrderDetail {
   night_charges: number;
   waiting_time: number;
   vendor_earns_estimation: number
+  updated_toll_charges: number
   
   // Oneway/Roundtrip specific fields
   cost_per_km: number | null;
@@ -106,8 +107,26 @@ interface EndRecord {
 }
 
 export default function OrderDetailsComponent() {
+  // const router = useRouter();
   const router = useRouter();
-  const { orderId } = useLocalSearchParams();
+  
+  // Add proper error handling for useLocalSearchParams
+  let orderId: string | undefined;
+  try {
+    const params = useLocalSearchParams();
+    orderId = Array.isArray(params.orderId) ? params.orderId[0] : params.orderId;
+  } catch (error) {
+    console.error('Error with useLocalSearchParams:', error);
+    orderId = undefined;
+  }
+  if (!orderId) {
+  return (
+    <View style={styles.loadingContainer}>
+      <ActivityIndicator size="large" color="#0d5464ff" />
+      <Text style={styles.loadingText}>Loading order...</Text>
+    </View>
+  );
+}
   const [orderDetails, setOrderDetails] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -123,19 +142,21 @@ export default function OrderDetailsComponent() {
     }
   }, [orderId]);
 
-  const fetchOrderDetails = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await api.get(`/orders/vendor/${orderId}`);
-      setOrderDetails(response.data);
-    } catch (err: any) {
-      console.error('Error fetching order details:', err);
-      setError('Failed to load order details. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+const fetchOrderDetails = async () => {
+  try {
+    setLoading(true);
+    setError(null);
+    // Ensure orderId is treated as string
+    const orderIdString = String(orderId);
+    const response = await api.get(`/orders/vendor/${orderIdString}`);
+    setOrderDetails(response.data);
+  } catch (err: any) {
+    console.error('Error fetching order details:', err);
+    setError('Failed to load order details. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   // const showMaxTimeInputDialog = () => {
   //   Alert.prompt(
@@ -271,16 +292,9 @@ export default function OrderDetailsComponent() {
   };
 
   const makePhoneCall = (phoneNumber: string) => {
-    const phoneUrl = `tel:${phoneNumber}`;
-    Linking.canOpenURL(phoneUrl)
-      .then((supported) => {
-        if (supported) {
-          Linking.openURL(phoneUrl);
-        } else {
-          Alert.alert('Error', 'Phone dialer not available');
-        }
-      })
-      .catch((err) => console.error('Error opening phone dialer:', err));
+      Linking.openURL(`tel:${phoneNumber}`).catch(() => {
+        Alert.alert('Error', 'Unable to open dial pad');
+      });
   };
 
   const viewImage = (imageUrl: string, title: string) => {
@@ -742,10 +756,10 @@ export default function OrderDetailsComponent() {
                     <Text style={styles.financialValue}>₹{orderDetails.hill_charges}</Text>
                   </View>
                 )}
-                {orderDetails.toll_charges && (
+                {(orderDetails.updated_toll_charges || orderDetails.toll_charges) && (
                   <View style={styles.financialRow}>
                     <Text style={styles.financialLabel}>Toll Charges</Text>
-                    <Text style={styles.financialValue}>₹{orderDetails.toll_charges}</Text>
+                    <Text style={styles.financialValue}>₹{orderDetails.updated_toll_charges > 0 ? orderDetails.updated_toll_charges : orderDetails.toll_charges}</Text>
                   </View>
                 )}
                 {orderDetails.night_charges > 0 && (
@@ -782,6 +796,12 @@ export default function OrderDetailsComponent() {
                   <View style={styles.financialRow}>
                     <Text style={styles.financialLabel}>Cost for Add-on KM</Text>
                     <Text style={styles.financialValue}>₹{orderDetails.cost_for_addon_km + orderDetails.extra_cost_for_addon_km}</Text>
+                  </View>
+                )}
+                {orderDetails.updated_toll_charges && (
+                  <View style={styles.financialRow}>
+                    <Text style={styles.financialLabel}>Toll Charge</Text>
+                    <Text style={styles.financialValue}>₹{orderDetails.updated_toll_charges}</Text>
                   </View>
                 )}
               </>

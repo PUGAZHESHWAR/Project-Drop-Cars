@@ -14,6 +14,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Car, Clock, MapPin, DollarSign, TrendingUp, Users, Search, ListFilter as Filter, X, CircleCheck as CheckCircle, Circle as XCircle, User, Calendar } from 'lucide-react-native';
 import api from '../api/api'; // Adjust the path as necessary
+import { router } from 'expo-router';
 const { width } = Dimensions.get('window');
 
 interface VendorData {
@@ -185,6 +186,10 @@ export default function DashboardScreen() {
     await Promise.all([loadVendorData(), fetchOrders()]);
   };
 
+    const handleOrderPress = (orderId: number) => {
+    router.push(`/order-details?orderId=${orderId}`);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status.toUpperCase()) {
       case 'PENDING': return '#F59E0B';
@@ -338,7 +343,7 @@ export default function DashboardScreen() {
           </View>
 
           {filteredOrders.map((order) => (
-            <TouchableOpacity key={order.id} style={styles.orderCard}>
+            <TouchableOpacity key={order.id} style={styles.orderCard} onPress={() => handleOrderPress(order.id)}>
               <View style={styles.orderCardHeader}>
                 <View style={styles.customerInfo}>
                   <View style={styles.customerAvatar}>

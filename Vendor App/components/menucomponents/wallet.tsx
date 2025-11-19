@@ -11,9 +11,10 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CircleArrowUp as ArrowUpCircle, CircleArrowDown as ArrowDownCircle, Search, ListFilter as Filter, Calendar, DollarSign, ArrowLeft, IndianRupee } from 'lucide-react-native';
+import { CircleArrowUp as ArrowUpCircle, CircleArrowDown as ArrowDownCircle, Search, ListFilter as Filter, Calendar, ArrowLeft, IndianRupee } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import api from "../../app/api/api"
+
 interface WalletTransaction {
   id: string;
   vendor_id: string;
@@ -33,30 +34,27 @@ export default function WalletHistoryScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState<'ALL' | 'CREDIT' | 'DEBIT'>('ALL');
   const [currentBalance, setCurrentBalance] = useState(0);
 
   const fetchWalletHistory = async () => {
-  try {
-    const response = await api.get<WalletTransaction[]>(`/vendor/wallet/history`);
+    try {
+      const response = await api.get<WalletTransaction[]>(`/vendor/wallet/history`);
+      const data = response.data;
+      setTransactions(data);
+      setFilteredTransactions(data);
 
-    const data = response.data;
-    setTransactions(data);
-    setFilteredTransactions(data);
-
-    // Set current balance from the most recent transaction
-    if (data.length > 0) {
-      setCurrentBalance(data[0].balance_after);
+      // Set current balance from the most recent transaction
+      if (data.length > 0) {
+        setCurrentBalance(data[0].balance_after);
+      }
+    } catch (error) {
+      console.error('Error fetching wallet history:', error);
+      Alert.alert('Error', 'Failed to load wallet history. Please try again.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-  } catch (error) {
-    console.error('Error fetching wallet history:', error);
-    Alert.alert('Error', 'Failed to load wallet history. Please try again.');
-  } finally {
-    setLoading(false);
-    setRefreshing(false);
-  }
-};
-
+  };
 
   useEffect(() => {
     fetchWalletHistory();
@@ -64,11 +62,6 @@ export default function WalletHistoryScreen() {
 
   useEffect(() => {
     let filtered = transactions;
-
-    // Filter by transaction type
-    if (selectedFilter !== 'ALL') {
-      filtered = filtered.filter(transaction => transaction.entry_type === selectedFilter);
-    }
 
     // Filter by search query
     if (searchQuery.trim() !== '') {
@@ -80,21 +73,12 @@ export default function WalletHistoryScreen() {
     }
 
     setFilteredTransactions(filtered);
-  }, [transactions, selectedFilter, searchQuery]);
+  }, [transactions, searchQuery]);
 
   const onRefresh = () => {
     setRefreshing(true);
     fetchWalletHistory();
   };
-
-  // const formatCurrency = (amount: number) => {
-  //   return new Intl.NumberFormat('en-US', {
-  //     style: 'currency',
-  //     currency: 'INR',
-  //     minimumFractionDigits: 0,
-  //     maximumFractionDigits: 0,
-  //   }).format(amount);
-  // };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -109,8 +93,8 @@ export default function WalletHistoryScreen() {
 
   const getTransactionIcon = (type: 'CREDIT' | 'DEBIT') => {
     return type === 'CREDIT' 
-      ? <ArrowUpCircle size={24} color="#10b981" />
-      : <ArrowDownCircle size={24} color="#ef4444" />;
+      ? <ArrowUpCircle size={20} color="#10b981" />
+      : <ArrowDownCircle size={20} color="#ef4444" />;
   };
 
   const renderTransactionItem = ({ item }: { item: WalletTransaction }) => (
@@ -120,10 +104,10 @@ export default function WalletHistoryScreen() {
           {getTransactionIcon(item.entry_type)}
         </View>
         <View style={styles.transactionInfo}>
-          <Text style={styles.transactionType}>
-            {item.entry_type === 'CREDIT' ? 'Money Received' : 'Money Sent'}
+          <Text style={styles.transactionId}>ID: {item.id}</Text>
+          <Text style={styles.transactionNotes} numberOfLines={2}>
+            {item.notes}
           </Text>
-          <Text style={styles.transactionNotes}>{item.notes}</Text>
           {item.order_id && (
             <Text style={styles.orderId}>Order #{item.order_id}</Text>
           )}
@@ -133,38 +117,21 @@ export default function WalletHistoryScreen() {
             styles.amountText,
             { color: item.entry_type === 'CREDIT' ? '#10b981' : '#ef4444' }
           ]}>
-            {item.entry_type === 'CREDIT' ? '+' : '-'}{(item.amount)}
+            {item.entry_type === 'CREDIT' ? '+' : '-'}₹{item.amount}
           </Text>
+          <View style={styles.balanceInfo}>
+            <Text style={styles.balanceLabel}>Balance: </Text>
+            <Text style={styles.balanceAmount}>₹{item.balance_after}</Text>
+          </View>
         </View>
       </View>
       <View style={styles.transactionFooter}>
-        <View style={styles.balanceInfo}>
-          <Text style={styles.balanceLabel}>Balance After: </Text>
-            <IndianRupee size={10} />
-          <Text style={styles.balanceAmount}>{(item.balance_after)}</Text>
-        </View>
         <Text style={styles.transactionDate}>{formatDate(item.created_at)}</Text>
+        <Text style={styles.entryType}>
+          {item.entry_type}
+        </Text>
       </View>
     </View>
-  );
-
-  const FilterButton = ({ 
-    title, 
-    type, 
-    isSelected 
-  }: { 
-    title: string; 
-    type: 'ALL' | 'CREDIT' | 'DEBIT'; 
-    isSelected: boolean;
-  }) => (
-    <TouchableOpacity
-      style={[styles.filterButton, isSelected && styles.filterButtonActive]}
-      onPress={() => setSelectedFilter(type)}
-    >
-      <Text style={[styles.filterButtonText, isSelected && styles.filterButtonTextActive]}>
-        {title}
-      </Text>
-    </TouchableOpacity>
   );
 
   if (loading) {
@@ -194,10 +161,10 @@ export default function WalletHistoryScreen() {
         </View>
         
         <View style={styles.titleContainer}>
-          <Text style={styles.subtitle}>Transaction History</Text>
+          <Text style={styles.subtitle}>All Transactions</Text>
           <View style={styles.balanceContainer}>
-            <IndianRupee size={20} color="#10b981" />
-            <Text style={styles.currentBalance}>{(currentBalance)}</Text>
+            <IndianRupee size={16} color="#10b981" />
+            <Text style={styles.currentBalance}>{currentBalance}</Text>
           </View>
         </View>
         
@@ -206,18 +173,11 @@ export default function WalletHistoryScreen() {
           <Search size={20} color="#9ca3af" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search transactions..."
+            placeholder="Search by ID, notes, or order..."
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor="#9ca3af"
           />
-        </View>
-
-        {/* Filter Buttons */}
-        <View style={styles.filterContainer}>
-          <FilterButton title="All" type="ALL" isSelected={selectedFilter === 'ALL'} />
-          <FilterButton title="Received" type="CREDIT" isSelected={selectedFilter === 'CREDIT'} />
-          <FilterButton title="Sent" type="DEBIT" isSelected={selectedFilter === 'DEBIT'} />
         </View>
       </View>
 
@@ -267,8 +227,8 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: '#ffffff',
-    paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#f3f4f6',
   },
@@ -276,7 +236,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   backButton: {
     width: 40,
@@ -287,7 +247,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '600',
     color: '#111827',
   },
@@ -301,7 +261,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '500',
     color: '#6b7280',
   },
@@ -309,146 +269,135 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#ecfdf5',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
   },
   currentBalance: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#10b981',
-    marginLeft: 4,
+    marginLeft: 2,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f9fafb',
     borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginBottom: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   searchIcon: {
-    marginRight: 12,
+    marginRight: 8,
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 14,
     color: '#374151',
   },
-  filterContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  filterButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#f3f4f6',
-  },
-  filterButtonActive: {
-    backgroundColor: '#3b82f6',
-  },
-  filterButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#6b7280',
-  },
-  filterButtonTextActive: {
-    color: '#ffffff',
-  },
   listContainer: {
-    padding: 20,
+    padding: 12,
   },
   transactionCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 12,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 8,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 1,
     },
     shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowRadius: 2,
+    elevation: 1,
   },
   transactionHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
+    alignItems: 'flex-start',
+    marginBottom: 8,
   },
   transactionIcon: {
-    marginRight: 16,
+    marginRight: 12,
+    marginTop: 2,
   },
   transactionInfo: {
     flex: 1,
+    marginRight: 8,
   },
-  transactionType: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
+  transactionId: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#6b7280',
     marginBottom: 4,
   },
   transactionNotes: {
     fontSize: 14,
-    color: '#6b7280',
+    color: '#374151',
     marginBottom: 4,
+    lineHeight: 18,
   },
   orderId: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#9ca3af',
     fontWeight: '500',
   },
   transactionAmount: {
     alignItems: 'flex-end',
+    minWidth: 100,
   },
   amountText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
-  },
-  transactionFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    marginBottom: 4,
   },
   balanceInfo: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   balanceLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#9ca3af',
   },
   balanceAmount: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     color: '#374151',
   },
+  transactionFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#f3f4f6',
+  },
   transactionDate: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#9ca3af',
+  },
+  entryType: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#6b7280',
+    textTransform: 'uppercase',
   },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
+    paddingVertical: 40,
   },
   emptyStateTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#374151',
     marginTop: 16,
     marginBottom: 8,
   },
   emptyStateSubtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#9ca3af',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 18,
   },
 });

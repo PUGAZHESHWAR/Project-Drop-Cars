@@ -329,7 +329,7 @@ export default function QuoteReview({
                 {quoteData.fare.remark_trip_min_km > 0 && (
                     <View style={styles.warningMessage}>
                       <Text style={styles.warningText}>
-                        Minimum KM for this trip is 130 (Current: {quoteData.fare.remark_trip_min_km} Changed to {quoteData.fare.total_km} KM)
+                        Minimum KM for this trip is {quoteData.fare.total_km} (Current: {quoteData.fare.remark_trip_min_km} Changed to {quoteData.fare.total_km} KM)
                       </Text>
                     </View>
                   )}

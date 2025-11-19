@@ -218,7 +218,7 @@ export default function HistoryScreen() {
                         ₹{transfer.requested_amount.toLocaleString('en-IN')}
                       </Text>
                       <Text style={styles.transferDate}>
-                        {formatDateShort(transfer.created_at)}
+                        {formatDate(transfer.created_at)}
                       </Text>
                     </View>
                     <View style={styles.transferRight}>
