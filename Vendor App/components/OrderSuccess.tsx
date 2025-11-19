@@ -11,6 +11,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { CircleCheck as CheckCircle, Copy, ArrowLeft, Timer } from 'lucide-react-native';
+import { router } from 'expo-router';
 
 interface OrderSuccessProps {
   visible: boolean;
@@ -86,6 +87,11 @@ const OrderSuccess: React.FC<OrderSuccessProps> = ({ visible, onClose, orderData
 
   const formatAmount = (amount: number | string) => {
     return `₹${amount}`;
+  };
+
+  const handleOrderPress = () => {
+    onClose()
+    router.push(`/(tabs)`);
   };
 
   const getDisplayAmount = () => {
@@ -267,7 +273,7 @@ const OrderSuccess: React.FC<OrderSuccessProps> = ({ visible, onClose, orderData
                 <Text style={styles.shareButtonText}>Share Receipt</Text>
               </TouchableOpacity> */}
               
-              <TouchableOpacity style={styles.doneButton} onPress={onClose}>
+              <TouchableOpacity style={styles.doneButton} onPress={handleOrderPress}>
                 <Text style={styles.doneButtonText}>Done</Text>
               </TouchableOpacity>
             </View>

@@ -189,7 +189,7 @@ export default function ProfileComponent() {
         },
         {
           label: 'Secondary Number',
-          value: data.secondary_number,
+          value: data.secondary_number ? data.secondary_number : "Null",
           icon: Phone,
           action: () => copyToClipboard(data.secondary_number || '', 'Secondary Number'),
         },

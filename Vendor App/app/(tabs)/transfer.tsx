@@ -126,7 +126,7 @@ export default function TransferScreen() {
                   style={styles.amountInput}
                   value={amount}
                   onChangeText={setAmount}
-                  placeholder="0.00"
+                  placeholder="0"
                   keyboardType="numeric"
                   placeholderTextColor="#9CA3AF"
                 />
@@ -170,16 +170,15 @@ export default function TransferScreen() {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
   },
-    header: {
-    paddingTop: 50,
-    paddingBottom: 16,
-    paddingHorizontal: 20,
+  header: {
+    paddingTop: 40,
+    paddingBottom: 12,
+    paddingHorizontal: 16,
     backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
@@ -194,33 +193,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '600',
     color: 'black',
     textAlign: 'center',
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   balanceSection: {
-    marginTop: 20,
-    marginBottom: 24,
+    marginTop: 16,
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#1F2937',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   balanceCards: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
   },
   balanceCard: {
     flex: 1,
     backgroundColor: 'white',
-    padding: 16,
+    padding: 14,
     borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -228,40 +227,39 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-    iconContainer: {
-    width: 32,
-    height: 32,
+  iconContainer: {
+    width: 28,
+    height: 28,
     backgroundColor: '#F3F4F6',
-    borderRadius: 16,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
-balanceHeader: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'center',  // center horizontally
-  marginBottom: 10,
-  // remove marginLeft or set it to 0 if needed
-},
+  balanceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
   balanceLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#6B7280',
-    marginLeft: 8,
+    marginLeft: 6,
     fontWeight: '500',
   },
   balanceAmount: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
     color: '#1F2937',
   },
   transferSection: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   transferCard: {
     backgroundColor: 'white',
-    padding: 20,
+    padding: 16,
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -273,8 +271,8 @@ balanceHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
-    paddingVertical: 16,
+    marginBottom: 20,
+    paddingVertical: 14,
     backgroundColor: '#F8FAFC',
     borderRadius: 12,
   },
@@ -283,19 +281,19 @@ balanceHeader: {
     flex: 1,
   },
   transferLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#6B7280',
     marginTop: 4,
     fontWeight: '500',
   },
   amountSection: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   inputLabel: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#1F2937',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -304,25 +302,25 @@ balanceHeader: {
     borderRadius: 12,
     borderWidth: 2,
     borderColor: '#E5E7EB',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
   currencySymbol: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#6B7280',
-    marginRight: 8,
+    marginRight: 6,
   },
   amountInput: {
     flex: 1,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#1F2937',
   },
   maxAmount: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#6B7280',
-    marginTop: 6,
+    marginTop: 4,
     textAlign: 'right',
   },
   transferButton: {
@@ -336,38 +334,38 @@ balanceHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
   },
   transferButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
-    marginLeft: 8,
+    marginLeft: 6,
   },
   infoSection: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   infoCard: {
     backgroundColor: '#FEF3C7',
-    padding: 16,
+    padding: 14,
     borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
   infoContent: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: 10,
   },
   infoTitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: '#92400E',
     marginBottom: 4,
   },
   infoText: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#92400E',
-    lineHeight: 16,
+    lineHeight: 14,
   },
 });

@@ -14,6 +14,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Car, Clock, MapPin, DollarSign, TrendingUp, Users, Search, ListFilter as Filter, X, CircleCheck as CheckCircle, Circle as XCircle, User, Calendar } from 'lucide-react-native';
 import api from '../api/api'; // Adjust the path as necessary
+import { router } from 'expo-router';
 const { width } = Dimensions.get('window');
 
 interface VendorData {
@@ -185,6 +186,10 @@ export default function DashboardScreen() {
     await Promise.all([loadVendorData(), fetchOrders()]);
   };
 
+    const handleOrderPress = (orderId: number) => {
+    router.push(`/order-details?orderId=${orderId}`);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status.toUpperCase()) {
       case 'PENDING': return '#F59E0B';
@@ -338,7 +343,7 @@ export default function DashboardScreen() {
           </View>
 
           {filteredOrders.map((order) => (
-            <TouchableOpacity key={order.id} style={styles.orderCard}>
+            <TouchableOpacity key={order.id} style={styles.orderCard} onPress={() => handleOrderPress(order.id)}>
               <View style={styles.orderCardHeader}>
                 <View style={styles.customerInfo}>
                   <View style={styles.customerAvatar}>
@@ -433,7 +438,7 @@ export default function DashboardScreen() {
                     </View>
 
                     <View style={styles.metaItem}>
-                      <Text style={styles.metaText}>ID:</Text>
+                      <Text style={styles.metaText}>Order ID:</Text>
                       <Text style={styles.metaText}>{order.id}</Text>
                     </View>
                   </View>
@@ -546,32 +551,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   loadingText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#1F2937',
     marginBottom: 10,
   },
   errorText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#EF4444',
     textAlign: 'center',
     marginBottom: 20,
   },
   retryButton: {
     backgroundColor: '#6366F1',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     borderRadius: 8,
   },
   retryButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
   header: {
-    paddingTop: 60,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
+    paddingTop: 50,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
   },
   headerContent: {
     flexDirection: 'row',
@@ -579,166 +584,167 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   welcomeText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#E2E8F0',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   companyName: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
   profileButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   profileInitial: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   statsSection: {
-    marginTop: 20,
-    marginBottom: 20,
+    marginTop: 16,
+    marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#1F2937',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   compactStatsGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: 6,
   },
   compactStatCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 10,
+    padding: 10,
     flex: 1,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowRadius: 3,
     elevation: 2,
+    minHeight: 70,
   },
   statIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 6,
     backgroundColor: '#EEF2FF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   compactStatValue: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#1F2937',
-    marginBottom: 2,
+    marginBottom: 1,
   },
   compactStatLabel: {
-    fontSize: 10,
+    fontSize: 9,
     color: '#6B7280',
     textAlign: 'center',
   },
   searchFilterSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
-    gap: 12,
+    marginBottom: 16,
+    gap: 10,
   },
   searchContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowRadius: 3,
     elevation: 2,
   },
   searchIcon: {
-    marginRight: 12,
+    marginRight: 8,
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 12,
     color: '#1F2937',
   },
   clearSearch: {
-    padding: 4,
+    padding: 2,
   },
   filterButton: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 10,
+    padding: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowRadius: 3,
     elevation: 2,
   },
   ordersSection: {
-    marginBottom: 30,
+    marginBottom: 20,
   },
   orderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   sectionSubtitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#6B7280',
   },
   orderCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
+    shadowRadius: 6,
+    elevation: 2,
   },
   orderCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    alignItems: 'flex-start',
+    marginBottom: 10,
   },
   customerInfo: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     flex: 1,
   },
   customerAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: '#6366F1',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
   customerInitial: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
@@ -746,100 +752,107 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   customerName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#1F2937',
-    marginBottom: 2,
+    marginBottom: 1,
   },
   customerPhone: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#6B7280',
-    marginBottom: 2,
+    marginBottom: 1,
   },
   orderTime: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#9CA3AF',
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 10,
+    gap: 3,
   },
   statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
   },
   statusText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '600',
   },
   orderDetails: {
-    gap: 12,
+    gap: 10,
   },
   locationContainer: {
-    gap: 8,
+    gap: 6,
   },
   locationItem: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   locationDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 12,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 8,
+    marginTop: 5,
   },
   locationText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#374151',
     flex: 1,
+    lineHeight: 16,
   },
   statusInfoContainer: {
     backgroundColor: '#F9FAFB',
-    borderRadius: 8,
-    padding: 12,
-    gap: 8,
+    borderRadius: 6,
+    padding: 10,
+    gap: 6,
   },
   statusInfoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
   statusItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
     flex: 1,
   },
   statusItemText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '500',
   },
   orderMeta: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 4,
   },
   metaGroup: {
     flexDirection: 'row',
-    gap: 16,
+    flexWrap: 'wrap',
+    gap: 12,
+    flex: 1,
   },
   metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 3,
   },
   metaText: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#6B7280',
   },
   priceText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#10B981',
+    marginLeft: 8,
   },
   modalOverlay: {
     flex: 1,
@@ -848,84 +861,88 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingTop: 20,
-    maxHeight: '80%',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingTop: 16,
+    maxHeight: '85%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#1F2937',
   },
   filterOptions: {
-    paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
   },
   filterGroup: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   filterGroupTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#1F2937',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   filterButtons: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
   },
+  // filterButton: {
+  //   backgroundColor: '#F3F4F6',
+  //   borderRadius: 8,
+  //   paddingHorizontal: 10,
+  //   paddingVertical: 6,
+  // },
   filterButtonActive: {
     backgroundColor: '#6366F1',
   },
   filterButtonText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#6B7280',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
   },
   filterButtonTextActive: {
     color: '#FFFFFF',
   },
   modalActions: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
-    gap: 12,
+    gap: 10,
   },
   clearButton: {
     flex: 1,
     backgroundColor: '#F3F4F6',
-    borderRadius: 12,
-    paddingVertical: 12,
+    borderRadius: 10,
+    paddingVertical: 10,
     alignItems: 'center',
   },
   clearButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#6B7280',
   },
   applyButton: {
     flex: 1,
     backgroundColor: '#6366F1',
-    borderRadius: 12,
-    paddingVertical: 12,
+    borderRadius: 10,
+    paddingVertical: 10,
     alignItems: 'center',
   },
   applyButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#FFFFFF',
   },

@@ -31,6 +31,8 @@ interface Order {
   platform_fees_percent: number;
   created_at: string;
   cost_per_km: number;
+  closed_vendor_price: number;
+  vendor_earns_estimation: number;
   venodr_profit: number | null;
   admin_profit: number | null;
 }
@@ -204,19 +206,27 @@ export default function OrdersComponent(){
             </View>
             <View style={styles.fareItem}>
               <Text style={styles.fareLabel}>Total Fare</Text>
-              <Text style={styles.fareValue}>₹{item.vendor_price}</Text>
+              <Text style={styles.fareValue}>₹{item.trip_status === 'COMPLETED' ? item.closed_vendor_price : item.vendor_price}</Text>
             </View>
           </View>
 
           <View style={styles.profitInfo}>
             <View style={styles.profitRow}>
               <Text style={styles.profitLabel}>Your Earning: </Text>
-              <Text style={styles.profitValue}>₹{item.trip_status === 'COMPLETED'? item.venodr_profit : Math.round((item.vendor_price - item.estimated_price)+((item.trip_distance * item.cost_per_km)*(item.platform_fees_percent/100))) - Math.round(((item.vendor_price - item.estimated_price)+((item.trip_distance * item.cost_per_km)*(item.platform_fees_percent/100)))*item.platform_fees_percent/100)}</Text>
+              <Text style={styles.profitValue}>
+                ₹{
+                  item.trip_type === "Hourly Rental" 
+                    ? item.trip_status === 'COMPLETED'? item.venodr_profit : (item.vendor_price - item.estimated_price) - Math.round((item.vendor_price - item.estimated_price) * item.platform_fees_percent / 100)
+                    : item.trip_status === 'COMPLETED' 
+                      ? item.venodr_profit 
+                      : item.vendor_earns_estimation
+                }
+              </Text>
             </View>
-            <View style={styles.profitRow}>
-              <Text style={styles.platformFeeLabel}>Platform Fee ({item.platform_fees_percent}%): </Text>
+            {/* <View style={styles.profitRow}>
+              <Text style={styles.platformFeeLabel}>Platform Fee ({item.platform_fees_percent}%): </Text> */}
               {/* <Text style={styles.platformFeeValue}>-₹{Math.round((item.cost_per_km * item.platform_fees_percent) / 100)}</Text> */}
-              {item.trip_type !== 'Hourly Rental' ? (
+              {/* {item.trip_type !== 'Hourly Rental' ? (
                 <Text style={styles.platformFeeValue}>
                   {item.cost_per_km !== null && item.cost_per_km !== undefined && item.trip_distance !== null
                     ? `-₹${item.trip_status === 'COMPLETED'? item.admin_profit : Math.round((((item.vendor_price - item.estimated_price)+((item.trip_distance * item.cost_per_km)*(item.platform_fees_percent/100)))*item.platform_fees_percent/100))}`
@@ -225,7 +235,7 @@ export default function OrdersComponent(){
               ) : (
                 <Text style={styles.platformFeeValue}>₹{item.admin_profit?item.admin_profit:Math.round((item.vendor_price - item.estimated_price)*item.platform_fees_percent/100)}</Text>
               )}
-            </View>
+            </View> */}
           </View>
         </View>
       </TouchableOpacity>
@@ -284,56 +294,56 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
   },
   header: {
-    paddingTop: 50,
-    paddingBottom: 30,
-    paddingHorizontal: 24,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    paddingTop: 45,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   headerIconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 12,
   },
   headerTextContainer: {
     flex: 1,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   headerSubtitle: {
-    fontSize: 16,
+    fontSize: 13,
     color: 'rgba(255, 255, 255, 0.9)',
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
   },
   ordersList: {
-    paddingTop: 24,
-    paddingBottom: 24,
+    paddingTop: 16,
+    paddingBottom: 16,
   },
   orderCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 3,
     borderWidth: 1,
     borderColor: '#E8EAED',
   },
@@ -341,7 +351,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   orderIdContainer: {
     flexDirection: 'row',
@@ -349,76 +359,76 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   orderIdText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#202124',
-    marginRight: 12,
+    marginRight: 10,
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 10,
   },
   statusText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
-    marginLeft: 4,
+    marginLeft: 3,
     textTransform: 'capitalize',
   },
   orderContent: {
-    gap: 12,
+    gap: 10,
   },
   customerInfo: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   customerName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#202124',
-    marginLeft: 8,
+    marginLeft: 6,
   },
   customerPhone: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#5F6368',
     marginLeft: 4,
   },
   tripInfo: {
-    gap: 8,
+    gap: 6,
   },
   tripTypeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   tripTypeText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#5F6368',
-    marginLeft: 6,
+    marginLeft: 5,
   },
   dateTimeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   dateTimeText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#5F6368',
-    marginLeft: 6,
+    marginLeft: 5,
   },
   routeInfo: {
-    paddingVertical: 8,
+    paddingVertical: 6,
   },
   routeItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   routeDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 12,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 8,
   },
   routeDotStart: {
     backgroundColor: '#10B981',
@@ -430,14 +440,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#DC2626',
   },
   routeText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#374151',
     flex: 1,
   },
   fareInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingTop: 12,
+    paddingTop: 8,
     borderTopWidth: 1,
     borderTopColor: '#F1F3F4',
   },
@@ -445,17 +455,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   fareLabel: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#5F6368',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   fareValue: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: '#059669',
   },
   profitInfo: {
-    paddingTop: 8,
+    paddingTop: 6,
     borderTopWidth: 1,
     borderTopColor: '#F1F3F4',
   },
@@ -463,24 +473,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   profitLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#6B7280',
     fontWeight: '500',
   },
   profitValue: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#10B981',
   },
   platformFeeLabel: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#9CA3AF',
   },
   platformFeeValue: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: '#DC2626',
   },
