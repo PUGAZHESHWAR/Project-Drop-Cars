@@ -168,6 +168,30 @@ export default function CreateOrderScreen() {
     fetchPackageHours();
   }, []);
 
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+  setShowDatePicker(false);
+  if (selectedDate) {
+    // Combine selected date with existing time
+    const currentDateTime = formData.start_date_time;
+    const newDate = new Date(selectedDate);
+    newDate.setHours(currentDateTime.getHours());
+    newDate.setMinutes(currentDateTime.getMinutes());
+    handleInputChange('start_date_time', newDate);
+  }
+};
+
+const handleTimeChange = (event: any, selectedTime?: Date) => {
+  setShowTimePicker(false);
+  if (selectedTime) {
+    // Combine selected time with existing date
+    const currentDateTime = formData.start_date_time;
+    const newDateTime = new Date(currentDateTime);
+    newDateTime.setHours(selectedTime.getHours());
+    newDateTime.setMinutes(selectedTime.getMinutes());
+    handleInputChange('start_date_time', newDateTime);
+  }
+};
+
   // Auto-populate return location for round trip
   useEffect(() => {
     if (formData.trip_type === 'Round Trip') {
@@ -657,38 +681,58 @@ export default function CreateOrderScreen() {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.row}>
-            <View style={[styles.halfWidth, { marginRight: 8 }]}>
-              <Text style={styles.fieldLabel}>Start Date *</Text>
-              <View style={styles.inputContainer}>
-                <Calendar size={18} color="#6B7280" style={styles.inputIcon} />
-                <TouchableOpacity 
-                  style={styles.pickerButton}
-                  onPress={() => setShowDatePicker(true)}
-                >
-                  <Text style={styles.pickerButtonText}>
-                    {formatDateTime(formData.start_date_time).date}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+         <View style={styles.row}>
+  <View style={[styles.halfWidth, { marginRight: 8 }]}>
+    <Text style={styles.fieldLabel}>Start Date *</Text>
+    <View style={styles.inputContainer}>
+      <Calendar size={18} color="#6B7280" style={styles.inputIcon} />
+      <TouchableOpacity 
+        style={styles.pickerButton}
+        onPress={() => setShowDatePicker(true)}
+      >
+        <Text style={styles.pickerButtonText}>
+          {formatDateTime(formData.start_date_time).date}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  </View>
 
-            <View style={[styles.halfWidth, { marginLeft: 8 }]}>
-              <Text style={styles.fieldLabel}>Start Time *</Text>
-              <View style={styles.inputContainer}>
-                <Clock size={18} color="#6B7280" style={styles.inputIcon} />
-                <TouchableOpacity 
-                  style={styles.pickerButton}
-                  onPress={() => setShowTimePicker(true)}
-                >
-                  <Text style={styles.pickerButtonText}>
-                    {formatDateTime(formData.start_date_time).time}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
+  <View style={[styles.halfWidth, { marginLeft: 8 }]}>
+    <Text style={styles.fieldLabel}>Start Time *</Text>
+    <View style={styles.inputContainer}>
+      <Clock size={18} color="#6B7280" style={styles.inputIcon} />
+      <TouchableOpacity 
+        style={styles.pickerButton}
+        onPress={() => setShowTimePicker(true)}
+      >
+        <Text style={styles.pickerButtonText}>
+          {formatDateTime(formData.start_date_time).time}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</View>
         </View>
+        {/* Date Picker */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={formData.start_date_time}
+          mode="date"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={handleDateChange} // MAKE SURE THIS IS UNCOMMENTED
+          minimumDate={new Date()}
+        />
+      )}
+
+      {/* Time Picker */}
+      {showTimePicker && (
+        <DateTimePicker
+          value={formData.start_date_time}
+          mode="time"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={handleTimeChange} // MAKE SURE THIS IS UNCOMMENTED
+        />
+      )}
 
         {/* Locations Section */}
         <View style={styles.section}>
