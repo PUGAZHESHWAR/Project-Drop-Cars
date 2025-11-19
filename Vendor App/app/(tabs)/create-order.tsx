@@ -713,7 +713,7 @@ const handleTimeChange = (event: any, selectedTime?: Date) => {
   </View>
 </View>
         </View>
-        {/* Date Picker */}
+      {/* Date Picker */}
       {showDatePicker && (
         <DateTimePicker
           value={formData.start_date_time}
@@ -1089,7 +1089,7 @@ const handleTimeChange = (event: any, selectedTime?: Date) => {
       </ScrollView>
 
       {/* Date Picker */}
-      {showDatePicker && (
+      {/* {showDatePicker && (
         <DateTimePicker
           value={formData.start_date_time}
           mode="date"
@@ -1097,17 +1097,17 @@ const handleTimeChange = (event: any, selectedTime?: Date) => {
           // onChange={onDateChange}
           minimumDate={new Date()}
         />
-      )}
+      )} */}
 
       {/* Time Picker */}
-      {showTimePicker && (
+      {/* {showTimePicker && (
         <DateTimePicker
           value={formData.start_date_time}
           mode="time"
           display={Platform.OS === 'ios' ? 'spinner' : 'default'}
           // onChange={onTimeChange}
         />
-      )}
+      )} */}
 
       {/* Trip Type Picker Modal */}
       <Modal

@@ -135,6 +135,8 @@ export default function OrderDetailsComponent() {
   const [showOrderSuccess, setShowOrderSuccess] = useState(false);
   const [recreatedOrderData, setRecreatedOrderData] = useState<any>(null);
   const [visibilityLoading, setVisibilityLoading] = useState(false);
+  const [showRecreateInput, setShowRecreateInput] = useState(false);
+  const [maxTimeInput, setMaxTimeInput] = useState('30');
 
   useEffect(() => {
     if (orderId) {
@@ -156,6 +158,27 @@ const fetchOrderDetails = async () => {
   } finally {
     setLoading(false);
   }
+};
+
+// Replace the showMaxTimeInputDialog function
+const showMaxTimeInputDialog = () => {
+  setShowRecreateInput(true);
+  setMaxTimeInput('30'); // Reset to default when showing
+};
+
+const handleRecreateSubmit = () => {
+  const timeInMinutes = parseInt(maxTimeInput || '30');
+  if (isNaN(timeInMinutes) || timeInMinutes <= 0) {
+    Alert.alert('Invalid Input', 'Please enter a valid number of minutes (greater than 0)');
+    return;
+  }
+  setShowRecreateInput(false);
+  performRecreateOrder(timeInMinutes);
+};
+
+const cancelRecreateInput = () => {
+  setShowRecreateInput(false);
+  setMaxTimeInput('30');
 };
 
   // const showMaxTimeInputDialog = () => {
@@ -183,12 +206,42 @@ const fetchOrderDetails = async () => {
   //     '30' // Default value
   //   );
   // };
-    const showMaxTimeInputDialog = () =>{
-      performRecreateOrder(30)
-    }
+    // const showMaxTimeInputDialog = () =>{
+    //   performRecreateOrder(2)
+    // }
+
+    // const showMaxTimeInputDialog = () => {
+    //   console.log("check 1")
+    //     Alert.prompt(
+    //       'Recreate Order',
+    //       'Enter maximum time to assign order (in minutes):',
+    //       [
+    //         {
+    //           text: 'Cancel',
+    //           style: 'cancel',
+    //         },
+    //         {
+    //           text: 'Create Order',
+    //           onPress: (maxTime) => {
+    //             const timeInMinutes = parseInt(maxTime || '30');
+    //             if (isNaN(timeInMinutes) || timeInMinutes <= 0) {
+    //               Alert.alert('Invalid Input', 'Please enter a valid number of minutes (greater than 0)');
+    //               return;
+    //             }
+    //             performRecreateOrder(timeInMinutes);
+    //           },
+    //         },
+    //       ],
+    //       'plain-text',
+    //       '30' // Default value
+    //     );
+    //   };
 
   const performRecreateOrder = async (maxTimeInMinutes: number) => {
+      console.log("check 2")
+
     if (!orderDetails) return;
+      console.log("check 3")
 
     try {
       setRecreateLoading(true);
@@ -421,44 +474,75 @@ const fetchOrderDetails = async () => {
         </View>
 
         {/* Action Buttons */}
-        <View style={styles.headerActions}>
-          {/* Cancel Button - Only show if trip status is PENDING */}
-          {orderDetails.trip_status === 'PENDING' && (
-            <TouchableOpacity 
-              style={[styles.actionButton, styles.cancelButton, cancelLoading && styles.actionButtonDisabled]} 
-              onPress={cancelOrder}
-              disabled={cancelLoading}
-            >
-              {cancelLoading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <>
-                  <X size={18} color="#FFFFFF" />
-                  <Text style={styles.actionButtonText}>Cancel</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          )}
-          
-          {/* Recreate Button - Only show if trip status is AUTO_CANCELLED */}
-          {canRecreate && (
-            <TouchableOpacity 
-              style={[styles.actionButton, styles.recreateButton, recreateLoading && styles.actionButtonDisabled]} 
-              onPress={showMaxTimeInputDialog}
-              disabled={recreateLoading}
-            >
-              {recreateLoading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <>
-                  <RefreshCw size={18} color="#FFFFFF" />
-                  <Text style={styles.actionButtonText}>Recreate</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          )}
-        </View>
+    {/* Action Buttons */}
+<View style={styles.headerActions}>
+  {/* Cancel Button - Only show if trip status is PENDING */}
+  {orderDetails.trip_status === 'PENDING' && (
+    <TouchableOpacity 
+      style={[styles.actionButton, styles.cancelButton, cancelLoading && styles.actionButtonDisabled]} 
+      onPress={cancelOrder}
+      disabled={cancelLoading}
+    >
+      {cancelLoading ? (
+        <ActivityIndicator size="small" color="#FFFFFF" />
+      ) : (
+        <>
+          <X size={18} color="#FFFFFF" />
+          <Text style={styles.actionButtonText}>Cancel</Text>
+        </>
+      )}
+    </TouchableOpacity>
+  )}
+  
+  {/* Recreate Button - Only show if trip status is AUTO_CANCELLED */}
+{/* Recreate Button - Only show if trip status is AUTO_CANCELLED */}
+  {canRecreate && (
+    <TouchableOpacity 
+      style={[styles.actionButton, styles.recreateButton, recreateLoading && styles.actionButtonDisabled]} 
+      onPress={showMaxTimeInputDialog}
+      disabled={recreateLoading || showRecreateInput}
+    >
+      {recreateLoading ? (
+        <ActivityIndicator size="small" color="#FFFFFF" />
+      ) : (
+        <>
+          <RefreshCw size={18} color="#FFFFFF" />
+          <Text style={styles.actionButtonText}>Recreate</Text>
+        </>
+      )}
+    </TouchableOpacity>
+  )}
+</View>
       </LinearGradient>
+      {showRecreateInput && (
+        <View style={styles.recreateInputContainer}>
+          <Text style={styles.recreateInputLabel}>Max time to assign (minutes):</Text>
+          <View style={styles.recreateInputRow}>
+            <TextInput
+              style={styles.recreateInput}
+              value={maxTimeInput}
+              onChangeText={setMaxTimeInput}
+              keyboardType="numeric"
+              placeholder="Enter minutes"
+              placeholderTextColor="#9CA3AF"
+            />
+            <TouchableOpacity 
+              style={[styles.submitButton, (!maxTimeInput || parseInt(maxTimeInput) <= 0) && styles.submitButtonDisabled]}
+              onPress={handleRecreateSubmit}
+              disabled={!maxTimeInput || parseInt(maxTimeInput) <= 0}
+            >
+              <Text style={styles.submitButtonText}>Submit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.cancelInputButton}
+              onPress={cancelRecreateInput}
+            >
+              <Text style={styles.cancelInputButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+            
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Customer Information */}
@@ -956,10 +1040,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  header: {
+header: {
     paddingTop: 45,
     paddingBottom: 16,
     paddingHorizontal: 20,
+    minHeight: 120, // Increased minimum height to accommodate input
   },
   backButton: {
     width: 36,
@@ -994,25 +1079,27 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     textTransform: 'capitalize',
   },
-  headerActions: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 6,
-    justifyContent: 'center',
-    flex: 1,
-  },
-  cancelButton: {
-    backgroundColor: '#DC2626',
-  },
-  recreateButton: {
-    backgroundColor: '#10B981',
-  },
+    headerActions: {
+      flexDirection: 'row',
+      gap: 10,
+    },
+    actionButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 6,
+      justifyContent: 'center',
+      minHeight: 36, // Add fixed height
+    },
+    cancelButton: {
+      backgroundColor: '#DC2626',
+      flex: 1, // Take available space
+    },
+    recreateButton: {
+      backgroundColor: '#10B981',
+      flex: 1, // Take available space
+    },
   actionButtonDisabled: {
     opacity: 0.6,
   },
@@ -1287,6 +1374,72 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
   },
+recreateContainer: {
+  flex: 1,
+  minWidth: 100, // Ensure minimum width
+},
+recreateInputContainer: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 8,
+  padding: 12,
+  marginTop: 8,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 1 },
+  shadowOpacity: 0.1,
+  shadowRadius: 3,
+  elevation: 2,
+  borderWidth: 1,
+  borderColor: '#E5E7EB',
+},
+recreateInputLabel: {
+  fontSize: 12,
+  color: '#6B7280',
+  marginBottom: 8,
+  fontWeight: '500',
+},
+recreateInputRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 8,
+},
+recreateInput: {
+  flex: 1,
+  borderWidth: 1,
+  borderColor: '#D1D5DB',
+  borderRadius: 6,
+  paddingHorizontal: 10,
+  paddingVertical: 8,
+  fontSize: 14,
+  color: '#202124',
+  backgroundColor: '#F9FAFB',
+},
+submitButton: {
+  backgroundColor: '#10B981',
+  paddingHorizontal: 12,
+  paddingVertical: 8,
+  borderRadius: 6,
+},
+submitButtonDisabled: {
+  backgroundColor: '#9CA3AF',
+  opacity: 0.6,
+},
+submitButtonText: {
+  color: '#FFFFFF',
+  fontSize: 12,
+  fontWeight: '600',
+},
+cancelInputButton: {
+  paddingHorizontal: 12,
+  paddingVertical: 8,
+  borderRadius: 6,
+  borderWidth: 1,
+  borderColor: '#D1D5DB',
+},
+cancelInputButtonText: {
+  color: '#6B7280',
+  fontSize: 12,
+  fontWeight: '600',
+},
   imageButton: {
     flexDirection: 'row',
     alignItems: 'center',
