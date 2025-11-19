@@ -8,23 +8,51 @@ import {
   Alert,
   Image,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useWallet } from '@/contexts/WalletContext';
 import { Camera, ArrowLeft, Check, IndianRupee } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { endTrip } from '@/services/driver/carDriverService';
+import LoadingOverlay from '@/components/LoadingOverlay';
 
 export default function EndTripScreen() {
   const [endKm, setEndKm] = useState('');
   const [odometerPhoto, setOdometerPhoto] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [thanked, setThanked] = useState(false);
-  const { deductMoney } = useWallet();
+  const [tollCharge, setTollCharge] = useState('');
+  const [tollChargeUpdate, setTollChargeUpdate] = useState(false);
   const router = useRouter();
-  const params = useLocalSearchParams<{ orderId?: string; startKm?: string; farePerKm?: string }>();
+  const params = useLocalSearchParams<{ 
+    order_id?: string; 
+    assignment_id?: string; 
+    startKm?: string; 
+    farePerKm?: string;
+    toll_charge_update?: string;
+  }>();
 
   const startKm = parseInt(String(params.startKm || '0')) || 0;
   const farePerKm = parseFloat(String(params.farePerKm || '0')) || 0;
+  const tollChargeUpdateEnabled = params.toll_charge_update === 'true';
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('🏁 End trip screen received params:', {
+      startKm: params.startKm,
+      parsedStartKm: startKm,
+      farePerKm: params.farePerKm,
+      parsedFarePerKm: farePerKm,
+      toll_charge_update: params.toll_charge_update,
+      tollChargeUpdateEnabled,
+    });
+  }, [params]);
+
+  // Initialize toll charge update state
+  React.useEffect(() => {
+    setTollChargeUpdate(tollChargeUpdateEnabled);
+  }, [tollChargeUpdateEnabled]);
 
   const takeOdometerPhoto = async () => {
     try {
@@ -48,11 +76,20 @@ export default function EndTripScreen() {
     return totalKm * farePerKm;
   };
 
-  const handleEndTrip = () => {
+  const handleEndTrip = async () => {
+    // Check required fields (removed contact number requirement)
     if (!endKm || !odometerPhoto || !thanked) {
-      Alert.alert('Error', 'Please complete all requirements');
+      Alert.alert('Error', 'Please complete all required fields and thank your customer.');
       return;
     }
+
+    // Toll must be entered ONLY if tollChargeUpdate is true
+    if (tollChargeUpdate === true && (!tollCharge || parseFloat(tollCharge) < 0)) {
+      Alert.alert('Error', 'Please enter a valid toll charge amount.');
+      return;
+    }
+
+    if (submitting) return;
 
     const totalKm = parseInt(endKm) - startKm;
     const totalFare = calculateFare();
@@ -62,18 +99,45 @@ export default function EndTripScreen() {
       return;
     }
 
-    // Deduct commission
-    deductMoney(50, 'Trip Commission');
+    try {
+      setSubmitting(true);
+      const assignment_id = String(params.assignment_id || '');
+      let tripEndResponse = null;
+      
+      if (assignment_id) {
+        // Create a dummy contact number since it's no longer required from user
+        const dummyContact = '0000000000';
+        tripEndResponse = await endTrip(
+          parseInt(params.order_id || ''), 
+          parseInt(endKm, 10), 
+          dummyContact, 
+          odometerPhoto, 
+          tollChargeUpdate === true ? parseFloat(tollCharge) : undefined,
+          tollChargeUpdate
+        );
+      } else {
+        console.warn('No assignment_id provided to end trip; finishing without API call');
+      }
 
-    Alert.alert(
-      'Trip Completed',
-      `Trip completed successfully!\n\nDistance: ${totalKm} km\nTotal Fare: ₹${totalFare}\nCommission: ₹50`,
-      [{ text: 'OK', onPress: () => router.replace('/quick-dashboard') }]
-    );
+      // Navigate to trip report screen (shows collection details)
+      router.replace({
+        pathname: '/trip/report',
+        params: { order_id: String(params.order_id || '0') }
+      });
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to end trip');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
+      <LoadingOverlay 
+        visible={submitting} 
+        message="Completing trip..." 
+      />
+      
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <ArrowLeft color="#1F2937" size={24} />
@@ -85,36 +149,6 @@ export default function EndTripScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Complete Your Trip</Text>
         <Text style={styles.subtitle}>Upload final odometer photo and reading</Text>
-
-        {/* Trip Summary */}
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>Trip Summary</Text>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Start KM:</Text>
-            <Text style={styles.summaryValue}>{startKm.toLocaleString()}</Text>
-          </View>
-          {endKm && (
-            <>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>End KM:</Text>
-                <Text style={styles.summaryValue}>{parseInt(endKm).toLocaleString()}</Text>
-              </View>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Distance:</Text>
-                <Text style={styles.summaryValue}>{parseInt(endKm) - startKm} km</Text>
-              </View>
-              <View style={[styles.summaryRow, styles.fareRow]}>
-                <Text style={styles.fareLabel}>Total Fare:</Text>
-                <View style={styles.fareContainer}>
-                  <IndianRupee color="#10B981" size={16} />
-                  <Text style={styles.fareValue}>{calculateFare()}</Text>
-                </View>
-              </View>
-            </>
-          )}
-        </View>
-
-        {/* Thank Customer Checkbox */}
         <TouchableOpacity 
           style={styles.checkboxContainer}
           onPress={() => setThanked(!thanked)}
@@ -155,12 +189,39 @@ export default function EndTripScreen() {
           />
         </View>
 
+        {/* Toll Charge Input - Only show if toll_charge_update is true */}
+        {tollChargeUpdate === true && (
+          <View style={styles.inputSection}>
+            <Text style={styles.sectionTitle}>Toll Charges</Text>
+            <TextInput
+              style={styles.kmInput}
+              placeholder="Enter toll charges (₹)"
+              value={tollCharge}
+              onChangeText={setTollCharge}
+              keyboardType="numeric"
+            />
+            <Text style={styles.helperText}>
+              Enter the toll charges incurred during the trip
+            </Text>
+          </View>
+        )}
+
         <TouchableOpacity
-          style={[styles.endButton, (!endKm || !odometerPhoto || !thanked) && styles.disabledButton]}
+          style={[
+            styles.endButton,
+            (!endKm || !odometerPhoto || !thanked || (tollChargeUpdate === true && !tollCharge) || submitting) && styles.disabledButton,
+          ]}
           onPress={handleEndTrip}
-          disabled={!endKm || !odometerPhoto || !thanked}
+          disabled={!endKm || !odometerPhoto || !thanked || (tollChargeUpdate === true && !tollCharge) || submitting}
         >
-          <Text style={styles.endButtonText}>Complete Trip</Text>
+          {submitting ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator color="white" size="small" />
+              <Text style={styles.endButtonText}>Completing Trip...</Text>
+            </View>
+          ) : (
+            <Text style={styles.endButtonText}>Complete Trip</Text>
+          )}
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -356,5 +417,16 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  helperText: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
+    fontStyle: 'italic',
   },
 });

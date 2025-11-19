@@ -13,8 +13,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useDashboard } from '@/contexts/DashboardContext';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Car, Plus, Edit, Trash2, Image as ImageIcon } from 'lucide-react-native';
-import { fetchDashboardData } from '@/services/dashboardService';
+import { ArrowLeft, Car, Plus, Image as ImageIcon } from 'lucide-react-native';
+import { fetchDashboardData } from '@/services/orders/dashboardService';
 
 export default function MyCarsScreen() {
   const { user } = useAuth();
@@ -38,28 +38,7 @@ export default function MyCarsScreen() {
     router.push('/add-car');
   };
 
-  const handleEditCar = (carId: string) => {
-    // TODO: Implement edit car functionality
-    Alert.alert('Edit Car', 'Edit functionality coming soon!');
-  };
-
-  const handleDeleteCar = (carId: string) => {
-    Alert.alert(
-      'Delete Car',
-      'Are you sure you want to delete this car? This action cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: () => {
-            // TODO: Implement delete car functionality
-            Alert.alert('Delete Car', 'Delete functionality coming soon!');
-          }
-        }
-      ]
-    );
-  };
+  // Edit/Delete not implemented – hide controls
 
   const dynamicStyles = StyleSheet.create({
     container: {
@@ -302,20 +281,7 @@ export default function MyCarsScreen() {
                 <Text style={dynamicStyles.carTitle}>
                   {car.car_brand} {car.car_model}
                 </Text>
-                <View style={dynamicStyles.carActions}>
-                  <TouchableOpacity 
-                    style={dynamicStyles.actionButton}
-                    onPress={() => handleEditCar(car.id)}
-                  >
-                    <Edit color={colors.primary} size={20} />
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={dynamicStyles.actionButton}
-                    onPress={() => handleDeleteCar(car.id)}
-                  >
-                    <Trash2 color={colors.error} size={20} />
-                  </TouchableOpacity>
-                </View>
+                {/* Edit/Delete actions removed */}
               </View>
 
               <View style={dynamicStyles.carInfo}>

@@ -70,7 +70,7 @@ export default function CarDriverDashboardScreen() {
       setStatusLoading(true);
       clearError();
 
-      if (driver.driver_status === 'ONLINE') {
+      if (driver.status === 'online' || driver.driver_status === 'ONLINE') {
         await goOffline();
         Alert.alert('Status Updated', 'You are now offline');
       } else {
@@ -110,7 +110,8 @@ export default function CarDriverDashboardScreen() {
   };
 
   const getStatusColor = () => {
-    switch (driver?.status) {
+    const normalized = (driver?.status || '').toLowerCase() || (driver?.driver_status || '').toLowerCase();
+    switch (normalized) {
       case 'online':
         return '#10B981'; // Green
       case 'offline':
@@ -125,7 +126,8 @@ export default function CarDriverDashboardScreen() {
   };
 
   const getStatusText = () => {
-    switch (driver?.status) {
+    const normalized = (driver?.status || '').toLowerCase() || (driver?.driver_status || '').toLowerCase();
+    switch (normalized) {
       case 'online':
         return 'Online';
       case 'offline':
@@ -388,7 +390,7 @@ export default function CarDriverDashboardScreen() {
         <Text style={dynamicStyles.headerTitle}>Driver Dashboard</Text>
         <View style={dynamicStyles.headerActions}>
           <TouchableOpacity 
-            onPress={() => router.push('/car-driver/profile')}
+            onPress={() => router.push('/car-driver/profile' as any)}
             style={dynamicStyles.headerButton}
           >
             <Settings color={colors.text} size={24} />
@@ -447,7 +449,7 @@ export default function CarDriverDashboardScreen() {
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
               <Text style={dynamicStyles.statusButtonText}>
-                {driver.driver_status === 'ONLINE' ? 'Go Offline' : 'Go Online'}
+                {(driver.driver_status === 'ONLINE' || driver.status === 'online') ? 'Go Offline' : 'Go Online'}
               </Text>
             )}
           </TouchableOpacity>
@@ -484,7 +486,7 @@ export default function CarDriverDashboardScreen() {
             
             <View style={dynamicStyles.detailRow}>
               <MapPin color={colors.textSecondary} size={16} style={dynamicStyles.detailIcon} />
-              <Text style={dynamicStyles.detailText}>{driver.adress}</Text>
+              <Text style={dynamicStyles.detailText}>{driver.address}</Text>
             </View>
             
             {driver.email && (

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Car, Plus, ArrowRight, ArrowLeft, X, Upload, CheckCircle, FileText } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { addCarDetails, CarDetailsData } from '@/services/signupService';
+import { addCarDetails, CarDetailsData } from '@/services/auth/signupService';
 
 const carTypes = ['HATCHBACK', 'SEDAN', 'NEW SEDAN', 'SUV', 'INNOVA', 'INNOVA CRYSTA'];
 

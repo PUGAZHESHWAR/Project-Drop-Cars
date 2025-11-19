@@ -11,12 +11,12 @@ import {
   setDriverOnline,
   setDriverOffline,
   getCarDriver,
-  getDriversByOrganization,
+  // getDriversByOrganization, // removed: organization APIs not supported
   getCarDriverByMobile,
   updateCarDriverProfile,
   deleteCarDriver,
   searchDrivers
-} from '@/services/carDriverService';
+} from '@/services/driver/carDriverService';
 
 interface CarDriverContextType {
   // Driver state
@@ -40,11 +40,12 @@ interface CarDriverContextType {
   
   // Data fetching
   refreshDriverData: () => Promise<void>;
-  getDriversForOrganization: (organizationId: string) => Promise<CarDriverResponse[]>;
+  getDriversForOrganization: (organizationId: string) => Promise<CarDriverResponse[]>; // deprecated
   searchDriversByFilters: (filters: any) => Promise<CarDriverResponse[]>;
   
   // Utility methods
   clearError: () => void;
+  clearAllData: () => void;
 }
 
 const CarDriverContext = createContext<CarDriverContextType | undefined>(undefined);
@@ -68,6 +69,7 @@ export const CarDriverProvider: React.FC<CarDriverProviderProps> = ({ children }
     try {
       setIsLoading(true);
       
+      // Fast local storage check only - no API calls on startup
       const storedDriver = await AsyncStorage.getItem('carDriver');
       const storedToken = await AsyncStorage.getItem('carDriverToken');
       
@@ -75,7 +77,9 @@ export const CarDriverProvider: React.FC<CarDriverProviderProps> = ({ children }
         const driverData = JSON.parse(storedDriver);
         setDriver(driverData);
         setIsAuthenticated(true);
-        console.log('✅ Stored driver data loaded:', driverData.full_name);
+        console.log('✅ Stored driver data loaded (fast startup):', driverData.full_name);
+      } else {
+        console.log('ℹ️ No stored driver data found, driver needs to login');
       }
     } catch (error) {
       console.error('❌ Failed to load stored driver data:', error);
@@ -308,16 +312,9 @@ export const CarDriverProvider: React.FC<CarDriverProviderProps> = ({ children }
     }
   };
 
-  const getDriversForOrganization = async (organizationId: string): Promise<CarDriverResponse[]> => {
-    try {
-      console.log('👥 Fetching drivers for organization:', organizationId);
-      const drivers = await getDriversByOrganization(organizationId);
-      console.log('✅ Drivers fetched successfully:', drivers.length);
-      return drivers;
-    } catch (error: any) {
-      console.error('❌ Failed to fetch drivers for organization:', error);
-      throw error;
-    }
+  const getDriversForOrganization = async (_organizationId: string): Promise<CarDriverResponse[]> => {
+    console.warn('getDriversForOrganization is deprecated: organization APIs are not available');
+    return [];
   };
 
   const searchDriversByFilters = async (filters: any): Promise<CarDriverResponse[]> => {
@@ -336,6 +333,14 @@ export const CarDriverProvider: React.FC<CarDriverProviderProps> = ({ children }
     setError(null);
   };
 
+  const clearAllData = () => {
+    console.log('🧹 Clearing all car driver data...');
+    setDriver(null);
+    setIsAuthenticated(false);
+    setError(null);
+    console.log('✅ All car driver data cleared');
+  };
+
   const value: CarDriverContextType = {
     driver,
     isAuthenticated,
@@ -351,7 +356,8 @@ export const CarDriverProvider: React.FC<CarDriverProviderProps> = ({ children }
     refreshDriverData,
     getDriversForOrganization,
     searchDriversByFilters,
-    clearError
+    clearError,
+    clearAllData
   };
 
   return (

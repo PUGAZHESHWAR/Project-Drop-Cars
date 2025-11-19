@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useWallet } from '@/contexts/WalletContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useDashboard } from '@/contexts/DashboardContext';
+import { useCarDriver } from '@/contexts/CarDriverContext';
 import { useRouter } from 'expo-router';
 import { 
   X, 
@@ -38,7 +39,8 @@ export default function DrawerNavigation({ visible, onClose }: DrawerNavigationP
   const { user, refreshUserData, logout } = useAuth();
   const { balance } = useWallet();
   const { colors } = useTheme();
-  const { dashboardData } = useDashboard();
+  const { dashboardData, clearAllData: clearDashboardData } = useDashboard();
+  const { clearAllData: clearCarDriverData } = useCarDriver();
   const router = useRouter();
 
   const handleLogout = () => {
@@ -51,7 +53,16 @@ export default function DrawerNavigation({ visible, onClose }: DrawerNavigationP
           text: 'Logout', 
           style: 'destructive',
           onPress: async () => {
+            console.log('🔄 Starting comprehensive logout process...');
+            
+            // Clear all context data first
+            clearDashboardData();
+            clearCarDriverData();
+            
+            // Then perform auth logout (which clears storage)
             await logout();
+            
+            console.log('✅ Logout completed, redirecting to login...');
             onClose();
             router.replace('/login');
           }

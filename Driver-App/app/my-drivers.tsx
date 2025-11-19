@@ -13,8 +13,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useDashboard } from '@/contexts/DashboardContext';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Users, Plus, Edit, Trash2, Phone, MapPin, CreditCard, RefreshCw } from 'lucide-react-native';
-import { fetchDashboardData } from '@/services/dashboardService';
+import { ArrowLeft, Users, Plus, Phone, MapPin, CreditCard, RefreshCw } from 'lucide-react-native';
+import { fetchDashboardData } from '@/services/orders/dashboardService';
 
 export default function MyDriversScreen() {
   const { user } = useAuth();
@@ -99,28 +99,7 @@ export default function MyDriversScreen() {
     router.push('/add-driver');
   };
 
-  const handleEditDriver = (driverId: string) => {
-    // TODO: Implement edit driver functionality
-    Alert.alert('Edit Driver', 'Edit functionality coming soon!');
-  };
-
-  const handleDeleteDriver = (driverId: string) => {
-    Alert.alert(
-      'Delete Driver',
-      'Are you sure you want to delete this driver? This action cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: () => {
-            // TODO: Implement delete driver functionality
-            Alert.alert('Delete Driver', 'Delete functionality coming soon!');
-          }
-        }
-      ]
-    );
-  };
+  // Edit/Delete not implemented – hide controls
 
   const dynamicStyles = StyleSheet.create({
     container: {
@@ -699,20 +678,7 @@ export default function MyDriversScreen() {
                         </Text>
                       </View>
                     </View>
-                    <View style={dynamicStyles.driverActions}>
-                      <TouchableOpacity 
-                        style={dynamicStyles.actionButton}
-                        onPress={() => handleEditDriver(driver.id)}
-                      >
-                        <Edit color={colors.primary} size={20} />
-                      </TouchableOpacity>
-                      <TouchableOpacity 
-                        style={dynamicStyles.actionButton}
-                        onPress={() => handleDeleteDriver(driver.id)}
-                      >
-                        <Trash2 color={colors.error} size={20} />
-                      </TouchableOpacity>
-                    </View>
+                    {/* Edit/Delete actions removed */}
                   </View>
 
                   <View style={dynamicStyles.driverInfo}>

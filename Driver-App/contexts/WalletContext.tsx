@@ -7,9 +7,12 @@ import {
   processWalletTopup,
   handleRazorpayPaymentSuccess,
   handleRazorpayPaymentFailure,
+  completePaymentFlow,
   WalletBalance,
   WalletTransaction 
-} from '@/services/paymentService';
+} from '@/services/payment/paymentService';
+import { useAuth } from './AuthContext';
+import { validateTokenBeforeApiCall } from '@/utils/tokenValidator';
 
 interface Transaction {
   id: string;
@@ -41,17 +44,38 @@ interface WalletContextType {
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 export function WalletProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Check if user is a Vehicle Owner (not a driver)
+  const isVehicleOwner = user && !user.driver_status;
+
   // Load initial data
   useEffect(() => {
-    syncWithBackend();
-  }, []);
+    if (isVehicleOwner) {
+      syncWithBackend();
+    } else {
+      console.log('ℹ️ Skipping wallet sync - user is not a Vehicle Owner');
+    }
+  }, [isVehicleOwner]);
 
   const syncWithBackend = async () => {
+    // Only sync if user is a Vehicle Owner
+    if (!isVehicleOwner) {
+      console.log('ℹ️ Skipping wallet sync - user is not a Vehicle Owner');
+      return;
+    }
+
+    // Validate token before making API call
+    const isTokenValid = await validateTokenBeforeApiCall('owner');
+    if (!isTokenValid) {
+      console.log('❌ Token validation failed, skipping wallet sync');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -73,34 +97,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       console.error('❌ Failed to sync wallet with backend:', error);
       setError(error.message);
       
-      // Fallback to local data if backend fails
-      setBalance(1500);
-      setTransactions([
-        {
-          id: '1',
-          type: 'credit',
-          amount: 2000,
-          description: 'Initial Balance',
-          date: '2025-01-20 10:30 AM',
-          status: 'completed'
-        },
-        {
-          id: '2',
-          type: 'debit',
-          amount: 50,
-          description: 'Trip Commission',
-          date: '2025-01-19 05:45 PM',
-          status: 'completed'
-        },
-        {
-          id: '3',
-          type: 'debit',
-          amount: 450,
-          description: 'Trip Earnings Payout',
-          date: '2025-01-19 05:45 PM',
-          status: 'completed'
-        }
-      ]);
+      // No fallback data - show empty state if backend fails
+      setBalance(0);
+      setTransactions([]);
     } finally {
       setLoading(false);
     }
@@ -246,13 +245,26 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       setError(null);
       
-      // Verify payment and update wallet
-      const verificationResponse = await handleRazorpayPaymentSuccess(razorpayResponse);
+      console.log('🎉 Processing payment success with complete flow...');
       
-      if (verificationResponse.success) {
-        // Refresh wallet data after successful payment
-        await syncWithBackend();
-        console.log('✅ Payment successful and wallet updated');
+      // Use the complete payment flow that includes wallet refresh
+      const result = await completePaymentFlow(
+        razorpayResponse.razorpay_order_id,
+        razorpayResponse.razorpay_payment_id,
+        razorpayResponse.razorpay_signature
+      );
+      
+      if (result.payment.success) {
+        // Update local state with fresh wallet data
+        setBalance(result.wallet.balance);
+        
+        // Refresh transactions as well
+        await refreshTransactions();
+        
+        console.log('✅ Payment successful and wallet updated:', {
+          newBalance: result.wallet.balance,
+          paymentId: result.payment.payment_id
+        });
       } else {
         throw new Error('Payment verification failed');
       }

@@ -13,9 +13,23 @@ import {
 import { useRouter } from 'expo-router';
 import { ArrowLeft, User, Save, Upload, CheckCircle, FileText, Image, Phone, Lock, MapPin, CreditCard } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
-import { addDriverDetails, DriverDetails } from '@/services/driverService';
+import { useTheme } from '@/contexts/ThemeContext';
+import { addDriverDetails, DriverDetails } from '@/services/driver/driverService';
 import * as ImagePicker from 'expo-image-picker';
 import axiosInstance from '@/app/api/axiosInstance';
+// Local MIME type resolver to avoid extra dependency
+const guessMimeTypeFromUri = (uri: string): string => {
+  try {
+    const lower = (uri || '').toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
+    if (lower.endsWith('.heic')) return 'image/heic';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    return 'image/jpeg';
+  } catch {
+    return 'image/jpeg';
+  }
+};
 
 export default function AddDriverScreen() {
   const [driverData, setDriverData] = useState({
@@ -29,18 +43,14 @@ export default function AddDriverScreen() {
   
   const [driverImages, setDriverImages] = useState({
     licence_front_img: '',
-    rc_front_img: '',
-    rc_back_img: '',
-    insurance_img: '',
-    fc_img: '',
-    car_img: '',
   });
 
   const [errors, setErrors] = useState<{[key: string]: string}>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
   const router = useRouter();
   const { user } = useAuth();
+  const { colors } = useTheme();
 
   // Function to check account status and redirect accordingly
   const checkAccountStatusAndRedirect = async () => {
@@ -176,12 +186,6 @@ export default function AddDriverScreen() {
   };
 
   const handleSave = async () => {
-    // Prevent duplicate submissions
-    if (isSubmitting) {
-      console.log('⚠️ Driver registration already in progress, ignoring duplicate submission');
-      return;
-    }
-
     // Clear previous errors
     setErrors({});
 
@@ -191,75 +195,124 @@ export default function AddDriverScreen() {
       return;
     }
 
-    // Check required images
-    if (!driverImages.licence_front_img || !driverImages.rc_front_img || !driverImages.rc_back_img || !driverImages.insurance_img || !driverImages.fc_img || !driverImages.car_img) {
-      Alert.alert('Error', 'Please upload all required images (Licence Front, RC Front, RC Back, Insurance, FC, Car Image)');
+    // Only licence_front_img is required by backend for this endpoint
+    if (!driverImages.licence_front_img) {
+      Alert.alert('Error', 'Please upload Licence Front image');
       return;
     }
 
     try {
-      setIsSubmitting(true);
-      console.log('🚀 Starting driver registration (preventing duplicates)...');
-
-      const payload: DriverDetails = {
-        full_name: driverData.full_name.trim(),
-        primary_number: driverData.primary_number.trim(), // Send as entered
-        secondary_number: driverData.secondary_number.trim(),
-        password: driverData.password.trim(),
-        licence_number: driverData.licence_number.trim(), // Send as entered
-        adress: driverData.adress.trim(),
-        organization_id: user?.organizationId || 'org_001',
-        vehicle_owner_id: user?.id || 'e5b9edb1-b4bb-48b8-a662-f7fd00abb6eb',
-        licence_front_img: driverImages.licence_front_img,
-        rc_front_img: driverImages.rc_front_img,
-        rc_back_img: driverImages.rc_back_img,
-        insurance_img: driverImages.insurance_img,
-        fc_img: driverImages.fc_img,
-        car_img: driverImages.car_img
+      setIsLoading(true);
+      console.log('👤 Starting driver registration process...');
+      // Verify auth before submitting (VO-protected endpoint)
+      try {
+        const authCheck = await axiosInstance.get('/api/users/vehicle-owner/me');
+        if (!authCheck || authCheck.status !== 200) {
+          Alert.alert('Authentication Required', 'Please log in again to continue.');
+          return;
+        }
+      } catch (authErr: any) {
+        console.error('🔒 Auth preflight failed:', authErr?.response?.status, authErr?.response?.data);
+        Alert.alert('Authentication Required', 'Session expired or invalid. Please log in again.');
+        return;
+      }
+      // Helpers
+      const toTenDigit = (phone: string) => {
+        const digits = (phone || '').replace(/\D/g, '');
+        if (digits.length === 12 && digits.startsWith('91')) return digits.slice(2);
+        return digits.slice(-10);
       };
 
-      await addDriverDetails(payload);
+      // Normalize
+      const primary = toTenDigit(driverData.primary_number.trim());
+      const secondary = driverData.secondary_number ? toTenDigit(driverData.secondary_number.trim()) : '';
 
-      Alert.alert(
-        'Success',
-        'Driver details added successfully!',
-        [
-          {
-            text: 'OK',
-            onPress: () => checkAccountStatusAndRedirect()
-          }
-        ]
-      );
-    } catch (error: any) {
-      console.error('Error adding driver:', error);
-      
-      // Check if it's a duplicate registration error
-      if (error.message && error.message.includes('already registered')) {
-        Alert.alert(
-          'Driver Already Exists',
-          'This driver is already registered. Redirecting to dashboard...',
-          [
-            {
-              text: 'OK',
-              onPress: () => checkAccountStatusAndRedirect()
-            }
-          ]
-        );
-      } else {
-        Alert.alert('Error', error.message || 'Failed to add driver details');
+      // Validations
+      if (!/^[6-9]\d{9}$/.test(primary)) {
+        setErrors(prev => ({ ...prev, primary_number: 'Enter valid 10-digit Indian mobile number' }));
+        Alert.alert('Validation Error', 'Enter valid 10-digit Indian mobile number');
+        return;
       }
-    } finally {
-      setIsSubmitting(false);
+      if (secondary && !/^[6-9]\d{9}$/.test(secondary)) {
+        setErrors(prev => ({ ...prev, secondary_number: 'Enter valid 10-digit Indian mobile number' }));
+        Alert.alert('Validation Error', 'Secondary number invalid');
+        return;
+      }
+      if (driverData.adress.trim().length < 10) {
+        setErrors(prev => ({ ...prev, adress: 'Address must be at least 10 characters' }));
+        Alert.alert('Validation Error', 'Address must be at least 10 characters');
+        return;
+      }
+      if (driverData.password.trim().length < 6) {
+        setErrors(prev => ({ ...prev, password: 'Password must be at least 6 characters' }));
+        Alert.alert('Validation Error', 'Password must be at least 6 characters');
+        return;
+      }
+      if (!driverImages.licence_front_img) {
+        Alert.alert('Error', 'Please upload Licence Front image');
+        return;
+      }
+
+      // Build multipart form
+      const uri = driverImages.licence_front_img;
+      const name = uri.split('/').pop() || 'license.jpg';
+      const type = guessMimeTypeFromUri(uri) || 'image/jpeg';
+
+      const form = new FormData();
+      form.append('full_name', driverData.full_name.trim());
+      form.append('primary_number', primary);
+      if (secondary) form.append('secondary_number', secondary);
+      form.append('password', driverData.password.trim());
+      form.append('licence_number', driverData.licence_number.trim().toUpperCase());
+      form.append('adress', driverData.adress.trim());
+      if (user?.organizationId) form.append('organization_id', user.organizationId);
+      if (user?.id) form.append('vehicle_owner_id', user.id);
+      form.append('licence_front_img', { uri, name, type } as any);
+
+      console.log('🚀 Submitting driver signup (multipart)...');
+      const res = await axiosInstance.post('/api/users/cardriver/signup', form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 120000,
+      });
+      console.log('✅ Driver registration completed successfully!', res.data);
+
+      Alert.alert('Success', 'Driver details added successfully!', [
+        { 
+          text: 'OK', 
+          onPress: () => {
+            setIsLoading(false);
+            checkAccountStatusAndRedirect();
+          }
+        },
+      ]);
+    } catch (err: any) {
+      console.error('❌ Error during driver registration:', err);
+      setIsLoading(false);
+      const detail = err?.response?.data?.detail;
+      if (Array.isArray(detail)) {
+        console.error('🔍 Backend validation error:', JSON.stringify(detail));
+        Alert.alert('Validation Failed', detail.map((d: any) => d?.msg || JSON.stringify(d)).join('\n'));
+      } else {
+        console.error('❌ API Error:', JSON.stringify({
+          status: err?.response?.status,
+          data: err?.response?.data || err?.message,
+        }));
+        Alert.alert('Error', err?.response?.data?.detail || 'Failed to add driver details');
+      }
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft color="#1F2937" size={24} />
+        <TouchableOpacity 
+          onPress={() => router.back()} 
+          style={[styles.backButton, isLoading && styles.backButtonDisabled]}
+          disabled={isLoading}
+        >
+          <ArrowLeft color={isLoading ? colors.textSecondary : colors.text} size={24} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Add Your First Driver</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Add Your First Driver</Text>
         <View style={styles.stepIndicator}>
           <Text style={styles.stepText}>Step 2/3</Text>
         </View>
@@ -267,7 +320,7 @@ export default function AddDriverScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.welcomeSection}>
-          <Text style={styles.welcomeTitle}>Driver Registration</Text>
+          <Text style={[styles.welcomeTitle, { color: colors.text }]}>Driver Registration</Text>
           <Text style={styles.welcomeSubtitle}>
             Hi {user?.fullName}, let's add your first driver to complete the setup.
           </Text>
@@ -276,10 +329,10 @@ export default function AddDriverScreen() {
         <View style={styles.form}>
           <Text style={styles.sectionTitle}>Driver Details</Text>
           
-          <View style={styles.inputGroup}>
+          <View style={[styles.inputGroup, { backgroundColor: colors.surface, borderColor: colors.border }] }>
             <User color="#6B7280" size={20} />
             <TextInput
-              style={[styles.input, errors.full_name && styles.inputError]}
+              style={[styles.input, { color: colors.text }, errors.full_name && styles.inputError]}
               placeholder="Full Name (e.g., John Doe)"
               value={driverData.full_name}
               onChangeText={(text) => handleInputChange('full_name', text)}
@@ -287,10 +340,10 @@ export default function AddDriverScreen() {
           </View>
           {errors.full_name && <Text style={styles.errorText}>{errors.full_name}</Text>}
 
-          <View style={styles.inputGroup}>
+          <View style={[styles.inputGroup, { backgroundColor: colors.surface, borderColor: colors.border }] }>
             <Phone color="#6B7280" size={20} />
             <TextInput
-              style={[styles.input, errors.primary_number && styles.inputError]}
+              style={[styles.input, { color: colors.text }, errors.primary_number && styles.inputError]}
               placeholder="Primary Mobile Number (+91XXXXXXXXXX)"
               value={driverData.primary_number}
               onChangeText={(text) => handleInputChange('primary_number', text)}
@@ -302,10 +355,10 @@ export default function AddDriverScreen() {
             Enter your mobile number exactly as you want it stored
           </Text>
 
-          <View style={styles.inputGroup}>
+          <View style={[styles.inputGroup, { backgroundColor: colors.surface, borderColor: colors.border }] }>
             <Phone color="#6B7280" size={20} />
             <TextInput
-              style={[styles.input, errors.secondary_number && styles.inputError]}
+              style={[styles.input, { color: colors.text }, errors.secondary_number && styles.inputError]}
               placeholder="Secondary Mobile Number (Optional)"
               value={driverData.secondary_number}
               onChangeText={(text) => handleInputChange('secondary_number', text)}
@@ -313,10 +366,10 @@ export default function AddDriverScreen() {
             />
           </View>
 
-          <View style={styles.inputGroup}>
+          <View style={[styles.inputGroup, { backgroundColor: colors.surface, borderColor: colors.border }] }>
             <Lock color="#6B7280" size={20} />
             <TextInput
-              style={[styles.input, errors.password && styles.inputError]}
+              style={[styles.input, { color: colors.text }, errors.password && styles.inputError]}
               placeholder="Password"
               value={driverData.password}
               onChangeText={(text) => handleInputChange('password', text)}
@@ -325,10 +378,10 @@ export default function AddDriverScreen() {
           </View>
           {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
-          <View style={styles.inputGroup}>
+          <View style={[styles.inputGroup, { backgroundColor: colors.surface, borderColor: colors.border }] }>
             <CreditCard color="#6B7280" size={20} />
             <TextInput
-              style={[styles.input, errors.licence_number && styles.inputError]}
+              style={[styles.input, { color: colors.text }, errors.licence_number && styles.inputError]}
               placeholder="Driving Licence Number (e.g., MH-12-1990-1234567)"
               value={driverData.licence_number}
               onChangeText={(text) => handleInputChange('licence_number', text)}
@@ -340,10 +393,10 @@ export default function AddDriverScreen() {
             Enter your driving licence number exactly as it appears on your licence
           </Text>
 
-          <View style={styles.inputGroup}>
+          <View style={[styles.inputGroup, { backgroundColor: colors.surface, borderColor: colors.border }] }>
             <MapPin color="#6B7280" size={20} />
             <TextInput
-              style={[styles.input, errors.adress && styles.inputError]}
+              style={[styles.input, { color: colors.text }, errors.adress && styles.inputError]}
               placeholder="Address (e.g., 123 Main Street, Mumbai, Maharashtra)"
               value={driverData.adress}
               onChangeText={(text) => handleInputChange('adress', text)}
@@ -353,9 +406,9 @@ export default function AddDriverScreen() {
           </View>
           {errors.adress && <Text style={styles.errorText}>{errors.adress}</Text>}
 
-          <Text style={styles.sectionTitle}>Required Documents & Images</Text>
+          <Text style={styles.sectionTitle}>Required Document</Text>
           <Text style={styles.sectionSubtitle}>
-            Please upload clear images of all required documents
+            Please upload a clear image of your driving license
           </Text>
 
           <ImageUploadField
@@ -365,49 +418,14 @@ export default function AddDriverScreen() {
             isRequired={true}
           />
 
-          <ImageUploadField
-            title="RC Front Image"
-            description="Registration Certificate front side (Optional)"
-            imageKey="rc_front_img"
-            isRequired={false}
-          />
-
-          <ImageUploadField
-            title="RC Back Image"
-            description="Registration Certificate back side (Optional)"
-            imageKey="rc_back_img"
-            isRequired={false}
-          />
-
-          <ImageUploadField
-            title="Insurance Image"
-            description="Valid insurance certificate (Optional)"
-            imageKey="insurance_img"
-            isRequired={false}
-          />
-
-          <ImageUploadField
-            title="FC Image"
-            description="Fitness Certificate (Optional)"
-            imageKey="fc_img"
-            isRequired={false}
-          />
-
-          <ImageUploadField
-            title="Car Image"
-            description="Clear photo of your car (Optional)"
-            imageKey="car_img"
-            isRequired={false}
-          />
-
           <TouchableOpacity 
-            style={[styles.saveButton, isSubmitting && styles.saveButtonDisabled]} 
+            style={[styles.saveButton, isLoading && styles.saveButtonDisabled]} 
             onPress={handleSave}
-            disabled={isSubmitting}
+            disabled={isLoading}
           >
-            {isSubmitting ? (
+            {isLoading ? (
               <>
-                <ActivityIndicator color="#FFFFFF" size={20} />
+                <ActivityIndicator color="#FFFFFF" size="small" />
                 <Text style={styles.saveButtonText}>Saving Driver...</Text>
               </>
             ) : (
@@ -439,6 +457,9 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 8,
+  },
+  backButtonDisabled: {
+    opacity: 0.5,
   },
   headerTitle: {
     fontSize: 18,
@@ -606,5 +627,4 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
 });
-
 

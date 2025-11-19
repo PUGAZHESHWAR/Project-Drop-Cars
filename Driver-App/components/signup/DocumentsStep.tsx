@@ -10,7 +10,7 @@ import {
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Upload, CheckCircle, FileText } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
-import { signupAccount, signupAndLogin } from '@/services/signupService';
+import { signupAccount, signupAndLogin } from '@/services/auth/signupService';
 import * as ImagePicker from 'expo-image-picker';
 
 interface DocumentsStepProps {
