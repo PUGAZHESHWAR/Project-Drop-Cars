@@ -284,7 +284,7 @@ export default function DashboardScreen() {
                 <Car size={20} color="#6366F1" />
               </View>
               <Text style={styles.compactStatValue}>{stats.totalOrders}</Text>
-              <Text style={styles.compactStatLabel}>Total Orders</Text>
+              <Text style={styles.compactStatLabel}>Active Orders</Text>
             </View>
             
             <View style={styles.compactStatCard}>

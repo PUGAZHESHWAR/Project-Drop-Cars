@@ -174,7 +174,7 @@ export default function SignupSuccessScreen() {
                 style={styles.copyButton}
                 onPress={() => handleCopyField('phone', successData.primary_number)}
               >
-                <Copy size={16} color={copiedField === 'phone' ? '#10B981' : '#6B7280'} />
+                {/* <Copy size={16} color={copiedField === 'phone' ? '#10B981' : '#6B7280'} /> */}
               </TouchableOpacity>
             </View>
           </View>
@@ -190,7 +190,7 @@ export default function SignupSuccessScreen() {
                 style={styles.copyButton}
                 onPress={() => handleCopyField('password', successData.account_status)}
               >
-                <Copy size={16} color={copiedField === 'password' ? '#10B981' : '#6B7280'} />
+                {/* <Copy size={16} color={copiedField === 'password' ? '#10B981' : '#6B7280'} /> */}
               </TouchableOpacity>
             </View>
           </View>
@@ -221,7 +221,7 @@ export default function SignupSuccessScreen() {
           </TouchableOpacity>
           
           <Text style={styles.helpText}>
-            Need help? Contact support at support@dropcars.com
+            Need help? Contact support at dropcars.in@gmail.com
           </Text>
         </Animated.View>
       </ScrollView>

@@ -262,27 +262,32 @@ export default function OrdersComponent(){
       </LinearGradient>
 
       <View style={styles.content}>
-        {loading ? (
-          <ActivityIndicator size="large" color="#10B981" style={{ marginTop: 50 }} />
-        ) : (
-          <FlatList
-            data={orders}
-            renderItem={renderOrderItem}
-            keyExtractor={(item) => item.id.toString()}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.ordersList}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                colors={['#0d5464']}
-                tintColor="#0d5464"
-                title="Refreshing orders..."
-                titleColor="#666"
-              />
-            }
+{loading ? (
+  <ActivityIndicator size="large" color="#10B981" style={{ marginTop: 50 }} />
+      ) : orders.length === 0 ? (
+        <View style={styles.noOrdersContainer}>
+          <Text style={styles.noOrdersText}>No orders available</Text>
+        </View>
+      ) : (
+      <FlatList
+        data={orders}
+        renderItem={renderOrderItem}
+        keyExtractor={(item) => item.id.toString()}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.ordersList}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#0d5464']}
+            tintColor="#0d5464"
+            title="Refreshing orders..."
+            titleColor="#666"
           />
-        )}
+        }
+      />
+    )}
+
       </View>
     </View>
   );
@@ -494,4 +499,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#DC2626',
   },
+  noOrdersContainer: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginTop: 100,
+},
+noOrdersText: {
+  fontSize: 16,
+  fontWeight: '600',
+  color: '#6B7280',
+},
 });

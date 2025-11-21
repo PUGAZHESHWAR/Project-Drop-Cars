@@ -106,7 +106,7 @@ export default function MenuScreen() {
     {
       id: 'profile',
       title: 'Profile',
-      subtitle: 'View and edit your profile',
+      subtitle: 'View your profile',
       icon: User,
       iconColor: '#1E40AF',
       action: () => router.push('/(menu)/profile'),
@@ -114,7 +114,7 @@ export default function MenuScreen() {
     {
       id: 'orders',
       title: 'Orders',
-      subtitle: 'Manage your deliveries',
+      subtitle: 'Manage your Orders',
       icon: Package,
       iconColor: '#3B82F6',
       action: () => router.push('/(menu)/orders'),
@@ -130,7 +130,7 @@ export default function MenuScreen() {
     {
       id: 'settings',
       title: 'Settings',
-      subtitle: 'App preferences',
+      subtitle: 'Notification Preferences',
       icon: Settings,
       iconColor: '#6B7280',
       action: () => router.push('/(menu)/notification'),

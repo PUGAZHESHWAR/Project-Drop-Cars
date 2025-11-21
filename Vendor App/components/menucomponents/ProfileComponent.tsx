@@ -159,12 +159,6 @@ export default function ProfileComponent() {
           action: () => copyToClipboard(data.full_name, 'Full Name'),
         },
         {
-          label: 'Vendor ID',
-          value: data.id.substring(0, 8) + '...',
-          icon: Shield,
-          action: () => copyToClipboard(data.id, 'Vendor ID'),
-        },
-        {
           label: 'Address',
           value: data.address,
           icon: MapPin,
