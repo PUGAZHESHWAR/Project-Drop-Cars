@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   Alert,
   Modal,
   Dimensions,
+  TextInput,
+  FlatList, // Add this import
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { 
@@ -27,38 +29,39 @@ import {
   Route,
   Timer
 } from 'lucide-react-native';
+import api from '@/app/api/api';
 
 const { width } = Dimensions.get('window');
 
-const cities = [
-  "Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem", "Tirunelveli", "Tiruppur", 
-  "Vellore", "Erode", "Thoothukudi", "Dindigul", "Thanjavur", "Hosur", "Nagercoil", "Avadi", 
-  "Kancheepuram", "Kumbakonam", "Cuddalore", "Karaikudi", "Sivakasi", "Ariyalur", "Jayankondam", 
-  "Varadarajanpettai", "Udayarpalayam", "Chengalpattu", "Madurantakam", "Mamallapuram", 
-  "Tirukalukundram", "Acharapakkam", "Mettupalayam", "Pollachi", "Valparai", "Annur", "Karamadai", 
-  "Sulur", "Kinathukadavu", "Chidambaram", "Virudhachalam", "Panruti", "Nellikuppam", 
-  "Parangipettai", "Bhuvanagiri", "Dharmapuri", "Harur", "Palacode", "Pennagaram", "Karimangalam", 
-  "Palani", "Kodaikanal", "Oddanchatram", "Nilakottai", "Vedasandur", "Batlagundu", 
-  "Gobichettipalayam", "Sathyamangalam", "Bhavani", "Perundurai", "Anthiyur", "Kallakurichi", 
-  "Sankarapuram", "Chinnasalem", "Thiagadurgam", "Sriperumbudur", "Uthiramerur", "Walajabad", 
-  "Colachel", "Kuzhithurai", "Padmanabhapuram", "Anjugramam", "Tiruvannamalai", 
-  "Tiruvannamalai District", "Katpadi", "Jolarpettai", "Nagapattinam", "Kanchipuram", 
-  "Rameswaram", "Villupuram", "Gingee", "Ooty", "Udhagamandalam", "Yercaud", "Kanyakumari", 
-  "Rajapalayam", "Sivaganga", "Pudukkottai", "Ambur", "Ranipet", "Vaniyambadi", "Tiruchengode", 
-  "Namakkal", "Paramakudi", "Ramanathapuram", "Tenkasi", "Sankarankovil", "Kovilpatti", "Mettur", 
-  "Mylapore", "Tambaram", "Ambattur", "Pallavaram", "Poonamallee", "Tiruvallur", "Pattukkottai", 
-  "Arcot", "Krishnagiri", "Udumalaipettai", "Dharapuram", "Pernampattu", "Tindivanam", 
-  "Vikravandi", "Ulundurpettai", "Arakkonam", "Sholingur", "Tirupattur", "Vedaranyam", 
-  "Manamadurai", "Devakottai", "Sirkazhi", "Mayiladuthurai", "Thuraiyur", "Manapparai", 
-  "Puliyankudi", "Sengottai", "Vadipatti", "Usilampatti", "Nilakkottai", "Rasipuram", 
-  "Sendamangalam", "Kumarapalayam", "Mohanur", "Kattumannarkoil", "Vadalur", "Neyveli", 
-  "Kurinjipadi", "Veppur", "Kunnam", "Lalgudi", "Manachanallur", "Thuvakudi", "Thiruthuraipoondi", 
-  "Mannargudi", "Needamangalam", "Kottur", "Tiruvadanai", "Mudukulathur", "Kamuthi", 
-  "Mallankinaru", "Kariapatti", "Natham", "Melur", "Tirumangalam", "Kallupatti", "Thirumangalam", 
-  "Sedapatti", "Chellampatti", "Kallikudi", "Nagalapuram", "Papanasam", "Thiruvidaimarudur", 
-  "Swamimalai", "Thiruppanandal", "Thiruvaiyaru", "Orathanadu", "Peravurani", "Gandarvakkottai", 
-  "Arantangi", "Avudayarkoil", "Vallam"
-];
+// const cities = [
+//   "Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem", "Tirunelveli", "Tiruppur", 
+//   "Vellore", "Erode", "Thoothukudi", "Dindigul", "Thanjavur", "Hosur", "Nagercoil", "Avadi", 
+//   "Kancheepuram", "Kumbakonam", "Cuddalore", "Karaikudi", "Sivakasi", "Ariyalur", "Jayankondam", 
+//   "Varadarajanpettai", "Udayarpalayam", "Chengalpattu", "Madurantakam", "Mamallapuram", 
+//   "Tirukalukundram", "Acharapakkam", "Mettupalayam", "Pollachi", "Valparai", "Annur", "Karamadai", 
+//   "Sulur", "Kinathukadavu", "Chidambaram", "Virudhachalam", "Panruti", "Nellikuppam", 
+//   "Parangipettai", "Bhuvanagiri", "Dharmapuri", "Harur", "Palacode", "Pennagaram", "Karimangalam", 
+//   "Palani", "Kodaikanal", "Oddanchatram", "Nilakottai", "Vedasandur", "Batlagundu", 
+//   "Gobichettipalayam", "Sathyamangalam", "Bhavani", "Perundurai", "Anthiyur", "Kallakurichi", 
+//   "Sankarapuram", "Chinnasalem", "Thiagadurgam", "Sriperumbudur", "Uthiramerur", "Walajabad", 
+//   "Colachel", "Kuzhithurai", "Padmanabhapuram", "Anjugramam", "Tiruvannamalai", 
+//   "Tiruvannamalai District", "Katpadi", "Jolarpettai", "Nagapattinam", "Kanchipuram", 
+//   "Rameswaram", "Villupuram", "Gingee", "Ooty", "Udhagamandalam", "Yercaud", "Kanyakumari", 
+//   "Rajapalayam", "Sivaganga", "Pudukkottai", "Ambur", "Ranipet", "Vaniyambadi", "Tiruchengode", 
+//   "Namakkal", "Paramakudi", "Ramanathapuram", "Tenkasi", "Sankarankovil", "Kovilpatti", "Mettur", 
+//   "Mylapore", "Tambaram", "Ambattur", "Pallavaram", "Poonamallee", "Tiruvallur", "Pattukkottai", 
+//   "Arcot", "Krishnagiri", "Udumalaipettai", "Dharapuram", "Pernampattu", "Tindivanam", 
+//   "Vikravandi", "Ulundurpettai", "Arakkonam", "Sholingur", "Tirupattur", "Vedaranyam", 
+//   "Manamadurai", "Devakottai", "Sirkazhi", "Mayiladuthurai", "Thuraiyur", "Manapparai", 
+//   "Puliyankudi", "Sengottai", "Vadipatti", "Usilampatti", "Nilakkottai", "Rasipuram", 
+//   "Sendamangalam", "Kumarapalayam", "Mohanur", "Kattumannarkoil", "Vadalur", "Neyveli", 
+//   "Kurinjipadi", "Veppur", "Kunnam", "Lalgudi", "Manachanallur", "Thuvakudi", "Thiruthuraipoondi", 
+//   "Mannargudi", "Needamangalam", "Kottur", "Tiruvadanai", "Mudukulathur", "Kamuthi", 
+//   "Mallankinaru", "Kariapatti", "Natham", "Melur", "Tirumangalam", "Kallupatti", "Thirumangalam", 
+//   "Sedapatti", "Chellampatti", "Kallikudi", "Nagalapuram", "Papanasam", "Thiruvidaimarudur", 
+//   "Swamimalai", "Thiruppanandal", "Thiruvaiyaru", "Orathanadu", "Peravurani", "Gandarvakkottai", 
+//   "Arantangi", "Avudayarkoil", "Vallam"
+// ];
 
 interface QuoteReviewProps {
   visible: boolean;
@@ -80,9 +83,31 @@ export default function QuoteReview({
   const [sendTo, setSendTo] = useState<'ALL' | 'NEAR_CITY'>('ALL');
   const [selectedCities, setSelectedCities] = useState<string[]>([]); 
   const [nearCity, setNearCity] = useState('');
+
+    // Add these states for search functionality and API cities
+  const [searchQuery, setSearchQuery] = useState('');
+  const [cities, setCities] = useState<string[]>([]); // Dynamic cities from API
+  const [filteredCities, setFilteredCities] = useState<string[]>([]);
+  const [isLoadingCities, setIsLoadingCities] = useState(false);
+
+    // Add these states for search functionality
+  // const [searchQuery, setSearchQuery] = useState('');
+  // const [filteredCities, setFilteredCities] = useState(cities);
   
   // console.log('Quote Data:', quoteData);
-  
+    // Add search filter effect
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredCities(cities);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = cities.filter(city => 
+        city.toLowerCase().includes(query)
+      );
+      setFilteredCities(filtered);
+    }
+  }, [searchQuery]);
+
   const handleConfirmOrder = async () => {
     if (sendTo === 'NEAR_CITY' && selectedCities.length === 0) {
       Alert.alert('Error', 'Please select at least one city when sending to NEAR_CITY');
@@ -93,6 +118,47 @@ export default function QuoteReview({
       await onConfirmOrder(sendTo, selectedCities); // Pass array instead of string
     } catch (error) {
       Alert.alert('Error', 'Failed to create order. Please try again.');
+    }
+  };
+
+    // Fetch cities from API when component mounts
+  useEffect(() => {
+    fetchCities();
+  }, []);
+
+  // Update filtered cities when cities data changes
+  useEffect(() => {
+    setFilteredCities(cities);
+  }, [cities]);
+
+  // Add search filter effect
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredCities(cities);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = cities.filter(city => 
+        city.toLowerCase().includes(query)
+      );
+      setFilteredCities(filtered);
+    }
+  }, [searchQuery, cities]);
+
+  // Function to fetch cities from API
+  const fetchCities = async () => {
+    try {
+      setIsLoadingCities(true);
+      const response = await api.get('/cities/vendor');
+      // Assuming the API returns an array of city strings directly
+      setCities(response.data);
+      setFilteredCities(response.data);
+    } catch (error) {
+      console.error('Failed to fetch cities:', error);
+      Alert.alert('Error', 'Failed to load cities. Please try again.');
+      // Optionally set some default cities or empty array
+      setCities([]);
+    } finally {
+      setIsLoadingCities(false);
     }
   };
 
@@ -532,29 +598,29 @@ export default function QuoteReview({
               <ChevronDown size={20} color={tripType === 'Hourly Rental' ? "#8B5A3C" : "#1E40AF"} />
             </TouchableOpacity>
 
-      {sendTo === 'NEAR_CITY' && (
-        <TouchableOpacity
-          style={[styles.pickerButton, { marginTop: 12 }]}
-          onPress={() => setShowNearCityPicker(true)}
-        >
-          <MapPin size={20} color={tripType === 'Hourly Rental' ? "#8B5A3C" : "#1E40AF"} style={styles.pickerIcon} />
-          <View style={styles.selectedCitiesContainer}>
-            <Text style={[styles.pickerText, selectedCities.length === 0 && styles.pickerPlaceholder]}>
-              {selectedCities.length === 0 
-                ? 'Select Cities' 
-                : `${selectedCities.length} city${selectedCities.length > 1 ? 's' : ''} selected`
-              }
-            </Text>
-            {selectedCities.length > 0 && (
-              <Text style={styles.selectedCitiesText}>
-                {selectedCities.slice(0, 2).join(', ')}
-                {selectedCities.length > 2 && ` +${selectedCities.length - 2} more`}
-              </Text>
-            )}
-          </View>
-          <ChevronDown size={20} color={tripType === 'Hourly Rental' ? "#8B5A3C" : "#1E40AF"} />
-        </TouchableOpacity>
+{sendTo === 'NEAR_CITY' && (
+  <TouchableOpacity
+    style={[styles.pickerButton, { marginTop: 12 }]}
+    onPress={() => setShowNearCityPicker(true)}
+  >
+    <MapPin size={20} color={tripType === 'Hourly Rental' ? "#8B5A3C" : "#1E40AF"} style={styles.pickerIcon} />
+    <View style={styles.selectedCitiesContainer}>
+      <Text style={[styles.pickerText, selectedCities.length === 0 && styles.pickerPlaceholder]}>
+        {selectedCities.length === 0 
+          ? 'Select Cities' 
+          : `${selectedCities.length} city${selectedCities.length > 1 ? 's' : ''} selected`
+        }
+      </Text>
+      {selectedCities.length > 0 && (
+        <Text style={styles.selectedCitiesPreviewText}>
+          {selectedCities.slice(0, 3).join(', ')}
+          {selectedCities.length > 3 && ` +${selectedCities.length - 3} more`}
+        </Text>
       )}
+    </View>
+    <ChevronDown size={20} color={tripType === 'Hourly Rental' ? "#8B5A3C" : "#1E40AF"} />
+  </TouchableOpacity>
+)}
           </View>
 
           {quoteData.echo.pickup_notes && (
@@ -654,7 +720,7 @@ export default function QuoteReview({
 
         {/* Near City Picker Modal */}
 {/* Multi-Select Near City Picker Modal */}
-<Modal
+{/* <Modal
   visible={showNearCityPicker}
   animationType="slide"
   presentationStyle="pageSheet"
@@ -749,6 +815,156 @@ export default function QuoteReview({
       </TouchableOpacity>
     </View>
   </View>
+</Modal> */}
+
+
+{/* Near City Picker Modal with Search */}
+<Modal
+  visible={showNearCityPicker}
+  animationType="slide"
+  presentationStyle="pageSheet"
+>
+  <View style={styles.modalContainer}>
+    <View style={styles.modalHeader}>
+      <Text style={styles.modalTitle}>
+        Select Cities ({selectedCities.length} selected)
+        {searchQuery && ` - ${filteredCities.length} results`}
+      </Text>
+      <View style={styles.modalHeaderActions}>
+        <TouchableOpacity
+          onPress={() => {
+            setSelectedCities([]);
+          }}
+          style={styles.clearButton}
+        >
+          <Text style={styles.clearButtonText}>Clear All</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            setShowNearCityPicker(false);
+            setSearchQuery(''); // Reset search when closing
+          }}
+          style={styles.modalCloseButton}
+        >
+          <X size={24} color="#5F6368" />
+        </TouchableOpacity>
+      </View>
+    </View>
+    
+    {/* Search Bar */}
+    <View style={styles.searchContainer}>
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Search cities..."
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        placeholderTextColor="#9CA3AF"
+        clearButtonMode="while-editing"
+      />
+    </View>
+
+    {/* Selected Cities Preview */}
+    {selectedCities.length > 0 && (
+      <View style={styles.selectedCitiesPreview}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {selectedCities.map((city) => (
+            <View key={city} style={styles.selectedCityChip}>
+              <Text style={styles.selectedCityChipText}>{city}</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setSelectedCities(prev => prev.filter(c => c !== city));
+                }}
+                style={styles.removeCityButton}
+              >
+                <X size={14} color="#1E40AF" />
+              </TouchableOpacity>
+            </View>
+          ))}
+        </ScrollView>
+      </View>
+    )}
+
+    {/* Cities List with FlatList for performance */}
+{/* Cities List with FlatList for performance */}
+        {/* Cities List with FlatList for performance */}
+    {isLoadingCities ? (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Loading cities...</Text>
+      </View>
+    ) : (
+      <FlatList
+        data={filteredCities}
+        keyExtractor={(item: string) => item}
+        initialNumToRender={30}
+        maxToRenderPerBatch={50}
+        windowSize={21}
+        removeClippedSubviews={true}
+        showsVerticalScrollIndicator={true}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>
+              {searchQuery 
+                ? `No cities found for "${searchQuery}"`
+                : 'No cities available'
+              }
+            </Text>
+          </View>
+        }
+        renderItem={({ item }: { item: string }) => {
+          const city: string = item;
+          const isSelected = selectedCities.includes(city);
+          return (
+            <TouchableOpacity
+              style={[
+                styles.modalOption,
+                isSelected && styles.modalOptionActive
+              ]}
+              onPress={() => {
+                if (isSelected) {
+                  setSelectedCities(prev => prev.filter(c => c !== city));
+                } else {
+                  setSelectedCities(prev => [...prev, city]);
+                }
+              }}
+            >
+              <View style={[
+                styles.checkbox,
+                isSelected && styles.checkboxSelected
+              ]}>
+                {isSelected && <Text style={styles.checkmark}>✓</Text>}
+              </View>
+              <MapPin size={20} color={isSelected ? "#1E40AF" : "#6B7280"} />
+              <Text style={[
+                styles.modalOptionText,
+                isSelected && styles.modalOptionTextActive
+              ]}>
+                {city}
+              </Text>
+            </TouchableOpacity>
+          );
+        }}
+      />
+    )}
+    
+    {/* Footer with Done Button */}
+    <View style={styles.modalFooter}>
+      <TouchableOpacity
+        style={[
+          styles.doneButton,
+          selectedCities.length === 0 && styles.doneButtonDisabled
+        ]}
+        onPress={() => {
+          setShowNearCityPicker(false);
+          setSearchQuery(''); // Reset search when done
+        }}
+        disabled={selectedCities.length === 0}
+      >
+        <Text style={styles.doneButtonText}>
+          Done ({selectedCities.length} selected)
+        </Text>
+      </TouchableOpacity>
+    </View>
+  </View>
 </Modal>
       </View>
     </Modal>
@@ -791,10 +1007,43 @@ const styles = StyleSheet.create({
   placeholder: {
     width: 32,
   },
+  searchContainer: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
+  },
+  searchInput: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 10,
+    fontSize: 16,
+    color: '#1F2937',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+  },
+
+  // Empty State Styles
+  emptyState: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
   content: {
     flex: 1,
     paddingHorizontal: 16,
   },
+  selectedCitiesPreviewText: {
+  fontSize: 12,
+  color: '#6B7280',
+  marginTop: 2,
+},
   section: {
     marginTop: 16,
   },
@@ -875,6 +1124,20 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     marginBottom: 6,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+  disabledText: {
+    color: '#9CA3AF',
   },
   routeDotStart: {
     backgroundColor: '#10B981',

@@ -649,7 +649,7 @@ const handleTimeChange = (event: any, selectedTime?: Date) => {
           <View style={styles.switchContainer}>
             <View style={styles.switchLabel}>
               <IndianRupee size={18} color="#6B7280" />
-              <Text style={styles.switchText}>Toll Charge Update</Text>
+              <Text style={styles.switchText}>Toll Extra</Text>
             </View>
             <Switch
               value={formData.toll_charge_update}
@@ -674,9 +674,14 @@ const handleTimeChange = (event: any, selectedTime?: Date) => {
               style={styles.pickerButton}
               onPress={() => setShowCarTypePicker(true)}
             >
-              <Text style={[styles.pickerButtonText, formData.car_type ? styles.pickerButtonTextActive : styles.pickerButtonTextPlaceholder]}>
-                {formData.car_type || 'Select car type'}
-              </Text>
+            <Text style={[styles.pickerButtonText, formData.car_type ? styles.pickerButtonTextActive : styles.pickerButtonTextPlaceholder]}>
+              {formData.car_type 
+                ? formData.car_type
+                    .replace(/_/g, ' ')
+                    .replace(/PLUS/g, '+')
+                : 'Select car type'
+              }
+            </Text>
               <ChevronDown size={18} color="#6B7280" />
             </TouchableOpacity>
           </View>
@@ -1169,32 +1174,39 @@ const handleTimeChange = (event: any, selectedTime?: Date) => {
           </View>
           <View style={styles.modalContent}>
             <ScrollView showsVerticalScrollIndicator={false}>
-              {carTypes.map((type) => (
-                <TouchableOpacity
-                  key={type}
-                  style={[
-                    styles.modalOption,
-                    formData.car_type === type && styles.modalOptionActive
-                  ]}
-                  onPress={() => {
-                    handleInputChange("car_type", type);
-                    setShowCarTypePicker(false);
-                  }}
-                >
-                  <Car
-                    size={18}
-                    color={formData.car_type === type ? "#1E40AF" : "#6B7280"}
-                  />
-                  <Text
-                    style={[
-                      styles.modalOptionText,
-                      formData.car_type === type && styles.modalOptionTextActive
-                    ]}
-                  >
-                    {type}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                {carTypes.map((type) => {
+                  // Format the display text
+                  const displayText = type
+                    .replace(/_/g, ' ')  // Replace underscores with spaces
+                    .replace(/PLUS/g, '+');  // Replace "PLUS" with "+"
+
+                  return (
+                    <TouchableOpacity
+                      key={type}
+                      style={[
+                        styles.modalOption,
+                        formData.car_type === type && styles.modalOptionActive
+                      ]}
+                      onPress={() => {
+                        handleInputChange("car_type", type);
+                        setShowCarTypePicker(false);
+                      }}
+                    >
+                      <Car
+                        size={18}
+                        color={formData.car_type === type ? "#1E40AF" : "#6B7280"}
+                      />
+                      <Text
+                        style={[
+                          styles.modalOptionText,
+                          formData.car_type === type && styles.modalOptionTextActive
+                        ]}
+                      >
+                        {displayText}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
             </ScrollView>
           </View>
         </View>
