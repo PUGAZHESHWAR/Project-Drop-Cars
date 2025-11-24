@@ -81,7 +81,7 @@ export default function MenuScreen() {
   };
 
   const handleWebSite = () => {
-    const weblink = 'www.arunachalatravels.in/#features';
+    const weblink = 'www.dropcars.in';
     Linking.openURL(`https://${weblink}`).catch(() => {
       Alert.alert('Error', 'Unable to open the Gmail');
     });
@@ -113,8 +113,8 @@ export default function MenuScreen() {
     },
     {
       id: 'orders',
-      title: 'Orders',
-      subtitle: 'Manage your Orders',
+      title: 'Bookings',
+      subtitle: 'Manage your Bookings',
       icon: Package,
       iconColor: '#3B82F6',
       action: () => router.push('/(menu)/orders'),
@@ -287,7 +287,7 @@ export default function MenuScreen() {
                 </View>
                 <View style={styles.supportContent}>
                   <Text style={styles.supportLabel}>Website</Text>
-                  <Text style={styles.supportValue}>www.arunachalatravels.com</Text>
+                  <Text style={styles.supportValue}>www.dropcars.in</Text>
                 </View>
                 <ChevronRight size={16} color="#9CA3AF" />
               </TouchableOpacity>

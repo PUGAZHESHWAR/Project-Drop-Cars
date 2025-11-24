@@ -255,7 +255,7 @@ export default function OrdersComponent(){
             <FileText size={32} color="#FFFFFF" />
           </View>
           <View style={styles.headerTextContainer}>
-            <Text style={styles.headerTitle}>My Orders</Text>
+            <Text style={styles.headerTitle}>My Bookings</Text>
             <Text style={styles.headerSubtitle}>{orders.length} total bookings</Text>
           </View>
         </View>

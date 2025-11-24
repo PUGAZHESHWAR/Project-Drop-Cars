@@ -464,7 +464,7 @@ const cancelRecreateInput = () => {
         </TouchableOpacity>
         
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Order #{orderDetails.id}</Text>
+          <Text style={styles.headerTitle}>Booking #{orderDetails.id}</Text>
           <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(orderDetails.trip_status)}20` }]}>
             {getStatusIcon(orderDetails.trip_status)}
             <Text style={[styles.statusText, { color: getStatusColor(orderDetails.trip_status) }]}>
@@ -671,8 +671,8 @@ const cancelRecreateInput = () => {
                 <Text style={styles.visibilityLabel}>Show data to vehicle owner</Text>
                 <Text style={styles.visibilityDescription}>
                   {orderDetails.data_visibility_vehicle_owner 
-                    ? 'Vehicle owner can see order details' 
-                    : 'Vehicle owner cannot see order details'
+                    ? 'Vehicle owner can see Booking details' 
+                    : 'Vehicle owner cannot see Booking details'
                   }
                 </Text>
               </View>

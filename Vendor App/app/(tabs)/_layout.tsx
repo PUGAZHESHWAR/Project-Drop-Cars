@@ -38,7 +38,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="create-order"
         options={{
-          title: 'New Order',
+          title: 'Create',
           tabBarIcon: ({ size, color }) => (
             <Plus size={size} color={color} />
           ),

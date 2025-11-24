@@ -335,9 +335,9 @@ export default function DashboardScreen() {
         <View style={styles.ordersSection}>
           <View style={styles.orderHeader}>
             <View>
-              <Text style={styles.sectionTitle}>All Orders</Text>
+              <Text style={styles.sectionTitle}>All Bookings</Text>
               <Text style={styles.sectionSubtitle}>
-                {filteredOrders.length} of {orders.length} orders
+                {filteredOrders.length} of {orders.length} Bookings
               </Text>
             </View>
           </View>
@@ -391,7 +391,7 @@ export default function DashboardScreen() {
                     <View style={styles.statusItem}>
                       <CheckCircle size={16} color={order.order_accept_status ? '#10B981' : '#9CA3AF'} />
                       <Text style={[styles.statusItemText, { color: order.order_accept_status ? '#10B981' : '#9CA3AF' }]}>
-                        Order {order.order_accept_status ? 'Accepted' : 'Pending'}
+                        Booking {order.order_accept_status ? 'Accepted' : 'Pending'}
                       </Text>
                     </View>
            
@@ -438,7 +438,7 @@ export default function DashboardScreen() {
                     </View>
 
                     <View style={styles.metaItem}>
-                      <Text style={styles.metaText}>Order ID:</Text>
+                      <Text style={styles.metaText}>Booking ID:</Text>
                       <Text style={styles.metaText}>{order.id}</Text>
                     </View>
                   </View>
