@@ -96,6 +96,10 @@ export default function SignUp() {
           Alert.alert('Error', 'Please enter your GPay number');
           return false;
         }
+      if (!aadharImage) {
+          Alert.alert('Error', 'Please upload your Aadhar image');
+          return false;
+        }
         return true;
       case 3:
         if (!formData.password.trim()) {
@@ -279,7 +283,7 @@ export default function SignUp() {
               <MapPin size={20} color="#3B82F6" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Bangalore"
+                placeholder="Chennai"
                 value={formData.city}
                 onChangeText={(value) => handleInputChange('city', value)}
                 placeholderTextColor="#9CA3AF"
@@ -335,7 +339,7 @@ export default function SignUp() {
 
         {/* Aadhar Image */}
         <View style={styles.imageSection}>
-          <Text style={styles.inputLabel}>Aadhar Front Image (Optional)</Text>
+          <Text style={styles.inputLabel}>Aadhar Front Image</Text>
           <Text style={styles.imageSubtext}>Max size: 5MB, Format: JPG/PNG</Text>
           
           {aadharImage ? (

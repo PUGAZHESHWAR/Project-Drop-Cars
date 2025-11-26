@@ -342,7 +342,7 @@ export default function HistoryScreen() {
                 <View style={styles.detailCard}>
                   <View style={styles.notesHeader}>
                     <MessageSquare size={16} color="#6B7280" />
-                    <Text style={styles.sectionTitle}>Admin Notes</Text>
+                    <Text style={styles.sectionTitle}>Admin Responce</Text>
                   </View>
                   <View style={styles.notesContent}>
                     <Text style={styles.notesText}>{selectedTransfer.admin_notes}</Text>
@@ -354,7 +354,7 @@ export default function HistoryScreen() {
               <View style={styles.detailCard}>
                 <Text style={styles.sectionTitle}>Transaction Information</Text>
                 <View style={styles.transactionId}>
-                  <Text style={styles.idLabel}>Transaction ID:</Text>
+                  <Text style={styles.idLabel}>Tnx ID:</Text>
                   <Text style={styles.idValue}>{selectedTransfer.id}</Text>
                 </View>
               </View>
@@ -671,7 +671,7 @@ const styles = StyleSheet.create({
   transactionId: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
   },
   idLabel: {
     fontSize: 12,

@@ -10,6 +10,7 @@ import {
 import { useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+import { Linking, Alert } from 'react-native';
 import { Clock, CircleCheck as CheckCircle, Phone, Mail, ArrowLeft, Shield, FileText, RefreshCw, MessageCircle } from 'lucide-react-native';
 
 const { width, height } = Dimensions.get('window');
@@ -25,10 +26,19 @@ export default function AccountStatusScreen() {
     router.back();
   };
 
-  const handleContactSupport = () => {
-    // Implement contact functionality
-    console.log('Contact support');
-  };
+const handleContactSupport = (value : string) => {
+  // Check if it's an email
+  const isEmail = value.includes("@");
+
+  if (isEmail) {
+    // Open email app
+    Linking.openURL(`mailto:${value}`);
+  } else {
+    // Open phone dialer
+    Linking.openURL(`tel:${value}`);
+  }
+};
+
 
   const handleRefresh = () => {
     // Implement refresh functionality
@@ -75,7 +85,7 @@ export default function AccountStatusScreen() {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Account Status</Text>
           <TouchableOpacity style={styles.refreshButton} onPress={handleRefresh}>
-            <RefreshCw size={20} color="#FFFFFF" />
+            {/* <RefreshCw size={20} color="#FFFFFF" /> */}
           </TouchableOpacity>
         </View>
 
@@ -125,7 +135,7 @@ export default function AccountStatusScreen() {
           )}
 
           {/* Status Details Card */}
-          <View style={styles.statusCard}>
+          {/* <View style={styles.statusCard}>
             <Text style={styles.cardTitle}>
               {isPending ? 'What happens next?' : 'Account Details'}
             </Text>
@@ -177,7 +187,7 @@ export default function AccountStatusScreen() {
                   <Shield size={20} color={colors.secondary} />
                   <View style={styles.stepContent}>
                     <Text style={styles.detailText}>
-                      Account requires manual reactivation
+                      Account Under Review
                     </Text>
                   </View>
                 </View>
@@ -185,13 +195,13 @@ export default function AccountStatusScreen() {
                   <FileText size={20} color={colors.secondary} />
                   <View style={styles.stepContent}>
                     <Text style={styles.detailText}>
-                      Additional verification may be required
+                      Aadhar is Under Review
                     </Text>
                   </View>
                 </View>
               </>
             )}
-          </View>
+          </View> */}
 
           {/* Contact Support Card */}
           <View style={styles.contactCard}>
@@ -201,7 +211,7 @@ export default function AccountStatusScreen() {
             </Text>
             
             <View style={styles.contactMethods}>
-              <TouchableOpacity style={styles.contactMethod} onPress={handleContactSupport}>
+              <TouchableOpacity style={styles.contactMethod}onPress={() => handleContactSupport("+919876543210")}>
                 <View style={styles.contactIcon}>
                   <Phone size={20} color={colors.secondary} />
                 </View>
@@ -212,18 +222,18 @@ export default function AccountStatusScreen() {
                 </View>
               </TouchableOpacity>
               
-              <TouchableOpacity style={styles.contactMethod} onPress={handleContactSupport}>
+              <TouchableOpacity style={styles.contactMethod} onPress={() => handleContactSupport("dropcars.in@gmail.com")}>
                 <View style={styles.contactIcon}>
                   <Mail size={20} color={colors.secondary} />
                 </View>
                 <View style={styles.contactInfo}>
                   <Text style={styles.contactLabel}>Email Support</Text>
-                  <Text style={styles.contactValue}>support@dropcars.com</Text>
+                  <Text style={styles.contactValue}>dropcars.in@gmail.com</Text>
                   <Text style={styles.contactNote}>Response within 2 hours</Text>
                 </View>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.contactMethod} onPress={handleContactSupport}>
+              {/* <TouchableOpacity style={styles.contactMethod} onPress={handleContactSupport}>
                 <View style={styles.contactIcon}>
                   <MessageCircle size={20} color={colors.secondary} />
                 </View>
@@ -232,13 +242,13 @@ export default function AccountStatusScreen() {
                   <Text style={styles.contactValue}>Start Conversation</Text>
                   <Text style={styles.contactNote}>Instant response</Text>
                 </View>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
           </View>
 
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
-            <TouchableOpacity 
+            {/* <TouchableOpacity 
               style={styles.primaryButton}
               onPress={handleContactSupport}
             >
@@ -250,7 +260,7 @@ export default function AccountStatusScreen() {
                   {isPending ? 'Contact Support' : 'Get Help'}
                 </Text>
               </LinearGradient>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             
             <TouchableOpacity 
               style={styles.secondaryButton}

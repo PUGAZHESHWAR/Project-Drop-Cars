@@ -17,7 +17,7 @@ export const pickImage = async (): Promise<ImageInfo | null> => {
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
+      allowsEditing: false,
       aspect: [4, 3],
       quality: 0.8,
       allowsMultipleSelection: false,

@@ -513,7 +513,7 @@ const handleTimeChange = (event: any, selectedTime?: Date) => {
   } catch (error: any) {
     console.error('Error confirming order:', error);
     const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
-    Alert.alert('Error', `Failed to create order: ${errorMessage}`);
+    Alert.alert('Error', `Failed to create Booking: ${errorMessage}`);
   } finally {
     setIsLoading(false);
   }
@@ -551,7 +551,7 @@ const handleTimeChange = (event: any, selectedTime?: Date) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Create {formData.trip_type} Order</Text>
+        <Text style={styles.headerTitle}>Create {formData.trip_type} Booking</Text>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -614,10 +614,10 @@ const handleTimeChange = (event: any, selectedTime?: Date) => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Clock size={20} color="#1E40AF" />
-            <Text style={styles.sectionTitle}>Order Configuration</Text>
+            <Text style={styles.sectionTitle}>Booking Configuration</Text>
           </View>
           
-          <Text style={styles.fieldLabel}>Max Time to Assign Order</Text>
+          <Text style={styles.fieldLabel}>Max Time to Assign Booking</Text>
           <View style={styles.timeInputRow}>
             <View style={[styles.inputContainer, styles.timeInput]}>
               <Clock size={18} color="#6B7280" style={styles.inputIcon} />
@@ -646,18 +646,7 @@ const handleTimeChange = (event: any, selectedTime?: Date) => {
             </View>
           </View>
 
-          <View style={styles.switchContainer}>
-            <View style={styles.switchLabel}>
-              <IndianRupee size={18} color="#6B7280" />
-              <Text style={styles.switchText}>Toll Charge Update</Text>
-            </View>
-            <Switch
-              value={formData.toll_charge_update}
-              onValueChange={(value) => handleInputChange('toll_charge_update', value)}
-              trackColor={{ false: '#E5E7EB', true: '#3B82F6' }}
-              thumbColor={formData.toll_charge_update ? '#FFFFFF' : '#9CA3AF'}
-            />
-          </View>
+
         </View>
 
         {/* Trip Details Section */}
@@ -674,9 +663,14 @@ const handleTimeChange = (event: any, selectedTime?: Date) => {
               style={styles.pickerButton}
               onPress={() => setShowCarTypePicker(true)}
             >
-              <Text style={[styles.pickerButtonText, formData.car_type ? styles.pickerButtonTextActive : styles.pickerButtonTextPlaceholder]}>
-                {formData.car_type || 'Select car type'}
-              </Text>
+            <Text style={[styles.pickerButtonText, formData.car_type ? styles.pickerButtonTextActive : styles.pickerButtonTextPlaceholder]}>
+              {formData.car_type 
+                ? formData.car_type
+                    .replace(/_/g, ' ')
+                    .replace(/PLUS/g, '+')
+                : 'Select car type'
+              }
+            </Text>
               <ChevronDown size={18} color="#6B7280" />
             </TouchableOpacity>
           </View>
@@ -713,7 +707,7 @@ const handleTimeChange = (event: any, selectedTime?: Date) => {
   </View>
 </View>
         </View>
-        {/* Date Picker */}
+      {/* Date Picker */}
       {showDatePicker && (
         <DateTimePicker
           value={formData.start_date_time}
@@ -1047,6 +1041,18 @@ const handleTimeChange = (event: any, selectedTime?: Date) => {
             )}
           </View>
         )}
+                  <View style={styles.switchContainer}>
+            <View style={styles.switchLabel}>
+              <IndianRupee size={18} color="#6B7280" />
+              <Text style={styles.switchText}>Toll Extra</Text>
+            </View>
+            <Switch
+              value={formData.toll_charge_update}
+              onValueChange={(value) => handleInputChange('toll_charge_update', value)}
+              trackColor={{ false: '#E5E7EB', true: '#3B82F6' }}
+              thumbColor={formData.toll_charge_update ? '#FFFFFF' : '#9CA3AF'}
+            />
+          </View>
 
         {/* Additional Notes Section */}
         <View style={styles.section}>
@@ -1089,7 +1095,7 @@ const handleTimeChange = (event: any, selectedTime?: Date) => {
       </ScrollView>
 
       {/* Date Picker */}
-      {showDatePicker && (
+      {/* {showDatePicker && (
         <DateTimePicker
           value={formData.start_date_time}
           mode="date"
@@ -1097,17 +1103,17 @@ const handleTimeChange = (event: any, selectedTime?: Date) => {
           // onChange={onDateChange}
           minimumDate={new Date()}
         />
-      )}
+      )} */}
 
       {/* Time Picker */}
-      {showTimePicker && (
+      {/* {showTimePicker && (
         <DateTimePicker
           value={formData.start_date_time}
           mode="time"
           display={Platform.OS === 'ios' ? 'spinner' : 'default'}
           // onChange={onTimeChange}
         />
-      )}
+      )} */}
 
       {/* Trip Type Picker Modal */}
       <Modal
@@ -1169,32 +1175,39 @@ const handleTimeChange = (event: any, selectedTime?: Date) => {
           </View>
           <View style={styles.modalContent}>
             <ScrollView showsVerticalScrollIndicator={false}>
-              {carTypes.map((type) => (
-                <TouchableOpacity
-                  key={type}
-                  style={[
-                    styles.modalOption,
-                    formData.car_type === type && styles.modalOptionActive
-                  ]}
-                  onPress={() => {
-                    handleInputChange("car_type", type);
-                    setShowCarTypePicker(false);
-                  }}
-                >
-                  <Car
-                    size={18}
-                    color={formData.car_type === type ? "#1E40AF" : "#6B7280"}
-                  />
-                  <Text
-                    style={[
-                      styles.modalOptionText,
-                      formData.car_type === type && styles.modalOptionTextActive
-                    ]}
-                  >
-                    {type}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                {carTypes.map((type) => {
+                  // Format the display text
+                  const displayText = type
+                    .replace(/_/g, ' ')  // Replace underscores with spaces
+                    .replace(/PLUS/g, '+');  // Replace "PLUS" with "+"
+
+                  return (
+                    <TouchableOpacity
+                      key={type}
+                      style={[
+                        styles.modalOption,
+                        formData.car_type === type && styles.modalOptionActive
+                      ]}
+                      onPress={() => {
+                        handleInputChange("car_type", type);
+                        setShowCarTypePicker(false);
+                      }}
+                    >
+                      <Car
+                        size={18}
+                        color={formData.car_type === type ? "#1E40AF" : "#6B7280"}
+                      />
+                      <Text
+                        style={[
+                          styles.modalOptionText,
+                          formData.car_type === type && styles.modalOptionTextActive
+                        ]}
+                      >
+                        {displayText}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
             </ScrollView>
           </View>
         </View>
