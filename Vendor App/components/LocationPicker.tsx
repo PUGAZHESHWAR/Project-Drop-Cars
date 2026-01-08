@@ -19,7 +19,7 @@ import {
   ArrowLeft,
   Navigation
 } from 'lucide-react-native';
-import { mockGoogleMapsService, PlacePrediction } from '../services/googleMaps';
+import { googleMapsService, PlacePrediction } from '../services/googleMaps';
 
 interface LocationPickerProps {
   visible: boolean;
@@ -43,22 +43,6 @@ export default function LocationPicker({
   const [isLoading, setIsLoading] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([
     'Chennai, Tamil Nadu, India',
-    'Bangalore, Karnataka, India',
-    'Mumbai, Maharashtra, India',
-    'Delhi, India',
-    'Hyderabad, Telangana, India',
-    'Pune, Maharashtra, India',
-    'Kolkata, West Bengal, India',
-    'Ahmedabad, Gujarat, India',
-    'Jaipur, Rajasthan, India',
-    'Surat, Gujarat, India',
-    'Vellore, Tamil Nadu, India',
-    'Salem, Tamil Nadu, India',
-    'Coimbatore, Tamil Nadu, India',
-    'Madurai, Tamil Nadu, India',
-    'Trichy, Tamil Nadu, India',
-    'Polur, Tamil Nadu, India',
-    'Tiruvannamalai, Tamil Nadu, India'
   ]);
 
   useEffect(() => {
@@ -77,7 +61,7 @@ export default function LocationPicker({
 
     setIsLoading(true);
     try {
-      const results = await mockGoogleMapsService.getPlacePredictions(query);
+      const results = await googleMapsService.getPlacePredictions(query);
       setPredictions(results);
     } catch (error) {
       console.error('Error searching locations:', error);

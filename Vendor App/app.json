@@ -2,6 +2,11 @@
   "expo": {
     "name": "Drop Cars Vendor",
     "slug": "drop-cars-vendor",
+    "splash": {
+      "image": "./assets/images/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -9,7 +14,8 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.pugazheas.dropcarsvendor"
     },
     "web": {
       "bundler": "metro",

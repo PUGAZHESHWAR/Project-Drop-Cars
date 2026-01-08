@@ -1,7 +1,7 @@
 // Google Maps Places API Service
 // Replace YOUR_GOOGLE_MAPS_API_KEY with your actual API key
 
-const GOOGLE_MAPS_API_KEY = 'AIzaSyCtsXKn2FR9HdDEX_Tvttiln9Iwtk5Xc00';
+const GOOGLE_MAPS_API_KEY = 'AIzaSyC9y9fA6NIRKA1_oapnNCpgISTDloBxOnM';
 const GOOGLE_PLACES_API_BASE = 'https://maps.googleapis.com/maps/api/place';
 
 export interface PlacePrediction {
@@ -54,9 +54,8 @@ export class GoogleMapsService {
 
     try {
       const response = await fetch(
-        // `${GOOGLE_PLACES_API_BASE}/autocomplete/json?input=${encodeURIComponent(input)}&key=${this.apiKey}&components=country:in&types=(cities)`
-        `${GOOGLE_PLACES_API_BASE}/autocomplete/json?input=${encodeURIComponent(input)}&key=${this.apiKey}&components=country:in`
-
+        `${GOOGLE_PLACES_API_BASE}/autocomplete/json?input=${encodeURIComponent(input)}&key=${this.apiKey}&components=country:in&types=(cities)`
+        // `${GOOGLE_PLACES_API_BASE}/autocomplete/json?input=${encodeURIComponent(input)}&key=${this.apiKey}&components=country:in`
       );
 
       if (!response.ok) {
@@ -175,70 +174,6 @@ export const googleMapsService = GoogleMapsService.getInstance();
 export class MockGoogleMapsService {
   private mockPlaces = [
     'Chennai, Tamil Nadu, India',
-    'Bangalore, Karnataka, India',
-    'Mumbai, Maharashtra, India',
-    'Delhi, India',
-    'Hyderabad, Telangana, India',
-    'Pune, Maharashtra, India',
-    'Kolkata, West Bengal, India',
-    'Ahmedabad, Gujarat, India',
-    'Jaipur, Rajasthan, India',
-    'Surat, Gujarat, India',
-    'Vellore, Tamil Nadu, India',
-    'Salem, Tamil Nadu, India',
-    'Coimbatore, Tamil Nadu, India',
-    'Madurai, Tamil Nadu, India',
-    'Trichy, Tamil Nadu, India',
-    'Polur, Tamil Nadu, India',
-    'Tiruvannamalai, Tamil Nadu, India',
-    'Arni, Tamil Nadu, India',
-    'Vandavasi, Tamil Nadu, India',
-    'Gingee, Tamil Nadu, India',
-    'Tindivanam, Tamil Nadu, India',
-    'Kanchipuram, Tamil Nadu, India',
-    'Chengalpattu, Tamil Nadu, India',
-    'Tambaram, Tamil Nadu, India',
-    'Sriperumbudur, Tamil Nadu, India',
-    'Arakkonam, Tamil Nadu, India',
-    'Ranipet, Tamil Nadu, India',
-    'Arcot, Tamil Nadu, India',
-    'Walajapet, Tamil Nadu, India',
-    'Krishnagiri, Tamil Nadu, India',
-    'Dharmapuri, Tamil Nadu, India',
-    'Hosur, Tamil Nadu, India',
-    'Erode, Tamil Nadu, India',
-    'Namakkal, Tamil Nadu, India',
-    'Karur, Tamil Nadu, India',
-    'Dindigul, Tamil Nadu, India',
-    'Theni, Tamil Nadu, India',
-    'Virudhunagar, Tamil Nadu, India',
-    'Sivakasi, Tamil Nadu, India',
-    'Ramanathapuram, Tamil Nadu, India',
-    'Thoothukkudi, Tamil Nadu, India',
-    'Tirunelveli, Tamil Nadu, India',
-    'Nagercoil, Tamil Nadu, India',
-    'Kanyakumari, Tamil Nadu, India',
-    'Puducherry, India',
-    'Cuddalore, Tamil Nadu, India',
-    'Villupuram, Tamil Nadu, India',
-    'Kallakurichi, Tamil Nadu, India',
-    'Perambalur, Tamil Nadu, India',
-    'Ariyalur, Tamil Nadu, India',
-    'Thanjavur, Tamil Nadu, India',
-    'Pudukkottai, Tamil Nadu, India',
-    'Sivaganga, Tamil Nadu, India',
-    'Pattukkottai, Tamil Nadu, India',
-    'Orathanadu, Tamil Nadu, India',
-    'Thiruvaiyaru, Tamil Nadu, India',
-    'Kumbakonam, Tamil Nadu, India',
-    'Mayiladuthurai, Tamil Nadu, India',
-    'Nagapattinam, Tamil Nadu, India',
-    'Vedaranyam, Tamil Nadu, India',
-    'Mannargudi, Tamil Nadu, India',
-    'Thiruvarur, Tamil Nadu, India',
-    'Karaikal, Puducherry, India',
-    'Yanam, Puducherry, India',
-    'Mahe, Puducherry, India'
   ];
 
   public async getPlacePredictions(input: string): Promise<PlacePrediction[]> {

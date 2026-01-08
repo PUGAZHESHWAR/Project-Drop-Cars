@@ -15,7 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Shield, FileText } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = 'https://drop-cars-api-1049299844333.asia-south2.run.app/api';
+const API_BASE_URL = 'https://drop-cars-api-207918408785.asia-south2.run.app/api';
 
 interface NotificationResponse {
   id: string;
