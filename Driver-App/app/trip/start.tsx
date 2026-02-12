@@ -7,17 +7,26 @@ import {
   StyleSheet,
   Alert,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Camera, Upload, ArrowLeft } from 'lucide-react-native';
+import { startTrip } from '@/services/driver/carDriverService';
 import * as ImagePicker from 'expo-image-picker';
+import LoadingOverlay from '@/components/LoadingOverlay';
 
 export default function StartTripScreen() {
   const [startKm, setStartKm] = useState('');
   const [odometerPhoto, setOdometerPhoto] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
-  const params = useLocalSearchParams<{ orderId?: string; farePerKm?: string }>();
+  const params = useLocalSearchParams<{ 
+    order_id?: string; 
+    farePerKm?: string; 
+    assignment_id?: string;
+    toll_charge_update?: string;
+  }>();
 
   const takeOdometerPhoto = async () => {
     try {
@@ -35,24 +44,71 @@ export default function StartTripScreen() {
     }
   };
 
-  const handleStartTrip = () => {
+  const handleStartTrip = async () => {
     if (!startKm || !odometerPhoto) {
       Alert.alert('Error', 'Please enter start KM and upload odometer photo');
       return;
     }
+    if (submitting) return;
+    try {
+      setSubmitting(true);
+      // Prefer assignment_id if provided (recommended)
+      const assignment_id = String(params.assignment_id || '');
+      let tripStartResponse = null;
+      
+      if (!assignment_id) {
+        // If no assignment id, continue UI flow without API to prevent blocking
+        console.warn('No assignment_id provided to start trip; navigating without API call');
+      } else {
+        tripStartResponse = await startTrip(parseInt(params.order_id || ''), parseInt(startKm, 10), odometerPhoto);
+        
+        // Update driver status to DRIVING after successful trip start
+        // This will be handled by the backend, but we can also update locally
+        console.log('🚗 Trip started successfully, driver status should be updated to DRIVING');
+        
+        // Log the API response
+        if (tripStartResponse) {
+          console.log('📊 Trip Start API Response:', {
+            message: tripStartResponse.message,
+            end_record_id: tripStartResponse.end_record_id,
+            start_km: tripStartResponse.start_km,
+            speedometer_img_url: tripStartResponse.speedometer_img_url
+          });
+        }
+      }
 
-    router.replace({
-      pathname: '/trip/end',
-      params: {
-        orderId: String(params.orderId || ''),
+      console.log('🚗 Navigating to end trip with params:', {
+        order_id: String(params.order_id || ''),
+        assignment_id,
         startKm: String(startKm),
         farePerKm: String(params.farePerKm || '0'),
-      }
-    });
+        toll_charge_update: params.toll_charge_update || 'false',
+      });
+
+      router.replace({
+        pathname: '/trip/end',
+        params: {
+          order_id: String(params.order_id || ''),
+          assignment_id,
+          startKm: String(startKm),
+          farePerKm: String(params.farePerKm || '0'),
+          toll_charge_update: params.toll_charge_update || 'false',
+        }
+      });
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to start trip');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
+      <LoadingOverlay 
+        visible={submitting} 
+        message="Starting trip..." 
+      />
+      
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <ArrowLeft color="#1F2937" size={24} />
@@ -94,11 +150,18 @@ export default function StartTripScreen() {
         </View>
 
         <TouchableOpacity
-          style={[styles.startButton, (!startKm || !odometerPhoto) && styles.disabledButton]}
+          style={[styles.startButton, (!startKm || !odometerPhoto || submitting) && styles.disabledButton]}
           onPress={handleStartTrip}
-          disabled={!startKm || !odometerPhoto}
+          disabled={!startKm || !odometerPhoto || submitting}
         >
-          <Text style={styles.startButtonText}>Start Trip</Text>
+          {submitting ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator color="white" size="small" />
+              <Text style={styles.startButtonText}>Starting Trip...</Text>
+            </View>
+          ) : (
+            <Text style={styles.startButtonText}>Start Trip</Text>
+          )}
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -214,5 +277,10 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

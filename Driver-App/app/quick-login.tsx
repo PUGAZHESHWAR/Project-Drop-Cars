@@ -14,7 +14,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Smartphone, Lock, ArrowRight, ArrowLeft } from 'lucide-react-native';
-import { loginDriver } from '@/services/driverService';
+import { loginDriver } from '@/services/driver/driverService';
 
 export default function QuickLoginScreen() {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -54,7 +54,45 @@ export default function QuickLoginScreen() {
       const loginResponse = await loginDriver(phoneNumber, password);
       
       if (loginResponse.access_token) {
-        console.log('✅ Driver login successful, creating user object...');
+        console.log('✅ Driver login successful, checking account status...');
+        
+        // Check driver status before proceeding
+        const driverStatus = loginResponse.driver_status || loginResponse.status;
+        console.log('🔍 Driver status:', driverStatus);
+        
+        // If driver status is PROCESSING, redirect to account verification
+        if (driverStatus === 'PROCESSING') {
+          console.log('⏳ Driver account is under verification, redirecting to verification screen');
+          
+          // Create minimal driver user object for verification screen
+          const driverUser = {
+            id: loginResponse.driver_id,
+            fullName: loginResponse.full_name,
+            primaryMobile: phoneNumber,
+            secondaryMobile: undefined,
+            password: password,
+            address: 'Driver Address',
+            aadharNumber: '',
+            organizationId: 'driver_org',
+            languages: ['English'],
+            documents: {},
+            driver_status: driverStatus,
+            account_status: 'inactive' // Map PROCESSING to inactive for AccountVerificationScreen
+          };
+          
+          // Login with the driver user data and token
+          await login(driverUser, loginResponse.access_token);
+          
+          // Redirect to verification screen instead of dashboard
+          router.replace('/verification');
+          return;
+        }
+        
+        // Check if driver status allows login (ONLINE, OFFLINE, DRIVING are allowed)
+        const allowedStatuses = ['ONLINE', 'OFFLINE', 'DRIVING', 'online', 'offline', 'driving'];
+        if (!allowedStatuses.includes(driverStatus)) {
+          throw new Error(`Driver account status is ${driverStatus}. Please contact support for assistance.`);
+        }
         
         // Create driver user object from login response
         const driverUser = {
@@ -68,7 +106,7 @@ export default function QuickLoginScreen() {
           organizationId: 'driver_org', // Default organization for drivers
           languages: ['English'], // Default language
           documents: {}, // No documents needed for quick login
-          driver_status: loginResponse.driver_status || 'ONLINE' // Include driver status from login response
+          driver_status: driverStatus // Include driver status from login response
         };
         
         // Login with the driver user data and token
@@ -94,7 +132,17 @@ export default function QuickLoginScreen() {
         style={styles.keyboardView}
       >
         <View style={styles.content}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity onPress={async () => {
+            // Clear any existing driver data before going back to owner login
+            try {
+              await SecureStore.deleteItemAsync('driverAuthToken');
+              await SecureStore.deleteItemAsync('driverAuthInfo');
+              console.log('✅ Cleared driver data before switching to owner login');
+            } catch (error) {
+              console.log('ℹ️ No driver data to clear');
+            }
+            router.back();
+          }} style={styles.backButton}>
             <ArrowLeft color="#FFFFFF" size={24} />
           </TouchableOpacity>
 

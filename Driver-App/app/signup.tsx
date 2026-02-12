@@ -12,7 +12,7 @@ import DocumentsStep from '@/components/signup/DocumentsStep';
 import SuccessScreen from '@/components/SuccessScreen';
 import { ArrowLeft } from 'lucide-react-native';
 import { TouchableOpacity } from 'react-native';
-import { loginVehicleOwner } from '@/services/signupService';
+import { loginVehicleOwner } from '@/services/auth/authService';
 
 export default function SignupScreen() {
   const [currentStep, setCurrentStep] = useState(1);

@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCarDriver } from '@/contexts/CarDriverContext';
-import { CarDriverSignupRequest } from '@/services/carDriverService';
+import { CarDriverSignupRequest } from '@/services/driver/carDriverService';
 import { ArrowLeft, User, Phone, MapPin, CreditCard, Car, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
 
 export default function CarDriverSignupScreen() {

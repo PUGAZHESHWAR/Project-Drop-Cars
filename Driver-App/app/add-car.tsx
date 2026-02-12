@@ -8,11 +8,14 @@ import {
   Alert,
   ScrollView,
   SafeAreaView,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Car, Save, Upload, CheckCircle, FileText, Image, ChevronDown } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
-import { addCarDetails } from '@/services/signupService';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useDashboard } from '@/contexts/DashboardContext';
+import { addCarDetails } from '@/services/auth/signupService';
 import * as ImagePicker from 'expo-image-picker';
 import * as SecureStore from 'expo-secure-store';
 import axiosInstance from '@/app/api/axiosInstance';
@@ -37,26 +40,30 @@ export default function AddCarScreen() {
 
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
   const router = useRouter();
   const { user } = useAuth();
+  const { colors } = useTheme();
+  const { dashboardData } = useDashboard();
 
-  const carTypes = ['HATCHBACK', 'SEDAN', 'NEW SEDAN', 'SUV', 'INNOVA', 'INNOVA CRYSTA'];
+  const carTypes = ['HATCHBACK', 'SEDAN', 'NEW_SEDAN', 'SUV', 'INNOVA', 'INNOVA_CRYSTA'];
 
   // Function to redirect after successful car addition
   const redirectAfterCarAddition = async () => {
     try {
       console.log('🚗 Car added successfully, determining next step...');
-      
-      // Since we just successfully added a car, we know the user has at least 1 car
-      // The typical flow is: Add Car → Add Driver → Dashboard
-      // So let's redirect to add driver page
-      console.log('👤 Redirecting to add driver page...');
-      router.replace('/add-driver');
+      const driverCount = Number(dashboardData?.drivers?.length || 0);
+      if (driverCount === 0) {
+        console.log('👤 No drivers yet → go to Add Driver');
+        router.replace('/add-driver');
+      } else {
+        console.log('🏠 Drivers already present → return to dashboard');
+        router.replace('/(tabs)');
+      }
     } catch (error) {
       console.error('❌ Error during redirect:', error);
-      // Fallback to add driver page
-      router.replace('/add-driver');
+      router.replace('/(tabs)');
     }
   };
 
@@ -132,58 +139,113 @@ export default function AddCarScreen() {
   const handleSave = async () => {
     // Clear previous errors
     setErrors({});
-
+  
     // Simple validation - just check if fields are not empty
     if (!carData.name || !carData.type || !carData.registration || !carData.year) {
       Alert.alert('Validation Error', 'Please fill all required fields');
       return;
     }
-
+  
     // Check required images
     if (!carImages.rcFront || !carImages.rcBack || !carImages.insurance || !carImages.fc || !carImages.carImage) {
       Alert.alert('Error', 'Please upload all required images (RC Front, RC Back, Insurance, FC, Car Image)');
       return;
     }
-
+  
     try {
+      setIsLoading(true);
+      console.log('🚗 Starting car registration process...');
       const payload = {
         car_name: carData.name.trim(),
         car_type: carData.type,
-        car_number: carData.registration.trim(), // Send as entered
+        car_number: carData.registration.trim().toUpperCase(), // Convert to uppercase
         organization_id: user?.organizationId || 'org_001',
         vehicle_owner_id: user?.id || 'e5b9edb1-b4bb-48b8-a662-f7fd00abb6eb',
         rc_front_img: carImages.rcFront,
         rc_back_img: carImages.rcBack,
         insurance_img: carImages.insurance,
         fc_img: carImages.fc,
-        car_img: carImages.carImage
+        car_img: carImages.carImage,
+        model: carData.model || carData.name, // Add model field
+        year: parseInt(carData.year), // Convert to number
+        color: carData.color || 'Unknown' // Default color
       };
-
+  
+      console.log('Sending payload:', JSON.stringify(payload, null, 2));
+  
       await addCarDetails(payload);
-
+  
+      console.log('✅ Car registration completed successfully!');
       Alert.alert(
         'Success',
         'Car details added successfully!',
         [
           {
             text: 'OK',
-            onPress: () => redirectAfterCarAddition()
+            onPress: () => {
+              setIsLoading(false);
+              redirectAfterCarAddition();
+            }
           }
         ]
       );
     } catch (error: any) {
-      console.error('Error adding car:', error);
+      console.error('❌ Error adding car:', error);
+      setIsLoading(false);
+      
+      // Improved error handling
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        console.error('Response data:', error.response.data);
+        console.error('Response status:', error.response.status);
+        
+        if (error.response.status === 422) {
+          // Handle validation errors
+          const validationErrors = error.response.data;
+          if (typeof validationErrors === 'object') {
+            // Convert backend validation errors to frontend error messages
+            const fieldErrors: {[key: string]: string} = {};
+            
+            Object.keys(validationErrors).forEach(key => {
+              if (Array.isArray(validationErrors[key])) {
+                fieldErrors[key] = validationErrors[key].join(', ');
+              } else {
+                fieldErrors[key] = validationErrors[key];
+              }
+            });
+            
+            // Set errors for specific fields
+            if (fieldErrors.car_number) {
+              setErrors(prev => ({...prev, registration: fieldErrors.car_number}));
+            }
+            if (fieldErrors.car_type) {
+              setErrors(prev => ({...prev, type: fieldErrors.car_type}));
+            }
+            if (fieldErrors.car_name) {
+              setErrors(prev => ({...prev, name: fieldErrors.car_name}));
+            }
+            
+            Alert.alert('Validation Error', 'Please check the highlighted fields');
+            return;
+          }
+        }
+      }
+      
       Alert.alert('Error', error.message || 'Failed to add car details');
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft color="#1F2937" size={24} />
+        <TouchableOpacity 
+          onPress={() => router.back()} 
+          style={[styles.backButton, isLoading && styles.backButtonDisabled]}
+          disabled={isLoading}
+        >
+          <ArrowLeft color={isLoading ? colors.textSecondary : colors.text} size={24} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Add Your First Car</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Add Your First Car</Text>
         <View style={styles.stepIndicator}>
           <Text style={styles.stepText}>Step 1/3</Text>
         </View>
@@ -191,7 +253,7 @@ export default function AddCarScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.welcomeSection}>
-          <Text style={styles.welcomeTitle}>Welcome to Drop Cars!</Text>
+          <Text style={[styles.welcomeTitle, { color: colors.text }]}>Welcome to Drop Cars!</Text>
           <Text style={styles.welcomeSubtitle}>
             Hi {user?.fullName}, let's get you started by adding your first car and driver.
           </Text>
@@ -200,31 +262,32 @@ export default function AddCarScreen() {
         <View style={styles.form}>
           <Text style={styles.sectionTitle}>Car Details</Text>
           
-          <View style={styles.inputGroup}>
+          <View style={[styles.inputGroup, { backgroundColor: colors.surface, borderColor: colors.border }] }>
             <Car color="#6B7280" size={20} />
             <TextInput
-              style={[styles.input, errors.name && styles.inputError]}
+              style={[styles.input, { color: colors.text }, errors.name && styles.inputError]}
               placeholder="Car Name (e.g., Toyota Camry)"
+              placeholderTextColor="#9CA3AF"
               value={carData.name}
               onChangeText={(text) => handleInputChange('name', text)}
             />
           </View>
           {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
 
-          <View style={styles.inputGroup}>
+          <View style={[styles.inputGroup, { backgroundColor: colors.surface, borderColor: colors.border }] }>
             <Car color="#6B7280" size={20} />
             <TouchableOpacity 
               style={[styles.dropdownButton, errors.type && styles.inputError]}
               onPress={() => setShowTypeDropdown(!showTypeDropdown)}
             >
-              <Text style={[styles.dropdownText, !carData.type && styles.placeholderText]}>
+              <Text style={[styles.dropdownText, { color: colors.text }, !carData.type && styles.placeholderText]}>
                 {carData.type || 'Select Car Type'}
               </Text>
               <ChevronDown color="#6B7280" size={20} />
             </TouchableOpacity>
           </View>
           {showTypeDropdown && (
-            <View style={styles.dropdown}>
+            <View style={[styles.dropdown, { backgroundColor: colors.surface, borderColor: colors.border }] }>
               {carTypes.map((type) => (
                 <TouchableOpacity
                   key={type}
@@ -235,18 +298,19 @@ export default function AddCarScreen() {
                     if (errors.type) setErrors(prev => ({ ...prev, type: '' }));
                   }}
                 >
-                  <Text style={styles.dropdownItemText}>{type}</Text>
+                  <Text style={[styles.dropdownItemText, { color: colors.text }]}>{type}</Text>
                 </TouchableOpacity>
               ))}
             </View>
           )}
           {errors.type && <Text style={styles.errorText}>{errors.type}</Text>}
 
-          <View style={styles.inputGroup}>
+          <View style={[styles.inputGroup, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <Car color="#6B7280" size={20} />
             <TextInput
-              style={[styles.input, errors.registration && styles.inputError]}
+              style={[styles.input, { color: colors.text }, errors.registration && styles.inputError]}
               placeholder="Registration Number (e.g., MH 12 AB 1234)"
+              placeholderTextColor="#9CA3AF"
               value={carData.registration}
               onChangeText={(text) => handleInputChange('registration', text)}
               autoCapitalize="characters"
@@ -257,11 +321,12 @@ export default function AddCarScreen() {
             Enter your car registration number exactly as it appears on your RC
           </Text>
 
-          <View style={styles.inputGroup}>
+          <View style={[styles.inputGroup, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <Car color="#6B7280" size={20} />
             <TextInput
-              style={[styles.input, errors.year && styles.inputError]}
+              style={[styles.input, { color: colors.text }, errors.year && styles.inputError]}
               placeholder="Model Year (e.g., 2023)"
+              placeholderTextColor="#9CA3AF"
               value={carData.year}
               onChangeText={(text) => handleInputChange('year', text)}
               keyboardType="numeric"
@@ -270,11 +335,12 @@ export default function AddCarScreen() {
           </View>
           {errors.year && <Text style={styles.errorText}>{errors.year}</Text>}
 
-          <View style={styles.inputGroup}>
+          <View style={[styles.inputGroup, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <Car color="#6B7280" size={20} />
             <TextInput
-              style={styles.input}
+              style={[styles.input, { color: colors.text }]}
               placeholder="Color (e.g., White, Black, Red)"
+              placeholderTextColor="#9CA3AF"
               value={carData.color}
               onChangeText={(text) => handleInputChange('color', text)}
             />
@@ -320,9 +386,22 @@ export default function AddCarScreen() {
             isRequired={true}
           />
 
-          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-            <Save color="#FFFFFF" size={20} />
-            <Text style={styles.saveButtonText}>Save Car & Continue</Text>
+          <TouchableOpacity 
+            style={[styles.saveButton, isLoading && styles.saveButtonDisabled]} 
+            onPress={handleSave}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <ActivityIndicator color="#FFFFFF" size="small" />
+                <Text style={styles.saveButtonText}>Saving Car...</Text>
+              </>
+            ) : (
+              <>
+                <Save color="#FFFFFF" size={20} />
+                <Text style={styles.saveButtonText}>Save Car & Continue</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -346,6 +425,9 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 8,
+  },
+  backButtonDisabled: {
+    opacity: 0.5,
   },
   headerTitle: {
     fontSize: 18,
@@ -425,6 +507,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter-Medium',
     color: '#1F2937',
+    textAlign: 'left'
   },
   inputError: {
     borderColor: '#EF4444',
@@ -547,6 +630,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 24,
     marginBottom: 20,
+  },
+  saveButtonDisabled: {
+    backgroundColor: '#9CA3AF',
+    opacity: 0.7,
   },
   saveButtonText: {
     color: '#FFFFFF',

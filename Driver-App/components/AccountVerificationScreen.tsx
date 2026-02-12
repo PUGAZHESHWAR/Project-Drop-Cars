@@ -50,6 +50,7 @@ export default function AccountVerificationScreen({
         };
       
       case 'inactive':
+      case 'processing': // Handle driver PROCESSING status
         return {
           icon: <Clock color="#F59E0B" size={64} />,
           title: 'Account Under Verification',
