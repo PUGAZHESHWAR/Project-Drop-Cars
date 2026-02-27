@@ -92,20 +92,19 @@ export default function DashboardScreen() {
   };
 
   const loadVendorData = async () => {
-    // try {
-    //   const response = await api.get('/vendor/profile');
-    //   setVendorData(response.data);
-    // } catch (err: any) {
-      // console.error('Error fetching vendor data:', err);
-      // Fallback to mock data if API fails
-      setVendorData({
-        id: '1',
-        full_name: 'Drop Cars Pvt Ltd',
-        primary_number: '+91 98765 43210',
-        account_status: 'Active',
-        branch_name: 'Drop Cars',
-      });
-    // }
+    try {
+      const response = await api.get('/users/vendor-details/me');
+      setVendorData(response.data);
+    } catch (err: any) {
+      console.error('Error fetching vendor data:', err);
+      // setVendorData({
+      //   id: '1',
+      //   full_name: 'Drop Cars Pvt Ltd',
+      //   primary_number: '+91 98765 43210',
+      //   account_status: 'Active',
+      //   branch_name: 'Drop Cars',
+      // });
+    }
   };
 
   const fetchOrders = async () => {
@@ -260,7 +259,7 @@ export default function DashboardScreen() {
         <View style={styles.headerContent}>
           <View>
             <Text style={styles.welcomeText}>Welcome back!</Text>
-            <Text style={styles.companyName}>{vendorData.branch_name}</Text>
+            <Text style={styles.companyName}>{vendorData.full_name}</Text>
           </View>
           <TouchableOpacity style={styles.profileButton}>
             <Text style={styles.profileInitial}>D</Text>
@@ -284,7 +283,7 @@ export default function DashboardScreen() {
                 <Car size={20} color="#6366F1" />
               </View>
               <Text style={styles.compactStatValue}>{stats.totalOrders}</Text>
-              <Text style={styles.compactStatLabel}>Active Orders</Text>
+              <Text style={styles.compactStatLabel}>Active Bookings</Text>
             </View>
             
             <View style={styles.compactStatCard}>
@@ -361,7 +360,7 @@ export default function DashboardScreen() {
                 <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(order.trip_status)}15` }]}>
                   <View style={[styles.statusDot, { backgroundColor: getStatusColor(order.trip_status) }]} />
                   <Text style={[styles.statusText, { color: getStatusColor(order.trip_status) }]}>
-                    {order.trip_status}
+                    {order.trip_status == "PENDING"? "Running":"N/A"}
                   </Text>
                 </View>
               </View>
@@ -391,7 +390,7 @@ export default function DashboardScreen() {
                     <View style={styles.statusItem}>
                       <CheckCircle size={16} color={order.order_accept_status ? '#10B981' : '#9CA3AF'} />
                       <Text style={[styles.statusItemText, { color: order.order_accept_status ? '#10B981' : '#9CA3AF' }]}>
-                        Booking {order.order_accept_status ? 'Accepted' : 'Pending'}
+                        {order.order_accept_status ? 'Booking Accepted' : 'Waiting for Acceptance'}
                       </Text>
                     </View>
            
@@ -461,7 +460,7 @@ export default function DashboardScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Filter Orders</Text>
+              <Text style={styles.modalTitle}>Filter Bookings</Text>
               <TouchableOpacity onPress={() => setFilterModalVisible(false)}>
                 <X size={24} color="#6B7280" />
               </TouchableOpacity>
@@ -475,7 +474,7 @@ export default function DashboardScreen() {
               <View style={styles.filterGroup}>
                 <Text style={styles.filterGroupTitle}>Trip Type</Text>
                 <View style={styles.filterButtons}>
-                  {['all', 'Oneway', 'Hourly Rental'].map((type) => (
+                  {['all', 'Oneway','Round Trip','Multy City', 'Hourly Rental'].map((type) => (
                     <TouchableOpacity
                       key={type}
                       style={[
@@ -512,7 +511,7 @@ export default function DashboardScreen() {
                         styles.filterButtonText,
                         selectedFilters.acceptStatus === status && styles.filterButtonTextActive
                       ]}>
-                        {status === 'all' ? 'All' : status === 'accepted' ? 'Accepted' : 'Pending'}
+                        {status === 'all' ? 'All' : status === 'accepted' ? 'Accepted' : 'Running'}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -692,12 +691,13 @@ const styles = StyleSheet.create({
   filterButton: {
     backgroundColor: '#FFFFFF',
     borderRadius: 10,
-    padding: 10,
+    padding: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 2,
+    marginLeft: 6,
   },
   ordersSection: {
     marginBottom: 20,

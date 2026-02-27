@@ -281,7 +281,7 @@ const cancelRecreateInput = () => {
         
         Alert.alert(
           'Success',
-          `Vehicle owner data visibility ${!orderDetails.data_visibility_vehicle_owner ? 'enabled' : 'disabled'} successfully!`,
+          `Driver now ${!orderDetails.data_visibility_vehicle_owner ? 'can' : 'cannot'} see the Customer details!`,
           [{ text: 'OK' }]
         );
       }
@@ -545,25 +545,35 @@ const cancelRecreateInput = () => {
             
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Customer Information */}
+                {/* Route Details */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <User size={20} color="#0d5464ff" />
-            <Text style={styles.sectionTitle}>Customer Details</Text>
+            <Navigation size={20} color="#0d5464ff" />
+            <Text style={styles.sectionTitle}>Route Details</Text>
           </View>
-          <View style={styles.customerCard}>
-            <View style={styles.customerRow}>
-              <Text style={styles.customerName}>{orderDetails.customer_name}</Text>
-              <TouchableOpacity 
-                style={styles.phoneButton}
-                onPress={() => makePhoneCall(orderDetails.customer_number)}
-              >
-                <Phone size={16} color="#FFFFFF" />
-                <Text style={styles.phoneButtonText}>{orderDetails.customer_number}</Text>
-              </TouchableOpacity>
-            </View>
+          <View style={styles.routeCard}>
+            {locations.map((location, index) => (
+              <View key={index} style={styles.routeItem}>
+                <View style={styles.routeLeft}>
+                  <View style={[
+                    styles.routeDot,
+                    index === 0 ? styles.routeDotStart :
+                    index === locations.length - 1 ? styles.routeDotEnd :
+                    styles.routeDotMiddle
+                  ]} />
+                  {index < locations.length - 1 && <View style={styles.routeLine} />}
+                </View>
+                <View style={styles.routeRight}>
+                  <Text style={styles.routeLabel}>
+                    {index === 0 ? 'Pickup' : index === locations.length - 1 ? 'Drop' : `Stop ${index}`}
+                  </Text>
+                  <Text style={styles.routeAddress}>{location[1]}</Text>
+                </View>
+              </View>
+            ))}
           </View>
         </View>
+
 
         {/* Trip Information */}
         <View style={styles.section}>
@@ -655,72 +665,6 @@ const cancelRecreateInput = () => {
           </View>
         </View>
 
-        {/* Visibility Toggle */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            {orderDetails.data_visibility_vehicle_owner ? (
-              <Eye size={20} color="#0d5464ff" />
-            ) : (
-              <EyeOff size={20} color="#0d5464ff" />
-            )}
-            <Text style={styles.sectionTitle}>Vehicle Owner Data Visibility</Text>
-          </View>
-          <View style={styles.visibilityCard}>
-            <View style={styles.visibilityRow}>
-              <View style={styles.visibilityInfo}>
-                <Text style={styles.visibilityLabel}>Show data to vehicle owner</Text>
-                <Text style={styles.visibilityDescription}>
-                  {orderDetails.data_visibility_vehicle_owner 
-                    ? 'Vehicle owner can see Booking details' 
-                    : 'Vehicle owner cannot see Booking details'
-                  }
-                </Text>
-              </View>
-              <View style={styles.switchContainer}>
-                {visibilityLoading ? (
-                  <ActivityIndicator size="small" color="#0d5464ff" />
-                ) : (
-                  <Switch
-                    value={orderDetails.data_visibility_vehicle_owner}
-                    onValueChange={toggleVisibility}
-                    trackColor={{ false: '#E5E7EB', true: '#0d546480' }}
-                    thumbColor={orderDetails.data_visibility_vehicle_owner ? '#0d5464ff' : '#9CA3AF'}
-                    ios_backgroundColor="#E5E7EB"
-                  />
-                )}
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Route Details */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Navigation size={20} color="#0d5464ff" />
-            <Text style={styles.sectionTitle}>Route Details</Text>
-          </View>
-          <View style={styles.routeCard}>
-            {locations.map((location, index) => (
-              <View key={index} style={styles.routeItem}>
-                <View style={styles.routeLeft}>
-                  <View style={[
-                    styles.routeDot,
-                    index === 0 ? styles.routeDotStart :
-                    index === locations.length - 1 ? styles.routeDotEnd :
-                    styles.routeDotMiddle
-                  ]} />
-                  {index < locations.length - 1 && <View style={styles.routeLine} />}
-                </View>
-                <View style={styles.routeRight}>
-                  <Text style={styles.routeLabel}>
-                    {index === 0 ? 'Pickup' : index === locations.length - 1 ? 'Drop' : `Stop ${index}`}
-                  </Text>
-                  <Text style={styles.routeAddress}>{location[1]}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        </View>
 
         {/* Assignment Details */}
         {currentAssignment && (
@@ -781,7 +725,7 @@ const cancelRecreateInput = () => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <CreditCard size={20} color="#0d5464ff" />
-            <Text style={styles.sectionTitle}>Financial Details</Text>
+            <Text style={styles.sectionTitle}>Tariff Details</Text>
           </View>
           <View style={styles.financialCard}>
             <View style={styles.financialRow}>
@@ -923,6 +867,64 @@ const cancelRecreateInput = () => {
                 </View>
               </>
             )}
+          </View>
+        </View>
+
+        {/* Customer Information */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <User size={20} color="#0d5464ff" />
+            <Text style={styles.sectionTitle}>Customer Details</Text>
+          </View>
+          <View style={styles.customerCard}>
+            <View style={styles.customerRow}>
+              <Text style={styles.customerName}>{orderDetails.customer_name}</Text>
+              <TouchableOpacity 
+                style={styles.phoneButton}
+                onPress={() => makePhoneCall(orderDetails.customer_number)}
+              >
+                <Phone size={16} color="#FFFFFF" />
+                <Text style={styles.phoneButtonText}>{orderDetails.customer_number}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        {/* Visibility Toggle */}
+        <View style={styles.section}>
+          {/* <View style={styles.sectionHeader}>
+            {orderDetails.data_visibility_vehicle_owner ? (
+              <Eye size={20} color="#0d5464ff" />
+            ) : (
+              <EyeOff size={20} color="#0d5464ff" />
+            )}
+            <Text style={styles.sectionTitle}>Vehicle Owner Data Visibility</Text>
+          </View> */}
+          <View style={styles.visibilityCard}>
+            <View style={styles.visibilityRow}>
+              <View style={styles.visibilityInfo}>
+                <Text style={styles.visibilityLabel}>Show Customer Details to the Driver</Text>
+                {/* <Text style={styles.visibilityDescription}>
+                  {orderDetails.data_visibility_vehicle_owner 
+                    ? 'Dr' 
+                    : 'Show Customer Details to the driver'
+                  }
+                </Text> */}
+              </View>
+              <View style={styles.switchContainer}>
+                {visibilityLoading ? (
+                  <ActivityIndicator size="small" color="#0d5464ff" />
+                ) : (
+                  <Switch
+                    value={orderDetails.data_visibility_vehicle_owner}
+                    onValueChange={toggleVisibility}
+                    trackColor={{ false: '#E5E7EB', true: '#0d546480' }}
+                    thumbColor={orderDetails.data_visibility_vehicle_owner ? '#0d5464ff' : '#9CA3AF'}
+                    ios_backgroundColor="#E5E7EB"
+                  />
+                )}
+              </View>
+            </View>
           </View>
         </View>
 

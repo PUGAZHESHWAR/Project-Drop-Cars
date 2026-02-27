@@ -10,7 +10,7 @@ import { Alert } from 'react-native';
 const api = axios.create({
   baseURL: "https://drop-cars-api-207918408785.asia-south2.run.app/api",
   // baseURL: "http://192.168.1.11:8000/api",
-  // baseURL: "http://172.20.10.7:8000/api",
+  // baseURL: "http://10.133.107.247:8000/api",
   headers: {
     'Content-Type': 'application/json',
   },
@@ -70,7 +70,7 @@ api.interceptors.response.use(
 const publicApi = axios.create({
   baseURL: 'https://drop-cars-api-207918408785.asia-south2.run.app/api',
   // baseURL: "http://192.168.1.11:8000/api",
-  // baseURL: "http://172.20.10.7:8000/api",
+  // baseURL: "http://10.133.107.247:8000/api",
   headers: {
     'Content-Type': 'application/json',
   },
