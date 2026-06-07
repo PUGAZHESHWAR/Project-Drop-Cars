@@ -77,6 +77,7 @@ interface OrderDetail {
   vehicle_owner_name: string | null;
   vendor_profit : number | null;
   admin_profit : number | null;
+  vehicle_owner_number: string | null;
 }
 
 interface Assignment {
@@ -640,6 +641,14 @@ const cancelRecreateInput = () => {
               <Text style={styles.infoLabel}>Accepted Status:</Text>
               <Text style={[styles.infoValue,{color: orderDetails.assignments.length == 0? "red" : "#10B981"}]}>{orderDetails.assignments.length == 0?"Waiting to accept":"Order Accepted"}</Text>
             </View>
+
+            <View style={styles.infoRow}>
+              <Timer size={16} color="#6B7280" />
+              <Text style={styles.infoLabel}>Driver Contact:</Text>
+              <Text style={[styles.infoValue,{color: orderDetails.assignments.length == 0? "red" : "#10B981"}]}>{orderDetails.assignments.length == 0 ? "Waiting to accept" : (orderDetails.vehicle_owner_number ?? '—')}</Text>
+            </View>
+
+
             {orderDetails.assignments.length > 0?(            
               <>
                 <View style={styles.infoRow}>
