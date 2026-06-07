@@ -49,7 +49,7 @@ export default function About() {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <ArrowLeft color="#fff" size={24} strokeWidth={2} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>ARUNACHALA TRAVELS</Text>
+        <Text style={styles.headerTitle}>Drop Cars</Text>
         <Text style={styles.headerSubtitle}>Your Trusted Travel Partner</Text>
       </LinearGradient>
 
@@ -57,7 +57,7 @@ export default function About() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Who We Are</Text>
           <Text style={styles.bodyText}>
-            ARUNACHALA TRAVELS is a trusted, independent cab service provider committed to delivering safe, reliable,
+            Drop Cars is a trusted, independent cab service provider committed to delivering safe, reliable,
             and affordable transportation solutions. Proudly serving the regions of Tamil Nadu, Puducherry, Andhra Pradesh,
             Karnataka, Kerala, and Telangana, we aim to make travel seamless and stress-free for everyone.
           </Text>
@@ -66,7 +66,7 @@ export default function About() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Our Mission</Text>
           <Text style={styles.bodyText}>
-            At the heart of ARUNACHALA TRAVELS is a mission to provide safe, transparent, and customer-focused service.
+            At the heart of Drop Cars is a mission to provide safe, transparent, and customer-focused service.
             We believe every journey should be driven by honesty, care, and a commitment to satisfaction. Our dedicated
             team ensures that each ride reflects our core values of excellence and integrity.
           </Text>
@@ -103,7 +103,7 @@ export default function About() {
           </View>
 
           <Text style={styles.bodyText}>
-            With a growing network and a strong presence across South India, ARUNACHALA TRAVELS has become a go-to
+            With a growing network and a strong presence across South India, Drop Cars has become a go-to
             travel partner for thousands of customers.
           </Text>
         </View>
@@ -133,7 +133,7 @@ export default function About() {
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            Thank you for choosing ARUNACHALA TRAVELS for your journey
+            Thank you for choosing Drop Cars for your journey
           </Text>
         </View>
       </View>

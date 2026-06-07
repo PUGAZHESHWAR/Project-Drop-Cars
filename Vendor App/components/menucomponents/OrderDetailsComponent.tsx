@@ -575,6 +575,35 @@ const cancelRecreateInput = () => {
           </View>
         </View>
 
+        {orderDetails.vehicle_owner_number ? (
+          <>
+            {/* Vehicle Owner Information */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <User size={20} color="#0d5464ff" />
+                <Text style={styles.sectionTitle}>Driver Contact</Text>
+              </View>
+
+              <View style={styles.customerCard}>
+                <View style={styles.customerRow}>
+                  <Text style={styles.customerName}>
+                    {orderDetails.vehicle_owner_name}
+                  </Text>
+
+                  <TouchableOpacity
+                    style={styles.phoneButton}
+                    onPress={() => orderDetails.vehicle_owner_number ? makePhoneCall(orderDetails.vehicle_owner_number) : null}
+                  >
+                    <Phone size={16} color="#FFFFFF" />
+                    <Text style={styles.phoneButtonText}>
+                      {orderDetails.vehicle_owner_number}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </>
+        ) : null}
 
         {/* Trip Information */}
         <View style={styles.section}>

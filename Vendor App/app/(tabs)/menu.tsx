@@ -67,7 +67,7 @@ export default function MenuScreen() {
   };
 
   const handleCall = () => {
-    const phoneNumber = '+919876543210';
+    const phoneNumber = '+918300448959';
     Linking.openURL(`tel:${phoneNumber}`).catch(() => {
       Alert.alert('Error', 'Unable to open dial pad');
     });
@@ -261,7 +261,7 @@ export default function MenuScreen() {
                 </View>
                 <View style={styles.supportContent}>
                   <Text style={styles.supportLabel}>Call Support</Text>
-                  <Text style={styles.supportValue}>+91 98765 43210</Text>
+                  <Text style={styles.supportValue}>+91 83004 48959</Text>
                 </View>
                 <ChevronRight size={16} color="#9CA3AF" />
               </TouchableOpacity>

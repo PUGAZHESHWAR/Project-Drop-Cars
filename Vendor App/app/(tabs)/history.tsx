@@ -179,7 +179,7 @@ export default function HistoryScreen() {
             <View style={styles.filterButtons}>
               <FilterButton status="all" label="All" />
               <FilterButton status="pending" label="Pending" />
-              <FilterButton status="approved" label="Approved" />
+              <FilterButton status="approved" label="Paid" />
             </View>
           </ScrollView>
         </View>
@@ -231,7 +231,7 @@ export default function HistoryScreen() {
                           styles.statusText,
                           { color: getStatusColor(transfer.status) }
                         ]}>
-                          {transfer.status}
+                          {transfer.status == "Approved" ? "Paid" : transfer.status}
                         </Text>
                       </View>
                       <ChevronRight size={16} color="#9CA3AF" />
@@ -290,7 +290,7 @@ export default function HistoryScreen() {
                       styles.statusTextLarge,
                       { color: getStatusColor(selectedTransfer.status) }
                     ]}>
-                      {selectedTransfer.status}
+                      {selectedTransfer.status == "Approved" ? "Paid" : selectedTransfer.status}
                     </Text>
                   </View>
                 </View>
